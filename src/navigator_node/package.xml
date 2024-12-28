@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>navigator_node</name>
+  <version>0.0.0</version>
+  <description>TODO</description>
+
+  <maintainer email="logan.m.murphy-11@ou.edu">Logan Murphy</maintainer>
+  <maintainer email="contact@barretts.club">Barrett Ray</maintainer>
+  <maintainer email="bford@axmilius.com">Brendan Ford</maintainer>
+
+  <license>TODO</license>
+
+  <!-- note: these are optional and only for testing -->
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

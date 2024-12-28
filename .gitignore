@@ -1,0 +1,19 @@
+# python build stuff
+src/**/**.egg-info
+src/**/uv.lock
+**/__pycache__
+
+# rust build stuff
+target/
+
+# top-level build (i think by colcon?)
+**/build/
+**/install/
+**/log/
+**/COLCON_IGNORE
+**/AMENT_IGNORE
+
+# misc files
+.ropeproject
+.DS_Store
+**/.pdb
