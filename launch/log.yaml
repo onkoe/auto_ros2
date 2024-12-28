@@ -1,0 +1,5 @@
+launch:
+    - node:
+          pkg: "log_node"
+          exec: "log_node"
+          name: "log_node"

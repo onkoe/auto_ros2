@@ -1,0 +1,5 @@
+launch:
+  - node:
+      pkg: "navigator_node"
+      exec: "navigator_node"
+      name: "navigator_node"
