@@ -1379,6 +1379,7 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 [[package]]
 name = "ros2-client"
 version = "0.7.6"
+<<<<<<< HEAD
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f61210ef51dba9c55d90e2eadd5753a9c4611013827645289384c44552b03f7d"
 dependencies = [
@@ -1408,6 +1409,9 @@ dependencies = [
 name = "ros2-client"
 version = "0.8.0"
 source = "git+https://github.com/Sooner-Rover-Team/ros2-client?rev=8ca2f85#8ca2f851026e0bb99fbd13418aa1023494d14051"
+=======
+source = "git+https://github.com/Sooner-Rover-Team/ros2-client?rev=2b2eb14#2b2eb1435b0a5e8d55721423946e91253ccf7412"
+>>>>>>> 293d658 (fix: update `ros2-client` patch)
 dependencies = [
  "async-channel",
  "bstr",
@@ -2288,3 +2292,7 @@ dependencies = [
  "quote",
  "syn 2.0.98",
 ]
+
+[[patch.unused]]
+name = "autonomous_node"
+version = "0.1.0"
