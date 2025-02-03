@@ -1,0 +1,12 @@
+[project]
+name = "autonomous"
+version = "0.2.0"
+requires-python = ">=3.13"
+
+[tool.uv.sources]
+# if one python project depends on another, put it here!
+#
+# for now, though, it's empty. :D
+
+[tool.uv.workspace]
+members = ["src/navigator_node", "src/log_node"]
