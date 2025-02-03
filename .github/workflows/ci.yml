@@ -2,7 +2,7 @@ name: CI
 on: ["push"]
 
 jobs:
-    do_et:
+    ci:
         # same as jetson :p
         runs-on: ubuntu-22.04 
         steps:
