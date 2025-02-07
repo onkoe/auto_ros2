@@ -1487,8 +1487,10 @@ dependencies = [
  "serde",
  "soro_gps",
  "tokio",
+ "tokio-stream",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -1612,8 +1614,8 @@ dependencies = [
 
 [[package]]
 name = "soro_gps"
-version = "1.0.0"
-source = "git+https://github.com/Sooner-Rover-Team/gps-rs#b53d057108ddcec7582bad551dca9dba40b688df"
+version = "1.0.1"
+source = "git+https://github.com/Sooner-Rover-Team/gps-rs#31c8f28a51749dd06035d4268b7145068189a6f1"
 dependencies = [
  "pisserror",
  "pyo3",
