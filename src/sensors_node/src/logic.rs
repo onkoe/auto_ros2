@@ -1,13 +1,10 @@
 //! Logic is encapsulated here to avoid clutter in the `main` module.
 
-use std::sync::Arc;
-
 use ros2_client::{
     log::LogLevel, ros2::QosPolicyBuilder, rosout, Context, MessageTypeName, Name, Node, NodeName,
     NodeOptions,
 };
 use soro_gps::Gps;
-use tokio::sync::RwLock;
 
 use crate::{msg::sensors::GpsMessage, SensorSetup};
 
@@ -63,7 +60,7 @@ pub fn spin(node: &mut Node) {
 /// Starts all tasks that over all sensor data and to publish to the correct topics.
 pub async fn spawn_sensor_publisher_tasks(
     sensor_setup: impl AsRef<SensorSetup>,
-    sensors_node: Arc<RwLock<Node>>,
+    mut sensors_node: Node,
 ) {
     let sensor_setup = sensor_setup.as_ref();
     // TODO: create mono cam, depth cam, battery, imu publishers
@@ -75,9 +72,7 @@ pub async fn spawn_sensor_publisher_tasks(
 
     // spawn gps task
     {
-        let mut locked_sensors_node = sensors_node.write().await;
-
-        let gps_topic = locked_sensors_node
+        let gps_topic = sensors_node
             .create_topic(
                 &Name::new("/sensors", "gps").expect("valid topic name"),
                 MessageTypeName::new("interfaces", "GpsMessage"),
@@ -86,7 +81,7 @@ pub async fn spawn_sensor_publisher_tasks(
             .expect("create gps topic");
 
         // make a gps publisher
-        let gps_pub = locked_sensors_node
+        let gps_pub = sensors_node
             .create_publisher::<GpsMessage>(&gps_topic, Some(qos()))
             .expect("create gps publisher");
 
@@ -99,7 +94,7 @@ pub async fn spawn_sensor_publisher_tasks(
             .expect("gps creation");
 
         tokio::task::spawn(sensor_tasks::gps_task(gps, gps_pub));
-        rosout!(locked_sensors_node, LogLevel::Debug, "made gps task!");
+        rosout!(sensors_node, LogLevel::Debug, "made gps task!");
     }
 }
 

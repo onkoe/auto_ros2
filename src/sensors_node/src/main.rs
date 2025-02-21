@@ -4,11 +4,10 @@
 //! other nodes through various topics.
 
 use core::net::{IpAddr, Ipv4Addr};
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use camino::Utf8PathBuf;
 use ros2_client::{log::LogLevel, rosout, Context};
-use tokio::sync::RwLock;
 
 mod logic;
 mod msg;
@@ -35,11 +34,7 @@ async fn main() {
     // start all our topics + publishers
     //
     // TODO: maybe fill `sensor_setup` using params?
-    logic::spawn_sensor_publisher_tasks(
-        SensorSetup::default(),
-        Arc::new(RwLock::new(sensors_node)),
-    )
-    .await;
+    logic::spawn_sensor_publisher_tasks(SensorSetup::default(), sensors_node).await;
 
     loop {
         tokio::time::sleep(Duration::from_millis(20_000)).await;
