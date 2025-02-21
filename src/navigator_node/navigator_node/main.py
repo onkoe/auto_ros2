@@ -54,7 +54,7 @@ from .coords import coordinate_from_aruco_pose
 ## how long we'll keep the data (DDS).
 QUEUE_SIZE: int = 10
 
-SENSOR_TIMEOUT_NS: float = 2 * 1_000_000_000
+SENSOR_TIMEOUT_NS: float = 2.0 * 1_000_000_000
 """
 The amount of time until we ignore a message from a sensor.
 
@@ -64,8 +64,8 @@ Measured in nanoseconds.
 """
 
 ## minimum distance we need to be within from the coordinate
-MIN_GPS_DISTANCE: float = 3  # meters
-MIN_ARUCO_DISTANCE: float = 2  # meters
+MIN_GPS_DISTANCE: float = 3.0  # meters
+MIN_ARUCO_DISTANCE: float = 2.0  # meters
 
 
 class NavigationMode(Enum):
