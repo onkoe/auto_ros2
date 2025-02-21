@@ -117,9 +117,9 @@ class NavigatorNode(Node):
     _coord_queue: list[GeoPoint] = []
 
     # TODO: use... not bools for that
-    _search_algo: Coroutine[bool, bool, bool] | None = None
+    _search_algo_cor: Coroutine[bool, bool, bool] | None = None
     """search algo if we're doin it"""
-    _go_to_coordinate: Coroutine[bool, bool, bool] | None = None
+    _go_to_coordinate_cor: Coroutine[Any, Any, None] | None = None
     """
     we replace this with a Coroutine (running async function) when we want
     to go somewhere.
