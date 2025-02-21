@@ -35,7 +35,7 @@ import rclpy
 from custom_interfaces.msg import ArMessage as ArucoMessage
 from custom_interfaces.msg import GpsMessage, WheelsMessage
 from custom_interfaces.srv import LightsRequest, LightsResponse
-from geographic_msgs.msg import GeoPoint
+from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from geometry_msgs.msg import PoseStamped
 from geopy.distance import distance
 from loguru import logger as llogger
@@ -106,9 +106,9 @@ class NavigatorNode(Node):
     """When true, we've reached the object itself."""
 
     # info about where the rover/target is
-    _last_known_rover_coord: GeoPoint | None = None
+    _last_known_rover_coord: GeoPointStamped | None = None
     """The coordinate last recv'd from the GPS."""
-    _last_known_marker_coord: GeoPoint | None = None
+    _last_known_marker_coord: GeoPointStamped | None = None
     """Coordinate pair where the target was last known to be located."""
 
     _curr_marker_transform: PoseStamped | None = None
@@ -277,13 +277,13 @@ class NavigatorNode(Node):
                 )
                 return
 
-            target_coord = self._coord_queue[0]
+            target_coord: GeoPoint = self._coord_queue[0]
             # calculate distance to target
             dist_to_target_coord_m = distance(
                 [target_coord.latitude, target_coord.longitude],
                 [
-                    self._last_known_rover_coord.latitude,
-                    self._last_known_rover_coord.longitude,
+                    self._last_known_rover_coord.position.latitude,
+                    self._last_known_rover_coord.position.longitude,
                 ],
             ).meters
 
