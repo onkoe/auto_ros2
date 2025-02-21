@@ -26,10 +26,10 @@ stuff that the navigator node does:
 """
 
 import sys
-import time
 from collections.abc import Coroutine
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 import rclpy
 from custom_interfaces.msg import ArMessage as ArucoMessage
@@ -45,12 +45,22 @@ from rclpy.publisher import Publisher
 from rclpy.qos import QoSProfile
 from rclpy.subscription import Subscription
 from rclpy.task import Future
+from rclpy.time import Time
 from rclpy.timer import Timer
 
 from .coords import coordinate_from_aruco_pose
 
 ## how long we'll keep the data (DDS).
 QUEUE_SIZE: int = 10
+
+SENSOR_TIMEOUT_NS: float = 2 * 1_000_000_000
+"""
+The amount of time until we ignore a message from a sensor.
+
+Using this allows us to ignore old messages, only using new ones.
+
+Measured in nanoseconds.
+"""
 
 ## minimum distance we need to be within from the coordinate
 MIN_GPS_DISTANCE: float = 3  # meters
