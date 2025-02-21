@@ -32,9 +32,6 @@ from enum import Enum
 from typing import Any
 
 import rclpy
-from custom_interfaces.msg import ArMessage as ArucoMessage
-from custom_interfaces.msg import GpsMessage, WheelsMessage
-from custom_interfaces.srv import LightsRequest, LightsResponse
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from geometry_msgs.msg import PoseStamped
 from geopy.distance import distance
@@ -47,6 +44,10 @@ from rclpy.subscription import Subscription
 from rclpy.task import Future
 from rclpy.time import Time
 from rclpy.timer import Timer
+
+from custom_interfaces.msg import ArMessage as ArucoMessage
+from custom_interfaces.msg import GpsMessage, WheelsMessage
+from custom_interfaces.srv import LightsRequest, LightsResponse
 
 from .coords import coordinate_from_aruco_pose
 
