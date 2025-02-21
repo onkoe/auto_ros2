@@ -34,6 +34,7 @@ dev = [
     { name = "colcon-ros-cargo" },
     { name = "empy" },
     { name = "lark" },
+    { name = "numpy" },
     { name = "ruff" },
 ]
 
@@ -51,6 +52,7 @@ dev = [
     { name = "colcon-ros-cargo", specifier = ">=0.2.0" },
     { name = "empy", specifier = "==3.3.4" },
     { name = "lark", specifier = "==1.2.2" },
+    { name = "numpy", specifier = ">=2.2.2" },
     { name = "ruff", specifier = ">=0.9.4" },
 ]
 
