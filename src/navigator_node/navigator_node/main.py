@@ -27,6 +27,7 @@ stuff that the navigator node does:
 
 import sys
 import time
+from collections.abc import Coroutine
 from dataclasses import dataclass
 from enum import Enum
 
@@ -115,6 +116,22 @@ class NavigatorNode(Node):
     # coordinate queue
     _coord_queue: list[GeoPoint] = []
 
+    # TODO: use... not bools for that
+    _search_algo: Coroutine[bool, bool, bool] | None = None
+    """search algo if we're doin it"""
+    _go_to_coordinate: Coroutine[bool, bool, bool] | None = None
+    """
+    we replace this with a Coroutine (running async function) when we want
+    to go somewhere.
+
+    we can set it to None to cancel it, which allows us to navigate to another
+    coordinate, or keep it going and check if it's returned yet to see if it's
+    arrived.
+
+    in short, this handles the actual navigation without requiring dense
+    logic within the `navigator` function
+    """
+
     # current gps attribute
 
     def __init__(self):
@@ -188,7 +205,7 @@ class NavigatorNode(Node):
         # Add the given GPS coordinate to the coordinate queue
         self._coord_queue.append(self._param_value.coord)
         # Calculate and append search coordinates for GPS coord
-        self.append_search_coords(self._coord_queue)
+        self.generate_similar_coords(self._coord_queue)
         # Run navigator callback every 0.5 seconds
         self._navigator_callback_timer = self.create_timer(0.5, self.navigator)
 
@@ -251,7 +268,7 @@ class NavigatorNode(Node):
                 )
                 return
 
-            target_coord = self._coord_queue.pop(0)
+            target_coord = self._coord_queue[0]
             # calculate distance to target
             dist_to_target_coord_m = distance(
                 [target_coord.latitude, target_coord.longitude],
@@ -282,6 +299,9 @@ class NavigatorNode(Node):
                 # wheel_speeds = self.get_wheel_speeds(
                 #     distance_to_coords, angle_to_coords
                 # )
+                """Based on the target coordinate and the current coordinate of the Rover, we want to calculate
+                what wheel speeds to send to the rover in order to move toward the target"""
+
                 pass
 
         match self._param_value.mode:
@@ -348,6 +368,15 @@ class NavigatorNode(Node):
             case NavigationMode.OBJECT_DETECTION:
                 llogger.error("Object detection is currently unimplemented!")
                 sys.exit(1)
+        pass
+
+    # Given a coordinate,
+    async def go_to_coordinate(self, coord: GeoPoint):
+        """
+        async so this acts kinda like a ros 2 action.
+
+        u can track it, cancel it, etc.
+        """
         pass
 
     def gps_callback(self, msg: GpsMessage):
