@@ -222,10 +222,10 @@ class NavigatorNode(Node):
         rclpy.spin_until_future_complete(self, self._lights_request_future)
         return self._lights_request_future.result()
 
-    # FIXME: distance and angle to marker should never be passed
-    # FIXME: wheel speeds can be determined for any mode, not just marker
-    # TODO: use `GeoPoint` type?
     def get_wheel_speeds(self, distance_to_marker, angle_to_marker):
+        # FIXME: distance and angle to marker should never be passed
+        # FIXME: wheel speeds can be determined for any mode, not just marker
+        # TODO: use `GeoPoint` type?
         pass
 
     def navigator(self):
