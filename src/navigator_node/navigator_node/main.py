@@ -366,6 +366,7 @@ class NavigatorNode(Node):
                         )
                     else:
                         wheel_speeds = 0
+                        self.calculating_aruco_coord = True
 
             # TODO: Get object detection, lul
             case NavigationMode.OBJECT_DETECTION:
@@ -374,12 +375,14 @@ class NavigatorNode(Node):
         pass
 
     # Given a coordinate,
-    async def go_to_coordinate(self, coord: GeoPoint):
+    async def _go_to_coordinate(self, coord: GeoPoint):
         """
         async so this acts kinda like a ros 2 action.
 
         u can track it, cancel it, etc.
         """
+
+        # start moving
         pass
 
     def _near_coordinate(
