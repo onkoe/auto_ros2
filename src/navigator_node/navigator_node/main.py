@@ -379,6 +379,38 @@ class NavigatorNode(Node):
         """
         pass
 
+    def _near_coordinate(
+        self, target_coordinate: GeoPoint, distance_m: float
+    ) -> bool:
+        """
+        Checks if the Rover is near a target coordinate, within the given
+        distance (in meters).
+        """
+        # we may only check if we're near a coordinate if the gps has given us
+        # the coordinate pair of the Rover
+        if self._last_known_rover_coord is None:
+            _ = self.get_logger().error(
+                "The GPS hasn't yet sent a coordinate, so we don't know if we're\
+                within distance of the given coordinate. Returning False."
+            )
+            return False
+
+        # calculate the distance
+        dist_to_target_coord_m = distance(
+            [target_coordinate.latitude, target_coordinate.longitude],
+            [
+                self._last_known_rover_coord.position.latitude,
+                self._last_known_rover_coord.position.longitude,
+            ],
+        ).meters
+
+        # perform the actual check
+        within_distance: bool = dist_to_target_coord_m < distance_m
+        llogger.debug(
+            f"Rover is near coordinate {target_coordinate}: {within_distance}"
+        )
+        return within_distance
+
     def _sensor_data_timed_out(self, sensor_data_timestamp: Time) -> bool:
         """
         Given a timestamp of sensor data (has to contain a `Header`), this
