@@ -331,7 +331,10 @@ class NavigatorNode(Node):
                 """
 
                 # only use old info if ArUco marker has been seen in the last 2 seconds
-                if self._curr_marker_transform.header.stamp - time.time() < 2.0:
+                time_since_aruco_marker: Time = Time().from_msg(
+                    self._curr_marker_transform.header.stamp
+                )
+                if self._sensor_data_timed_out(time_since_aruco_marker):
                     # if we've seen the marker this frame, increase the counter.
                     #
                     # when we've seen it enough times, we'll start moving
