@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(geographic_msgs REQUIRED)
 
 # make a list of all msg files in `msg/`.
 #
@@ -29,6 +30,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   ${SRV_FILES} # service files
   ${ACT_FILES} # and action files
   DEPENDENCIES geometry_msgs
+  DEPENDENCIES geographic_msgs
 )
 
 if(BUILD_TESTING)
