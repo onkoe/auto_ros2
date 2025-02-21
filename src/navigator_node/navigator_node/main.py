@@ -379,6 +379,27 @@ class NavigatorNode(Node):
         """
         pass
 
+    def _sensor_data_timed_out(self, sensor_data_timestamp: Time) -> bool:
+        """
+        Given a timestamp of sensor data (has to contain a `Header`), this
+        method will check if it's too old to use ("has timed out").
+        """
+
+        current_time: int = self.get_clock().now().nanoseconds
+        time_since_sensor_data: int = sensor_data_timestamp.nanoseconds
+
+        # check if it's timed out
+        timed_out: bool = (
+            current_time - time_since_sensor_data
+        ) > SENSOR_TIMEOUT_NS
+
+        # if we've timed out on some data, print that out
+        if timed_out:
+            _ = self.get_logger().error("Sensor data timed out!")
+
+        # return the boolean val
+        return timed_out
+
     def gps_callback(self, msg: GpsMessage):
         self._last_known_rover_coord = msg.coords()
 
