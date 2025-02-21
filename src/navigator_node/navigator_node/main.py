@@ -107,10 +107,17 @@ class NavigatorNode(Node):
 
     _param_value: NavigationParameters | None
 
+    _given_aruco_marker_id: int | None = None
+    """
+    The ID of the ArUco marker we're looking for.
+
+    We don't use this directly - it's only to make error messages better.
+    """
+
     _times_marker_seen: int = 0
 
     # these let us check if we've reached stuff
-    coords_reached: bool = False
+    calculating_aruco_coord: bool = False
     """When this is true, we've reached the coordinate near the goal."""
     goal_reached: bool = False
     """When true, we've reached the object itself."""
@@ -140,6 +147,11 @@ class NavigatorNode(Node):
 
     in short, this handles the actual navigation without requiring dense
     logic within the `navigator` function
+    """
+
+    _last_searched_coord: GeoPoint | None = None
+    """
+    The coordinate we were searching at during the previous callback iteration.
     """
 
     # current gps attribute
@@ -300,7 +312,9 @@ class NavigatorNode(Node):
             # Check if destination is reacheed
             if dist_to_target_coord_m < MIN_GPS_DISTANCE:
                 _ = self.get_logger().info("Reached destination coordinate!")
-                self.coords_reached = True
+
+                # in ArUco or object detection mode, we want to move on to the next coordinate (provided by calculation)
+                _ = self._coord_queue.pop(0)
 
                 # in GPS mode, we're only navigating to a coordinate.
                 #
@@ -318,36 +332,44 @@ class NavigatorNode(Node):
                 # wheel_speeds = self.get_wheel_speeds(
                 #     distance_to_coords, angle_to_coords
                 # )
-                """Based on the target coordinate and the current coordinate of the Rover, we want to calculate
-                what wheel speeds to send to the rover in order to move toward the target"""
+                """Based on the target coordinate and the current coordinate of the Rover, we want to activate the
+                go_to_coordinate async function to have the Rover start moving toward a coordinate. If the function is already
+                running with the same coordinate, no need to stop the current function running."""
 
+                # PID Controller function to send wheel speeds
+                #
+                # if we want to go somewhere else, we replace `self._go_to_coordinate_cor` with
+                # another Coroutine.
+                #
+                # doing so will have the Rover moving while we make decisions.
+                #
+                # we can also cancel the Task
+                if self._last_searched_coord != target_coord:
+                    self._go_to_coordinate_cor = self._go_to_coordinate(
+                        target_coord
+                    )
+                    self._last_searched_coord = target_coord
                 pass
 
+        # What extra work do we have to do for task? lol
         match self._param_value.mode:
             case NavigationMode.GPS:
                 pass
 
             case NavigationMode.ARUCO:
                 # Do ArUco tracking stuff
-                #
-                # Should probably make sure this information isn't old first
                 """
-                (noir jazz [muted trumpet solo *sounds like weeping {like the sound of dying love}*] plays in the background)
-                |_t: T|::<T> -> () { _t; }
-                ROVERS INTERNAL THOUGHTS: [coords]
-                ROVERS INTERNAL THOUGHTS: [coords, search1, search2, search3, search4]
-                * It's going through these...*
-                * Arrives at original coord   *
-                ROVERS INTERNAL THOUGHTS: [search1, search2, search3, search4]
-                * Going through these... *
-                */ a doc comment that doesnt need to be in a multi-line comment */
-                ROVER [speaking]: Oh! We found a tag!
-                ROVERS INTERNAL THOUGHTS :[tag, tagsearch1, tagsearch2, tagsearch3, tagsearch4] TAG TAKES PRIORITY
-                *dances epic style*
-
                 random note: we're possibly definitely gonna need to reset the
                 PID controller each time we traverse to a new coordinate
                 """
+
+                # Ensure we've at least seen the aruco marker once
+                if self._curr_marker_transform is None:
+                    # TODO: Double check if this is the message we want
+                    llogger.debug(
+                        f"Haven't seen the ArUco marker (id: {self._given_aruco_marker_id}) yet"
+                    )
+                    return
 
                 # only use old info if ArUco marker has been seen in the last 2 seconds
                 time_since_aruco_marker: Time = Time().from_msg(
@@ -379,13 +401,22 @@ class NavigatorNode(Node):
                             )
                             return
 
-                        self._param_value.coord = coordinate_from_aruco_pose(
+                        aruco_coord = coordinate_from_aruco_pose(
                             self._last_known_rover_coord,
                             self._curr_marker_transform,
                         )
+
+                        # Update rover coords queue and stop calculating aruco coordinate
+                        self._coord_queue.insert(0, aruco_coord)
+                        self.calculating_aruco_coord = False
                     else:
-                        wheel_speeds = 0
+                        # Stop the coroutine (set it to none)
+                        self._go_to_coordinate_cor = None
                         self.calculating_aruco_coord = True
+
+                else:  # Lost the marker, start traversing to previous coord
+                    self._times_marker_seen = 0
+                    self.calculating_aruco_coord = False
 
             # TODO: Get object detection, lul
             case NavigationMode.OBJECT_DETECTION:
@@ -402,6 +433,14 @@ class NavigatorNode(Node):
         """
 
         # start moving
+        # TODO
+
+        # if we're within the required distance of the coordinate, we'll stop
+        # automatically
+        #
+        # FIXME: use distance for aruco/gps depending on mode :)
+        if self._near_coordinate(coord, MIN_GPS_DISTANCE):
+            return
         pass
 
     def _near_coordinate(
