@@ -234,11 +234,10 @@ class NavigatorNode(Node):
 
         Driven by a `rclpy::Timer`.
         """
-
-        # When the last time, we updated GPS
-        # - If took too long, freak out
-
-        #
+        # Ensure a navigation mode was specified
+        if self._param_value is None:
+            llogger.error("Called, but no parameters given.")
+            rclpy.shutdown()
 
         # If goal is reached, turn the node off
         if self.goal_reached:
