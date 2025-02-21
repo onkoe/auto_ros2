@@ -189,7 +189,7 @@ class NavigatorNode(Node):
             self._aruco_subscription = self.create_subscription(
                 msg_type=ArucoMessage,  # TODO: change to wherever the ar message type is
                 topic="/aruco",  # TODO: change to whatever the markers topic is
-                callback=self.navigator,
+                callback=self.aruco_callback,
                 qos_profile=QUEUE_SIZE,
             )
 
@@ -198,7 +198,7 @@ class NavigatorNode(Node):
         self._gps_subscription = self.create_subscription(
             msg_type=GpsMessage,
             topic="/sensors/gps",
-            callback=self.navigator,
+            callback=self.gps_callback,
             qos_profile=QUEUE_SIZE,
         )
 
