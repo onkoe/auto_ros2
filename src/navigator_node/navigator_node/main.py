@@ -74,6 +74,18 @@ class NavigationMode(Enum):
     OBJECT_DETECTION = 2
 
 
+class GoToCoordinateReason(Enum):
+    """
+    The 'reason' we're going to a coordinate.
+
+    As an argument to `go_to_coordinate`, this type allows it to use the correct
+    stopping distance.
+    """
+
+    GPS = 0
+    ARUCO = 1
+
+
 @dataclass(kw_only=True)
 class NavigationParameters:
     coord: GeoPoint
@@ -426,7 +438,9 @@ class NavigatorNode(Node):
         pass
 
     # Given a coordinate,
-    async def _go_to_coordinate(self, coord: GeoPoint):
+    async def _go_to_coordinate(
+        self, coord: GeoPoint, reason: GoToCoordinateReason
+    ):
         """
         async so this acts kinda like a ros 2 action.
 
@@ -436,11 +450,17 @@ class NavigatorNode(Node):
         # start moving
         # TODO
 
+        # get stop distance for provided reason
+        stop_distance: float
+        match reason:
+            case GoToCoordinateReason.GPS:
+                stop_distance = MIN_GPS_DISTANCE
+            case GoToCoordinateReason.ARUCO:
+                stop_distance = MIN_ARUCO_DISTANCE
+
         # if we're within the required distance of the coordinate, we'll stop
         # automatically
-        #
-        # FIXME: use distance for aruco/gps depending on mode :)
-        if self._near_coordinate(coord, MIN_GPS_DISTANCE):
+        if self._near_coordinate(coord, stop_distance):
             return
         pass
 
