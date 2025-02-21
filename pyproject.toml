@@ -26,3 +26,9 @@ dev = [
     "empy==3.3.4",
     "lark==1.2.2",
 ]
+
+[tool.basedpyright]
+reportUnknownVariableType = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportMissingTypeStubs = false
