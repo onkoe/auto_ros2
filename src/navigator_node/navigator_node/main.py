@@ -228,8 +228,7 @@ class NavigatorNode(Node):
     def get_wheel_speeds(self, distance_to_marker, angle_to_marker):
         pass
 
-    # TODO: change msg type to whatever the gps message type is
-    def navigator(self, _msg: str):
+    def navigator(self):
         """
         TODO: docs...
 
