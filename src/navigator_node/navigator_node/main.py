@@ -243,7 +243,7 @@ class NavigatorNode(Node):
         if self.goal_reached:
             # Log message that goal was reached
             _ = self.get_logger().info("Goal reached!")
-            #           # Set lights to FLASHING GREEN
+            # Set lights to FLASHING GREEN
             lights_info: LightsRequest = LightsRequest.Request()
             lights_info.red = 0
             lights_info.green = 255
@@ -252,12 +252,23 @@ class NavigatorNode(Node):
             _ = self.send_lights_request(lights_info)
             rclpy.shutdown()
 
-        if self._param_value is None:
-            llogger.error("Called, but no parameters given.")
-            sys.exit(1)
+        # Ensure we've started receving rover coordinates
+        if self._last_known_rover_coord is None:
+            llogger.warning(
+                "Can't start navigating until the GPS provides a coordinate. Returning early."
+            )
+            return
 
-        # when we haven't reached the coords yet (step 1), keep goin
-        if not self.coords_reached:
+        # Ensure our current coordinate is updating
+        time_since_rover_coord: Time = Time().from_msg(
+            self._last_known_rover_coord.header.stamp
+        )
+        if self._sensor_data_timed_out(time_since_rover_coord):
+            llogger.warning("gps coord hasn't updated; cannot navigate")
+            return
+
+        # when we haven't reached the coords yet (step 1), keep navgating to current coordinates
+        if not self.calculating_aruco_coord:
             # we may only continue if the GPS has provided a coordinate for the
             # Rover
             if self._last_known_rover_coord is None:
