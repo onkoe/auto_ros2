@@ -47,6 +47,8 @@ from rclpy.time import Time
 from rclpy.timer import Timer
 from simple_pid import PID
 
+# sudo apt install ros-jazzy-geographic-msgs
+
 # FIXME: make this use the fr module!
 #        seems like there's some kinda Python glue missing...
 from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._gps_message import (
@@ -64,6 +66,7 @@ from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights i
 from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights import (
     Lights_Response as LightsResponse,
 )
+
 
 # from custom_interfaces.msg import ArMessage as ArucoMessage
 from .coords import coordinate_from_aruco_pose, get_distance_to_marker
@@ -118,6 +121,24 @@ class NavigationParameters:
 
     For example, if we're given `NavigationMode::GPS`, we'll navigate to the given GPS
     coordinate and stop when we're there.
+    """
+    pk: float = 0.0
+    """
+    Proportional gain for the PID controller.
+    Determines the speed at which the rover will correct itself.
+    Default: 0.0
+    """
+    pi: float = 0.0
+    """
+    Integral gain for the PID controller.
+    Determines how much the rover will correct itself.
+    Default: 0.0
+    """
+    pd: float = 0.0
+    """
+    Derivative gain for the PID controller.
+    Determines how quickly the rover will stop correcting itself.
+    Default: 0.0
     """
 
 
@@ -299,13 +320,6 @@ class NavigatorNode(Node):
         )
         rclpy.spin_until_future_complete(self, self._lights_request_future)
         return self._lights_request_future.result()
-
-    # Do we even want this function?
-    def get_wheel_speeds(self, _distance_to_marker, _angle_to_marker):
-        # FIXME: distance and angle to marker should never be passed
-        # FIXME: wheel speeds can be determined for any mode, not just marker
-        # TODO: use `GeoPoint` type?
-        pass
 
     def navigator(self):
         """
@@ -537,7 +551,7 @@ class NavigatorNode(Node):
         # NOTE: I have a funny feeling this will send wheel speeds too fast
         #pk = proportional, pi = integral, pd = derivative
         #pk determines the speed of error correction, pi determines how much the rover will correct itself, and pd determines how quickly the rover will stop correcting itself
-        pk, pi, pd = 0, 0., 0 # TODO: Make these parameters. NOTE: We may not want to use all of these
+        pk, pi, pd = self._param_value.pk, self._param_value.pi, self._param_value.pd # NOTE: We may not want to use all of these
         target_value = 0     # We want the rover's angle to the destination be 0
         pid = PID(pk, pi, pd, setpoint=target_value)
         wheel_speeds: WheelsMessage = WheelsMessage()
