@@ -33,7 +33,7 @@ from typing import Any
 
 import rclpy
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Vector3
 from geopy.distance import distance
 from loguru import logger as llogger
 from rclpy.client import Client
@@ -161,6 +161,8 @@ class NavigatorNode(Node):
 
     _curr_marker_transform: PoseStamped | None = None
 
+    _last_known_imu_data: ImuMessage | None = None
+
     _coordinate_path_queue: list[GeoPoint] = []
     """
     A coordinate queue where the first element of the queue holds whatever coordinate we want to go to next.
@@ -178,7 +180,7 @@ class NavigatorNode(Node):
     """
 
     # TODO: use... not bools for that
-    _search_algo_cor: Coroutine[bool, bool, bool] | None = None
+    _search_algo_cor: Coroutine[Any, Any, None] | None = None
     """search algo if we're doin it"""
     _go_to_coordinate_cor: Coroutine[Any, Any, None] | None = None
     """
@@ -361,11 +363,11 @@ class NavigatorNode(Node):
                 # in GPS mode, we're only navigating to a coordinate.
                 #
                 # so we stop here and return!
-                #
-                # FIXME: returning won't stop the timer. so do that first.
-                if self._param_value.mode == NavigationMode.GPS:
+                if self._param_value is not None and self._param_value.mode == NavigationMode.GPS:
+                    # WARNING: by making this `True`, we tell the function to
+                    # stop itself from running the next time it's called
                     self.goal_reached = True
-                    return  # Return here right?
+                    return
 
                 # in ArUco or object detection mode, we want to move on to the next coordinate (provided by calculation)
                 _ = self._coordinate_path_queue.pop(0)
@@ -383,7 +385,7 @@ class NavigatorNode(Node):
                 # we can also cancel the Task
                 if self._last_searched_coord != target_coord:
                     self._go_to_coordinate_cor = self._go_to_coordinate(
-                        target_coord, GoToCoordinateReason.ARUCO
+                        target_coord
                     )
                     self._last_searched_coord = target_coord
                 pass
@@ -418,18 +420,20 @@ class NavigatorNode(Node):
                     # when we've seen it enough times, we'll start moving
                     # toward it.
                     #
-                    # this strategy reduces the liklihood of false positives
+                    # this strategy reduces the likelihood of false positives
                     # impacting our plan/route
                     self._times_marker_seen += 1
 
-                    # Calculate distance and angle to marker
-                    distance_to_marker, angle_to_marker = (
-                        get_dist_angle_to_marker(self._curr_marker_transform)
+                    # Calculate distance to marker
+                    distance_to_marker = (
+                        get_distance_to_marker(self._curr_marker_transform)
                     )
 
                     if distance_to_marker < MIN_ARUCO_DISTANCE:
+                        # WARNING: by making this `True`, we tell the function to
+                        # stop itself from running the next time it's called
                         self.goal_reached = True
-                        return  # Return here right?
+                        return
                     elif self._times_marker_seen > 20:
                         # check that we have recv'd any messages from the gps
                         if self._last_known_rover_coord is None:
@@ -438,16 +442,17 @@ class NavigatorNode(Node):
                             )
                             return
 
+                        # Calculate the coordinate of the ArUco marker given the current Rover coordinate and the ArUco pose
                         aruco_coord = coordinate_from_aruco_pose(
                             self._last_known_rover_coord,
                             self._curr_marker_transform,
                         )
 
                         # Update rover coords queue and stop calculating aruco coordinate
-                        self._coord_queue.insert(0, aruco_coord)
+                        self._coordinate_path_queue.insert(0, aruco_coord)
                         self.calculating_aruco_coord = False
                     else:
-                        # Stop the coroutine (set it to none)
+                        # Stop the coroutine (set it to none) so that we can sit still and check to see if we've seen the marker enough times
                         self._go_to_coordinate_cor = None
                         self.calculating_aruco_coord = True
 
@@ -461,8 +466,71 @@ class NavigatorNode(Node):
                 sys.exit(1)
         pass
 
-    # Given a coordinate,
     async def _go_to_coordinate(
+            self, coord: GeoPoint
+    ):
+        """
+        async so this acts kinda like a ros 2 action.
+
+        u can track it, cancel it, etc.
+
+        given a coordinate and a distance, sends wheel speeds to move the rover toward the coordinate
+        """
+        # make sure we have the latest imu data
+        if self._last_known_imu_data is None:
+            llogger.warning("IMU data not yet received; cannot navigate to coordinate")
+            return
+        elif self._last_known_rover_coord is None:
+            llogger.warning("GPS data not yet received; cannot navigate to coordinate")
+            return
+
+        # get magnetometer info from IMU
+        compass_info: Vector3 = self._last_known_imu_data.compass # gives us x, y, z compass data
+        # get current rover position
+        rover_position: GeoPoint = self._last_known_rover_coord.position
+        # calculate angle to target
+        angle_to_target: float = calculate_angle_to_target(rover_position, coord, compass_info)
+        # send wheel speeds to turn rover until it's facing the target
+        """
+        Reverse at max speed = 0
+        Forward at max speed = 255
+        Nothing = 126
+        """
+        wheel_speeds: WheelsMessage = WheelsMessage()
+        while abs(angle_to_target) > 5:
+            if angle_to_target > 5:
+                # turn rover right at 50% speed
+                # TODO: We should probably have some sort of constants to abstract a LEFT request or a RIGHT request
+                wheel_speeds.left_wheels = 126+(126/2)
+                wheel_speeds.right_wheels = 126-(126/2)
+            elif angle_to_target < -5:
+                # turn rover left at 50% speed
+                wheel_speeds.left_wheels = 126-(126/2)
+                wheel_speeds.right_wheels = 126+(126/2)
+
+            # publish wheel speeds
+            self._wheels_publisher.publish(wheel_speeds)
+            # wait for new imu data (NOTE: I am completely bullshitting here, this could be so wrong)
+            while self._sensor_data_timed_out(imu_data_timestamp):
+                pass
+            compass_info = self._last_known_imu_data.compass
+            # recalculate angle to target
+            angle_to_target = calculate_angle_to_target(rover_position, coord, compass_info)
+
+        # stop turning
+        wheel_speeds.left_wheels = 126
+        wheel_speeds.right_wheels = 126
+        self._wheels_publisher.publish(wheel_speeds)
+
+        # TODO: based on distance, calculate wheel speeds to move rover toward target
+        # for now, just drive forward at 50% speed
+        wheel_speeds.left_wheels = 126+(126/2)
+        wheel_speeds.right_wheels = 126+(126/2)
+        self._wheels_publisher.publish(wheel_speeds)
+        pass
+
+    # Given a coordinate,
+    async def _go_to_coordinate_with_reason(
         self, coord: GeoPoint, reason: GoToCoordinateReason
     ):
         """
@@ -472,8 +540,6 @@ class NavigatorNode(Node):
         """
 
         # start moving
-        # TODO
-
         # get stop distance for provided reason
         stop_distance: float
         match reason:
@@ -488,6 +554,7 @@ class NavigatorNode(Node):
             return
         pass
 
+    # Note: This is good, but idfk how to implement this with the structure that has already had a lot of work put into it. For the moment, ignoring this
     def _near_coordinate(
         self, target_coordinate: GeoPoint, distance_m: float
     ) -> bool:
