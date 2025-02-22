@@ -32,6 +32,7 @@ from enum import Enum
 from typing import Any
 
 import rclpy
+import math
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from geometry_msgs.msg import PoseStamped, Vector3
 from geopy.distance import distance
@@ -44,6 +45,7 @@ from rclpy.subscription import Subscription
 from rclpy.task import Future
 from rclpy.time import Time
 from rclpy.timer import Timer
+from simple_pid import PID
 
 # FIXME: make this use the fr module!
 #        seems like there's some kinda Python glue missing...
@@ -390,7 +392,6 @@ class NavigatorNode(Node):
                     self._last_searched_coord = target_coord
                 pass
 
-        # What extra work do we have to do for task? lol
         match self._param_value.mode:
             case NavigationMode.GPS:
                 pass
@@ -404,7 +405,6 @@ class NavigatorNode(Node):
 
                 # Ensure we've at least seen the aruco marker once
                 if self._curr_marker_transform is None:
-                    # TODO: Double check if this is the message we want
                     llogger.debug(
                         f"Haven't seen the ArUco marker (id: {self._given_aruco_marker_id}) yet"
                     )
@@ -435,6 +435,8 @@ class NavigatorNode(Node):
                         self.goal_reached = True
                         return
                     elif self._times_marker_seen > 20:
+                        # WARNING! Won't this keep calculating the ArUco coordinate and appending to the coordinate queue after 20?
+
                         # check that we have recv'd any messages from the gps
                         if self._last_known_rover_coord is None:
                             llogger.warning(
@@ -528,6 +530,48 @@ class NavigatorNode(Node):
         wheel_speeds.right_wheels = 126+(126/2)
         self._wheels_publisher.publish(wheel_speeds)
         pass
+
+    async def _tyler_go_to_coordinate_with_reason(
+        self, dest_coord: GeoPoint,
+    ):
+        """Given a set of GPS coordinates, navigate to them"""
+        # Make sure that we are receiving rover imu and coordinates
+        if self._last_known_imu_data is None:
+            llogger.warning("IMU data not yet received; cannot navigate to coordinate")
+            return
+        elif self._last_known_rover_coord is None:
+            llogger.warning("GPS data not yet received; cannot navigate to coordinate")
+            return
+
+        # Utility functions
+        def get_angle_to_dest():
+            """Calculate the angle from the robot to the destination."""
+            # TODO: Double check trigonometry
+            unnormalized_angle = math.atan2(
+                dest_coord.latitude - self._last_known_rover_coord.latitude,
+                dest_coord.longitude- self._last_known_rover_coord.longitude,
+            )
+            # Normalize the angle to be between -pi and pi
+            normalized_angle = (unnormalized_angle + math.pi) % (2 * math.pi) - math.pi
+            return normalized_angle
+
+        # Start navigating to the coordinates using a PID controller
+        # NOTE: I have a funny feeling this will send wheel speeds too fast
+        pk, pi, pd = 0, 0, 0 # TODO: Make these parameters. NOTE: We may not want to use all of these
+        target_value = 0     # We want the rover's angle to the destination be 0
+        pid = PID(pk, pi, pd, setpoint=target_value)
+        wheel_speeds: WheelsMessage = WheelsMessage()
+        while True:
+            angle_to_dest = get_angle_to_dest()
+            pid_value = pid(angle_to_dest)
+
+            wheel_speeds.right_wheels += pid_value
+            wheel_speeds.left_wheels -= pid_value
+            self._wheels_publisher.publish(wheel_speeds)
+
+            # Filter the wheel speeds
+            # - make sure they aren't above max or min
+            # max speed = 255, reverse at max speed = 0, middle/none = 126
 
     # Given a coordinate,
     async def _go_to_coordinate_with_reason(
