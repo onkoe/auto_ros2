@@ -9,6 +9,8 @@ translations to the physical Rover.
 import sys
 
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
+from geometry_msgs.msg import Point, PoseStamped
+from geopy.distance import distance
 from loguru import logger as llogger
 
 from custom_interfaces.msg import ArucoPoseMessage
@@ -26,3 +28,17 @@ def coordinate_from_aruco_pose(
     """
     llogger.error("coordinate estimation is unimplemented!")
     sys.exit(1)
+
+def get_distance_to_marker(current_location: GeoPointStamped, marker: PoseStamped) -> float:
+    """
+    Given the pose information for an ArUco marker, calculate the distance to the marker
+    """
+    marker_position: Point = marker.pose.point
+    # get the current position of the rover
+    rover_position: GeoPointStamped = current_location.position
+    # calculate the distance to the marker
+    dist_to_marker = distance(
+        [marker_position.y, marker_position.x],
+        [rover_position.latitude, rover_position.longitude],
+    ).meters
+    return dist_to_marker
