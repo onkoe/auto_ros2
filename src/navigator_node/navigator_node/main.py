@@ -34,7 +34,7 @@ from typing import Any
 import rclpy
 import math
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
-from geometry_msgs.msg import PoseStamped, Vector3
+from geometry_msgs.msg import PoseStamped, Point
 from geopy.distance import distance
 from loguru import logger as llogger
 from rclpy.client import Client
@@ -66,7 +66,7 @@ from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights i
 )
 
 # from custom_interfaces.msg import ArMessage as ArucoMessage
-from .coords import coordinate_from_aruco_pose
+from .coords import coordinate_from_aruco_pose, get_distance_to_marker
 from .search import generate_similar_coordinates
 
 ## how long we'll keep the data (DDS).
@@ -366,6 +366,10 @@ class NavigatorNode(Node):
                 #
                 # so we stop here and return!
                 if self._param_value is not None and self._param_value.mode == NavigationMode.GPS:
+                    # stop the coroutine
+                    self._go_to_coordinate_cor = None
+                    # stop the wheels
+                    self.stop_wheels()
                     # WARNING: by making this `True`, we tell the function to
                     # stop itself from running the next time it's called
                     self.goal_reached = True
@@ -430,6 +434,10 @@ class NavigatorNode(Node):
                     )
 
                     if distance_to_marker < MIN_ARUCO_DISTANCE:
+                        # stop the coroutine
+                        self._go_to_coordinate_cor = None
+                        # stop the wheels
+                        self.stop_wheels()
                         # WARNING: by making this `True`, we tell the function to
                         # stop itself from running the next time it's called
                         self.goal_reached = True
@@ -449,13 +457,25 @@ class NavigatorNode(Node):
                             self._last_known_rover_coord,
                             self._curr_marker_transform,
                         )
-
+                        # Clear the coordinate queue
+                        self._coordinate_path_queue.clear()
                         # Update rover coords queue and stop calculating aruco coordinate
                         self._coordinate_path_queue.insert(0, aruco_coord)
+                        # Generate search coordinates around the ArUco coordinate
+                        self._coordinate_path_queue.extend(
+                            generate_similar_coordinates(aruco_coord, 10, 5)
+                        )
+                        # Append original GPS coordinate to the end of the queue
+                        self._coordinate_path_queue.append(
+                            self._param_value.coord
+                        )
+                        # NOTE: Should we reset the times marker seen here?
                         self.calculating_aruco_coord = False
                     else:
                         # Stop the coroutine (set it to none) so that we can sit still and check to see if we've seen the marker enough times
                         self._go_to_coordinate_cor = None
+                        # Stop the wheels
+                        self.stop_wheels()
                         self.calculating_aruco_coord = True
 
                 else:  # Lost the marker, start traversing to previous coord
@@ -468,88 +488,46 @@ class NavigatorNode(Node):
                 sys.exit(1)
         pass
 
-    async def _go_to_coordinate(
-            self, coord: GeoPoint
-    ):
+    def stop_wheels(self):
         """
-        async so this acts kinda like a ros 2 action.
-
-        u can track it, cancel it, etc.
-
-        given a coordinate and a distance, sends wheel speeds to move the rover toward the coordinate
-        """
-        # make sure we have the latest imu data
-        if self._last_known_imu_data is None:
-            llogger.warning("IMU data not yet received; cannot navigate to coordinate")
-            return
-        elif self._last_known_rover_coord is None:
-            llogger.warning("GPS data not yet received; cannot navigate to coordinate")
-            return
-
-        # get magnetometer info from IMU
-        compass_info: Vector3 = self._last_known_imu_data.compass # gives us x, y, z compass data
-        # get current rover position
-        rover_position: GeoPoint = self._last_known_rover_coord.position
-        # calculate angle to target
-        angle_to_target: float = calculate_angle_to_target(rover_position, coord, compass_info)
-        # send wheel speeds to turn rover until it's facing the target
-        """
-        Reverse at max speed = 0
-        Forward at max speed = 255
-        Nothing = 126
+        Publish wheel speeds to stop the rover.
         """
         wheel_speeds: WheelsMessage = WheelsMessage()
-        while abs(angle_to_target) > 5:
-            if angle_to_target > 5:
-                # turn rover right at 50% speed
-                # TODO: We should probably have some sort of constants to abstract a LEFT request or a RIGHT request
-                wheel_speeds.left_wheels = 126+(126/2)
-                wheel_speeds.right_wheels = 126-(126/2)
-            elif angle_to_target < -5:
-                # turn rover left at 50% speed
-                wheel_speeds.left_wheels = 126-(126/2)
-                wheel_speeds.right_wheels = 126+(126/2)
-
-            # publish wheel speeds
-            self._wheels_publisher.publish(wheel_speeds)
-            # wait for new imu data (NOTE: I am completely bullshitting here, this could be so wrong)
-            while self._sensor_data_timed_out(imu_data_timestamp):
-                pass
-            compass_info = self._last_known_imu_data.compass
-            # recalculate angle to target
-            angle_to_target = calculate_angle_to_target(rover_position, coord, compass_info)
-
-        # stop turning
+        # wheel speed of none is represented by 126 for some reason
         wheel_speeds.left_wheels = 126
         wheel_speeds.right_wheels = 126
         self._wheels_publisher.publish(wheel_speeds)
+        # log message that wheels have stopped
+        _ = self.get_logger().info("Wheels stopped!")
 
-        # TODO: based on distance, calculate wheel speeds to move rover toward target
-        # for now, just drive forward at 50% speed
-        wheel_speeds.left_wheels = 126+(126/2)
-        wheel_speeds.right_wheels = 126+(126/2)
-        self._wheels_publisher.publish(wheel_speeds)
-        pass
-
-    async def _tyler_go_to_coordinate_with_reason(
+    async def _go_to_coordinate(
         self, dest_coord: GeoPoint,
     ):
-        """Given a set of GPS coordinates, navigate to them"""
+        """
+        Given a GPS coordinate, navigate to it. 
+        This acts kind of like a ROS 2 action, where we can track it, cancel it, etc.
+        This is a simple implementation that uses a PID controller to navigate to the coordinate, based 
+        on the rover's current position and the destination coordinate.
+        """
         # Make sure that we are receiving rover imu and coordinates
-        if self._last_known_imu_data is None:
-            llogger.warning("IMU data not yet received; cannot navigate to coordinate")
-            return
-        elif self._last_known_rover_coord is None:
+        #TODO: Implement a version of this function that actually uses the IMU compass data. For now, we're just using the GPS data
+        # if self._last_known_imu_data is None:
+        #     llogger.warning("IMU data not yet received; cannot navigate to coordinate")
+        #     return
+        if self._last_known_rover_coord is None:
             llogger.warning("GPS data not yet received; cannot navigate to coordinate")
             return
+        
+        # get magnetometer info from IMU
+        # compass_info: Vector3 = self._last_known_imu_data.compass # gives us x, y, z compass data
 
         # Utility functions
-        def get_angle_to_dest():
+        def get_angle_to_dest(dest_coord: GeoPoint, current_coord: GeoPointStamped) -> float:
             """Calculate the angle from the robot to the destination."""
             # TODO: Double check trigonometry
             unnormalized_angle = math.atan2(
-                dest_coord.latitude - self._last_known_rover_coord.latitude,
-                dest_coord.longitude- self._last_known_rover_coord.longitude,
+                dest_coord.latitude - current_coord.position.latitude,
+                dest_coord.longitude- current_coord.position.longitude,
             )
             # Normalize the angle to be between -pi and pi
             normalized_angle = (unnormalized_angle + math.pi) % (2 * math.pi) - math.pi
@@ -557,21 +535,31 @@ class NavigatorNode(Node):
 
         # Start navigating to the coordinates using a PID controller
         # NOTE: I have a funny feeling this will send wheel speeds too fast
-        pk, pi, pd = 0, 0, 0 # TODO: Make these parameters. NOTE: We may not want to use all of these
+        #pk = proportional, pi = integral, pd = derivative
+        #pk determines the speed of error correction, pi determines how much the rover will correct itself, and pd determines how quickly the rover will stop correcting itself
+        pk, pi, pd = 0, 0., 0 # TODO: Make these parameters. NOTE: We may not want to use all of these
         target_value = 0     # We want the rover's angle to the destination be 0
         pid = PID(pk, pi, pd, setpoint=target_value)
         wheel_speeds: WheelsMessage = WheelsMessage()
         while True:
-            angle_to_dest = get_angle_to_dest()
+            angle_to_dest = get_angle_to_dest(dest_coord, self._last_known_rover_coord)
             pid_value = pid(angle_to_dest)
 
             wheel_speeds.right_wheels += pid_value
             wheel_speeds.left_wheels -= pid_value
-            self._wheels_publisher.publish(wheel_speeds)
 
             # Filter the wheel speeds
             # - make sure they aren't above max or min
             # max speed = 255, reverse at max speed = 0, middle/none = 126
+            wheel_speeds.left_wheels = max(0, min(255, wheel_speeds.left_wheels))
+            wheel_speeds.right_wheels = max(0, min(255, wheel_speeds.right_wheels))
+            # Publish the wheel speeds
+            self._wheels_publisher.publish(wheel_speeds)
+            # Log the wheel speeds being sent
+            _ = self.get_logger().info(
+                f"Sending wheel speeds: left: {wheel_speeds.left_wheels}, right: {wheel_speeds.right_wheels}"
+            )
+            
 
     # Given a coordinate,
     async def _go_to_coordinate_with_reason(
