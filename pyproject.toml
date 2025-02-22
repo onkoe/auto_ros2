@@ -9,12 +9,20 @@ dependencies = [
 ]
 
 [tool.uv.sources]
+webots-py = { path = "../../../../bin/webots/lib/controller", editable = true }
 # if one python project depends on another, put it here!
 #
 # for now, though, it's empty. :D
+# webots-py = { path = "/home/barrett/bin/webots/lib/controller" }
+
 
 [tool.uv.workspace]
-members = ["src/navigator_node", "src/log_node", "src/aruco_node"]
+members = [
+    "src/navigator_node",
+    "src/log_node",
+    "src/aruco_node",
+    "src/soro_simulator_driver",
+]
 
 [dependency-groups]
 dev = [
@@ -26,6 +34,7 @@ dev = [
     "empy==3.3.4",
     "lark==1.2.2",
     "numpy>=2.2.2",
+    "cst-lsp>=0.1.3",
 ]
 
 [tool.basedpyright]
