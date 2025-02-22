@@ -8,13 +8,14 @@ translations to the physical Rover.
 
 import sys
 
-from custom_interfaces.msg import ArucoPoseMessage
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from loguru import logger as llogger
 
+from custom_interfaces.msg import ArucoPoseMessage
+
 
 def coordinate_from_aruco_pose(
-    current_location: GeoPointStamped, pose: ArucoPoseMessage
+    _current_location: GeoPointStamped, _pose: ArucoPoseMessage
 ) -> GeoPoint:
     """
     Given the Rover's current location and the ArUco marker's current pose,

@@ -45,11 +45,27 @@ from rclpy.task import Future
 from rclpy.time import Time
 from rclpy.timer import Timer
 
-from custom_interfaces.msg import ArMessage as ArucoMessage
-from custom_interfaces.msg import GpsMessage, WheelsMessage
-from custom_interfaces.srv import LightsRequest, LightsResponse
+# FIXME: make this use the fr module!
+#        seems like there's some kinda Python glue missing...
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._gps_message import (
+    GpsMessage,
+)
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._imu_message import (
+    ImuMessage,
+)
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._wheels_message import (
+    WheelsMessage,
+)
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights import (
+    Lights_Request as LightsRequest,
+)
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights import (
+    Lights_Response as LightsResponse,
+)
 
+# from custom_interfaces.msg import ArMessage as ArucoMessage
 from .coords import coordinate_from_aruco_pose
+from .search import generate_similar_coordinates
 
 ## how long we'll keep the data (DDS).
 QUEUE_SIZE: int = 10
@@ -109,6 +125,8 @@ class NavigatorNode(Node):
     """Publish wheels speeds to move the Rover."""
     _gps_subscription: Subscription
     _aruco_subscription: Subscription
+    _imu_subscription: Subscription
+    """Grabs information from the IMU, which includes compass, acceleration, and orientation."""
     ## service client for lights node
     _lights_client: Client
 
@@ -143,8 +161,21 @@ class NavigatorNode(Node):
 
     _curr_marker_transform: PoseStamped | None = None
 
-    # coordinate queue
-    _coord_queue: list[GeoPoint] = []
+    _coordinate_path_queue: list[GeoPoint] = []
+    """
+    A coordinate queue where the first element of the queue holds whatever coordinate we want to go to next.
+    This is initially set to only hold the given coordinate parameter. Then, if we are doing an ArUco or Object Detection task,
+    further coordinates are added to the queue in order to determine where the Rover searches next. If we find the coordinate for
+    an ArUco tag or object, we add that tag to the front of the queue and generate more search coordinates around that area.
+    No matter what task we're performing, we know we are going to navigate to the parameter coordinate. If we're doing the GPS task,
+    this will be the only element in the queue.
+
+    If not, we can work off of the current element (which could be the original coordinate, or the estimated coordinate for a tag)
+    in order to give ourselves a planned path for each location we want the Rover to go to.
+
+    Then, in the Navigator logic, it follows a simple structure of driving to whatever is at the front, while at the same time,
+    looking for the desired ArUco tag/object.
+    """
 
     # TODO: use... not bools for that
     _search_algo_cor: Coroutine[bool, bool, bool] | None = None
@@ -204,7 +235,7 @@ class NavigatorNode(Node):
         # turn lights RED immediately upon startup.
         #
         # it's required for competition :)
-        lights_info: LightsRequest = LightsRequest.Request()
+        lights_info: LightsRequest = LightsRequest()
         lights_info.red = 255
         lights_info.green = 0
         lights_info.blue = 0
@@ -222,25 +253,33 @@ class NavigatorNode(Node):
         # if in aruco mode, create a subscriber for aruco tracking
         if self._param_value.mode == NavigationMode.ARUCO:
             self._aruco_subscription = self.create_subscription(
-                msg_type=ArucoMessage,  # TODO: change to wherever the ar message type is
+                msg_type=PoseStamped,  # TODO: change to wherever the ar message type is
                 topic="/aruco",  # TODO: change to whatever the markers topic is
                 callback=self.aruco_callback,
                 qos_profile=QUEUE_SIZE,
             )
 
-        # create a subscriber for GPS sensor
-        # create the publisher
+        # connect to our sensors using subscriptions
         self._gps_subscription = self.create_subscription(
             msg_type=GpsMessage,
             topic="/sensors/gps",
             callback=self.gps_callback,
             qos_profile=QUEUE_SIZE,
         )
+        self._imu_subscription = self.create_subscription(
+            msg_type=ImuMessage,
+            topic="/sensors/imu",
+            callback=self.imu_callback,
+            qos_profile=QUEUE_SIZE,
+        )
 
         # Add the given GPS coordinate to the coordinate queue
-        self._coord_queue.append(self._param_value.coord)
+        self._coordinate_path_queue.append(self._param_value.coord)
         # Calculate and append search coordinates for GPS coord
-        self.generate_similar_coords(self._coord_queue)
+        self._coordinate_path_queue.extend(
+            generate_similar_coordinates(self._param_value.coord, 10, 5)
+        )  # takes source coordinate, radius in meters, and a number of points to generate
+
         # Run navigator callback every 0.5 seconds
         self._navigator_callback_timer = self.create_timer(0.5, self.navigator)
 
@@ -257,7 +296,8 @@ class NavigatorNode(Node):
         rclpy.spin_until_future_complete(self, self._lights_request_future)
         return self._lights_request_future.result()
 
-    def get_wheel_speeds(self, distance_to_marker, angle_to_marker):
+    # Do we even want this function?
+    def get_wheel_speeds(self, _distance_to_marker, _angle_to_marker):
         # FIXME: distance and angle to marker should never be passed
         # FIXME: wheel speeds can be determined for any mode, not just marker
         # TODO: use `GeoPoint` type?
@@ -269,7 +309,7 @@ class NavigatorNode(Node):
 
         Driven by a `rclpy::Timer`.
         """
-        # Ensure a navigation mode was specified
+        # Ensure navigation parameters were specified
         if self._param_value is None:
             llogger.error("Called, but no parameters given.")
             rclpy.shutdown()
@@ -279,7 +319,7 @@ class NavigatorNode(Node):
             # Log message that goal was reached
             _ = self.get_logger().info("Goal reached!")
             # Set lights to FLASHING GREEN
-            lights_info: LightsRequest = LightsRequest.Request()
+            lights_info: LightsRequest = LightsRequest()
             lights_info.red = 0
             lights_info.green = 255
             lights_info.blue = 0
@@ -302,17 +342,10 @@ class NavigatorNode(Node):
             llogger.warning("gps coord hasn't updated; cannot navigate")
             return
 
-        # when we haven't reached the coords yet (step 1), keep navgating to current coordinates
+        # when we haven't reached the coords yet (step 1), keep navigating to current coordinates (if not stopped to look at a tag)
         if not self.calculating_aruco_coord:
-            # we may only continue if the GPS has provided a coordinate for the
-            # Rover
-            if self._last_known_rover_coord is None:
-                llogger.warning(
-                    "Can't start navigating until the GPS provides a coordinate. Returning early."
-                )
-                return
-
-            target_coord: GeoPoint = self._coord_queue[0]
+            # get current target coordinate from coordinate queue
+            target_coord: GeoPoint = self._coordinate_path_queue[0]
             # calculate distance to target
             dist_to_target_coord_m = distance(
                 [target_coord.latitude, target_coord.longitude],
@@ -325,10 +358,6 @@ class NavigatorNode(Node):
             # Check if destination is reacheed
             if dist_to_target_coord_m < MIN_GPS_DISTANCE:
                 _ = self.get_logger().info("Reached destination coordinate!")
-
-                # in ArUco or object detection mode, we want to move on to the next coordinate (provided by calculation)
-                _ = self._coord_queue.pop(0)
-
                 # in GPS mode, we're only navigating to a coordinate.
                 #
                 # so we stop here and return!
@@ -338,17 +367,12 @@ class NavigatorNode(Node):
                     self.goal_reached = True
                     return  # Return here right?
 
+                # in ArUco or object detection mode, we want to move on to the next coordinate (provided by calculation)
+                _ = self._coordinate_path_queue.pop(0)
             else:
-                # Calculate wheel speeds to send
-                #
-                # FIXME: write `wheel_speeds` for any mode lol
-                # wheel_speeds = self.get_wheel_speeds(
-                #     distance_to_coords, angle_to_coords
-                # )
                 """Based on the target coordinate and the current coordinate of the Rover, we want to activate the
                 go_to_coordinate async function to have the Rover start moving toward a coordinate. If the function is already
                 running with the same coordinate, no need to stop the current function running."""
-
                 # PID Controller function to send wheel speeds
                 #
                 # if we want to go somewhere else, we replace `self._go_to_coordinate_cor` with
@@ -359,7 +383,7 @@ class NavigatorNode(Node):
                 # we can also cancel the Task
                 if self._last_searched_coord != target_coord:
                     self._go_to_coordinate_cor = self._go_to_coordinate(
-                        target_coord
+                        target_coord, GoToCoordinateReason.ARUCO
                     )
                     self._last_searched_coord = target_coord
                 pass
@@ -522,6 +546,9 @@ class NavigatorNode(Node):
 
     def aruco_callback(self, msg: PoseStamped):
         self._curr_marker_transform = msg
+
+    def imu_callback(self, msg: ImuMessage):
+        self._last_known_imu_data = msg
 
 
 def main(args: list[str] | None = None):
