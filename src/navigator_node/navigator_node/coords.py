@@ -7,17 +7,15 @@ translations to the physical Rover.
 """
 
 import sys
-
+from math import sqrt
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from geometry_msgs.msg import Point, PoseStamped
 from geopy.distance import distance
 from loguru import logger as llogger
 
-from custom_interfaces.msg import ArucoPoseMessage
-
 
 def coordinate_from_aruco_pose(
-    _current_location: GeoPointStamped, _pose: ArucoPoseMessage
+    _current_location: GeoPointStamped, _pose: PoseStamped
 ) -> GeoPoint:
     """
     Given the Rover's current location and the ArUco marker's current pose,
@@ -25,20 +23,27 @@ def coordinate_from_aruco_pose(
 
     These coordinates allow the Navigator to start moving toward an ArUco
     marker.
+    
+    If we can get the current heading/bearing of the rover from compass info,
+    we can use that and the distance to the marker to calculate the estimated
+    coordinate.
     """
+    marker_position: Point = _pose.pose.point
+    marker_orientation = _pose.quaternion
+
     llogger.error("coordinate estimation is unimplemented!")
     sys.exit(1)
 
-def get_distance_to_marker(current_location: GeoPointStamped, marker: PoseStamped) -> float:
+def get_distance_to_marker(marker: PoseStamped) -> float:
     """
-    Given the pose information for an ArUco marker, calculate the distance to the marker
+    Given the pose information for an ArUco marker relative to the rover,
+    calculate the distance to the marker
     """
     marker_position: Point = marker.pose.point
-    # get the current position of the rover
-    rover_position: GeoPointStamped = current_location.position
-    # calculate the distance to the marker
-    dist_to_marker = distance(
-        [marker_position.y, marker_position.x],
-        [rover_position.latitude, rover_position.longitude],
-    ).meters
-    return dist_to_marker
+    distance_x: float = marker_position.x # forward/backward distance
+    distance_y: float = marker_position.y # left/right distance
+    
+    # now we need to calculate the distance to the marker by taking the hypotenuse
+    distance_to_marker: float = sqrt(distance_x**2 + distance_y**2)
+    return distance_to_marker
+
