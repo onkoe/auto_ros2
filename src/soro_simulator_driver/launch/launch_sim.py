@@ -6,20 +6,19 @@ from webots_ros2_driver.webots_launcher import WebotsLauncher
 
 import launch
 from launch import LaunchDescription
+from launch.event_handlers import OnProcessExit
 
 
 def generate_launch_description():
-    package_dir = get_package_share_directory("my_package")
-    robot_description_path = os.path.join(
-        package_dir, "resource", "my_robot.urdf"
-    )
+    package_dir = get_package_share_directory("soro_simulator_driver")
+    robot_description_path = os.path.join(package_dir, "resource", "remi.urdf")
 
     webots = WebotsLauncher(
-        world=os.path.join(package_dir, "worlds", "my_world.wbt")
+        world=os.path.join(package_dir, "worlds", "base_world.wbt")
     )
 
     my_robot_driver = WebotsController(
-        robot_name="my_robot",
+        robot_name="REMI",
         parameters=[
             {"robot_description": robot_description_path},
         ],
@@ -30,7 +29,7 @@ def generate_launch_description():
             webots,
             my_robot_driver,
             launch.actions.RegisterEventHandler(
-                event_handler=launch.event_handlers.OnProcessExit(
+                event_handler=OnProcessExit(
                     target_action=webots,
                     on_exit=[
                         launch.actions.EmitEvent(event=launch.events.Shutdown())
