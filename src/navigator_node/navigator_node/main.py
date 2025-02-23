@@ -227,7 +227,7 @@ class NavigatorNode(Node):
         """
         Creates a new `NavigatorNode`.
         """
-        super().__init__("Navigator Node")
+        super().__init__("navigator_node")
         _ = self.declare_parameter("navigator_parameters", None)
 
         # try to grab the instructions we're given over parameters.
