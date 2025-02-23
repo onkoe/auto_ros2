@@ -306,6 +306,10 @@ class NavigatorNode(Node):
         # Run navigator callback every 0.5 seconds
         self._navigator_callback_timer = self.create_timer(0.5, self.navigator)
 
+    # all ROS 2 nodes must be hashable!
+    @override
+    def __hash__(self) -> int:
+        return super().__hash__()
     # Function to send lights request given a LightsRequest class instance
     def send_lights_request(
         self, lights_info: LightsRequest
