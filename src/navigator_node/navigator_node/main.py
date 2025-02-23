@@ -25,6 +25,7 @@ stuff that the navigator node does:
 - launches other nodes necessary for requested form of navigation
 """
 
+import dataclasses
 import math
 import sys
 from collections.abc import Coroutine
@@ -46,23 +47,20 @@ from rclpy.task import Future
 from rclpy.time import Time
 from rclpy.timer import Timer
 from simple_pid import PID
+from typing_extensions import override
 
 # sudo apt install ros-jazzy-geographic-msgs
 # FIXME: make this use the fr module!
 #        seems like there's some kinda Python glue missing...
-from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._gps_message import (
+from custom_interfaces.msg import (
     GpsMessage,
-)
-from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._imu_message import (
     ImuMessage,
-)
-from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._wheels_message import (
     WheelsMessage,
 )
-from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights import (
+from custom_interfaces.srv._lights import (
     Lights_Request as LightsRequest,
 )
-from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights import (
+from custom_interfaces.srv._lights import (
     Lights_Response as LightsResponse,
 )
 
