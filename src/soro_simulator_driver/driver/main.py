@@ -27,12 +27,22 @@ from sensor_msgs.msg import Imu, NavSatFix
 from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._gps_message import (
     GpsMessage,
 )
-from custom_interfaces.msg._imu_message import ImuMessage
-from custom_interfaces.msg._wheels_message import WheelsMessage
-from custom_interfaces.srv._lights import Lights
-from custom_interfaces.srv._lights import Lights_Request as LightsRequest
-from custom_interfaces.srv._lights import Lights_Request as LightsResponse
-from log_node.main import QOS_PROFILE
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._imu_message import (
+    ImuMessage,
+)
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.msg._wheels_message import (
+    WheelsMessage,
+)
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights import (
+    Lights,
+)
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights import (
+    Lights_Request as LightsRequest,
+)
+from build.custom_interfaces.rosidl_generator_py.custom_interfaces.srv._lights import (
+    Lights_Response as LightsResponse,
+)
+from src.log_node.log_node.main import QOS_PROFILE
 from src.soro_simulator_driver.driver.wheel_speeds import translate_u8
 
 
@@ -112,7 +122,9 @@ class SoroDriver(Robot):
         )
 
         rclpy.init(args=None)
-        self.__node = rclpy.create_node("my_robot_driver")
+        self.__node = rclpy.create_node(
+            "my_robot_driver", parameter_overrides=[]
+        )
 
         # make publishers for each (fake) sensor.
         #
