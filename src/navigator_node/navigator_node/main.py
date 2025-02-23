@@ -310,6 +310,7 @@ class NavigatorNode(Node):
     @override
     def __hash__(self) -> int:
         return super().__hash__()
+
     # Function to send lights request given a LightsRequest class instance
     def send_lights_request(
         self, lights_info: LightsRequest
