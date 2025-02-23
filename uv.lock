@@ -1,9 +1,10 @@
 version = 1
+revision = 1
 requires-python = ">=3.13"
 resolution-markers = [
-    "platform_system == 'Darwin' and python_full_version >= '3.13'",
-    "platform_machine == 'aarch64' and platform_system == 'Linux' and python_full_version >= '3.13'",
-    "(platform_machine != 'aarch64' and platform_system != 'Darwin') or (platform_system != 'Darwin' and platform_system != 'Linux')",
+    "sys_platform == 'darwin'",
+    "platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')",
 ]
 
 [manifest]
@@ -37,28 +38,30 @@ name = "autonomous"
 version = "0.2.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "geopy", marker = "python_full_version >= '3.13'" },
-    { name = "loguru", marker = "python_full_version >= '3.13'" },
-    { name = "webots-py", marker = "python_full_version >= '3.13'" },
+    { name = "geopy" },
+    { name = "loguru" },
+    { name = "simple-pid" },
+    { name = "webots-py" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "basedpyright", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-cargo", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-common-extensions", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-ros-cargo", marker = "python_full_version >= '3.13'" },
-    { name = "cst-lsp", marker = "python_full_version >= '3.13'" },
-    { name = "empy", marker = "python_full_version >= '3.13'" },
-    { name = "lark", marker = "python_full_version >= '3.13'" },
-    { name = "numpy", marker = "python_full_version >= '3.13'" },
-    { name = "ruff", marker = "python_full_version >= '3.13'" },
+    { name = "basedpyright" },
+    { name = "colcon-cargo" },
+    { name = "colcon-common-extensions" },
+    { name = "colcon-ros-cargo" },
+    { name = "cst-lsp" },
+    { name = "empy" },
+    { name = "lark" },
+    { name = "numpy" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "geopy", specifier = ">=2.4.1" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "simple-pid", specifier = ">=2.0.1" },
     { name = "webots-py", editable = "../../../../bin/webots/lib/controller" },
 ]
 
@@ -80,7 +83,7 @@ name = "basedpyright"
 version = "1.27.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nodejs-wheel-binaries", marker = "python_full_version >= '3.13'" },
+    { name = "nodejs-wheel-binaries" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c6/62/c70698c616854639c23e7462276789dc6f42040f6abca39eb71cdcee9374/basedpyright-1.27.1.tar.gz", hash = "sha256:ddbe226c154c973a954626ce9ecb3b3a59df9d68bbab0e3f82a6c2c7b29616df", size = 21418646 }
 wheels = [
@@ -113,10 +116,10 @@ name = "catkin-pkg"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "docutils", marker = "python_full_version >= '3.13'" },
-    { name = "pyparsing", marker = "python_full_version >= '3.13'" },
-    { name = "python-dateutil", marker = "python_full_version >= '3.13'" },
-    { name = "setuptools", marker = "python_full_version >= '3.13'" },
+    { name = "docutils" },
+    { name = "pyparsing" },
+    { name = "python-dateutil" },
+    { name = "setuptools" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2e/a2/88f8ba42a0119833887b8afe159f6e3ae96e2700720baf461eeabcc6acd8/catkin_pkg-1.0.0.tar.gz", hash = "sha256:476e9f52917282f464739241b4bcaf5ebbfba9a7a68d9af8f875225feac0e1b5", size = 64861 }
 wheels = [
@@ -128,7 +131,7 @@ name = "cattrs"
 version = "24.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "attrs", marker = "python_full_version >= '3.13'" },
+    { name = "attrs" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/64/65/af6d57da2cb32c076319b7489ae0958f746949d407109e3ccf4d115f147c/cattrs-24.1.2.tar.gz", hash = "sha256:8028cfe1ff5382df59dd36474a86e02d817b06eaf8af84555441bac915d2ef85", size = 426462 }
 wheels = [
@@ -140,8 +143,8 @@ name = "colcon-argcomplete"
 version = "0.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "argcomplete", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "argcomplete" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c9/9e/fe7842b0c1c82511f8d9176cfdbd1ba0e19bc24219c84a0510ed816078a6/colcon-argcomplete-0.3.3.tar.gz", hash = "sha256:3e70a32b7d16b816a7c72182bdb20df985ffc01678ec9c67d44659814a61987d", size = 7583 }
 wheels = [
@@ -153,7 +156,7 @@ name = "colcon-bash"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/07/e7/f1b7867c6c64d633e868e5220cc7ece184fed221ca8096cb371af1e7532f/colcon-bash-0.5.0.tar.gz", hash = "sha256:29a223a66828e18aad9b8db5087f7114e388601830091830ca17b095ada2cbac", size = 10909 }
 wheels = [
@@ -165,8 +168,8 @@ name = "colcon-cargo"
 version = "0.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "toml", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
+    { name = "toml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b2/2a/3a7d5e40e87f6b25cba32bacd7f63c619542245ab1e64021658bb0ea7d2c/colcon-cargo-0.1.3.tar.gz", hash = "sha256:157a7736ca39365bc1a8f0362afd37981351f1fc1010b6c3314fa6aa6c534967", size = 15294 }
 wheels = [
@@ -178,8 +181,8 @@ name = "colcon-cd"
 version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-package-information", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
+    { name = "colcon-package-information" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/63/17/2ae72bad0acf22cc6dc1d0665cd3b8343629cba2e591e78d15d2c65dd9bc/colcon-cd-0.1.1.tar.gz", hash = "sha256:379ef4d9f4bb3557d48ea25230ec5d749e83bb2814319e5a1d5ba5810df7b584", size = 4214 }
 wheels = [
@@ -191,10 +194,10 @@ name = "colcon-cmake"
 version = "0.2.29"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-library-path", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-test-result", marker = "python_full_version >= '3.13'" },
-    { name = "packaging", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
+    { name = "colcon-library-path" },
+    { name = "colcon-test-result" },
+    { name = "packaging" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/59/3b/fa7e37ef7033dbd4cf6c218a1fda2be36e2709b369e17d8fe3ac61479078/colcon-cmake-0.2.29.tar.gz", hash = "sha256:f1c0a14e2530d3b738f8d0659c27d59e2a0a03dfef601e61369bb5083ebf1f69", size = 24629 }
 wheels = [
@@ -206,26 +209,26 @@ name = "colcon-common-extensions"
 version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-argcomplete", marker = "python_full_version >= '3.13' and sys_platform != 'win32'" },
-    { name = "colcon-bash", marker = "python_full_version >= '3.13' and sys_platform != 'win32'" },
-    { name = "colcon-cd", marker = "python_full_version >= '3.13' and sys_platform != 'win32'" },
-    { name = "colcon-cmake", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-defaults", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-devtools", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-library-path", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-metadata", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-notification", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-output", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-package-information", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-package-selection", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-parallel-executor", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-powershell", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-python-setup-py", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-recursive-crawl", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-ros", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-test-result", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-zsh", marker = "python_full_version >= '3.13' and sys_platform != 'win32'" },
+    { name = "colcon-argcomplete", marker = "sys_platform != 'win32'" },
+    { name = "colcon-bash", marker = "sys_platform != 'win32'" },
+    { name = "colcon-cd", marker = "sys_platform != 'win32'" },
+    { name = "colcon-cmake" },
+    { name = "colcon-core" },
+    { name = "colcon-defaults" },
+    { name = "colcon-devtools" },
+    { name = "colcon-library-path" },
+    { name = "colcon-metadata" },
+    { name = "colcon-notification" },
+    { name = "colcon-output" },
+    { name = "colcon-package-information" },
+    { name = "colcon-package-selection" },
+    { name = "colcon-parallel-executor" },
+    { name = "colcon-powershell" },
+    { name = "colcon-python-setup-py" },
+    { name = "colcon-recursive-crawl" },
+    { name = "colcon-ros" },
+    { name = "colcon-test-result" },
+    { name = "colcon-zsh", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3c/5b/c4928b0fef2fdf1738b569aab9ed7f8bfa6a19df080b8c864f87552fa577/colcon-common-extensions-0.3.0.tar.gz", hash = "sha256:84408d13f8a46044851a7a4e686749940539d2b3d02e6752746cbbc9a89049ff", size = 1966 }
 wheels = [
@@ -237,15 +240,15 @@ name = "colcon-core"
 version = "0.18.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "coloredlogs", marker = "python_full_version >= '3.13' and sys_platform == 'win32'" },
-    { name = "distlib", marker = "python_full_version >= '3.13'" },
-    { name = "empy", marker = "python_full_version >= '3.13'" },
-    { name = "packaging", marker = "python_full_version >= '3.13'" },
-    { name = "pytest", marker = "python_full_version >= '3.13'" },
-    { name = "pytest-cov", marker = "python_full_version >= '3.13'" },
-    { name = "pytest-repeat", marker = "python_full_version >= '3.13'" },
-    { name = "pytest-rerunfailures", marker = "python_full_version >= '3.13'" },
-    { name = "setuptools", marker = "python_full_version >= '3.13'" },
+    { name = "coloredlogs", marker = "sys_platform == 'win32'" },
+    { name = "distlib" },
+    { name = "empy" },
+    { name = "packaging" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-repeat" },
+    { name = "pytest-rerunfailures" },
+    { name = "setuptools" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a9/64/b59ca3e4be8c1b0064674eedfe2c7e1cfce7935d19c23cb92a4ef710b9ff/colcon-core-0.18.4.tar.gz", hash = "sha256:39ec26dd66d5c69a5f4031239c93258069f61fa3df6f88744a370073d2691a1d", size = 129554 }
 wheels = [
@@ -257,8 +260,8 @@ name = "colcon-defaults"
 version = "0.2.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "pyyaml", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
+    { name = "pyyaml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ff/9c/7b31ca07cf765f92808c7d0b8af42f40bc7268ab9f7b3b00a02ce91b8aa9/colcon-defaults-0.2.9.tar.gz", hash = "sha256:b0f3cc900626906a46ae9ee5341f78b237908df9572a10e57d0f041d946b88e3", size = 10640 }
 wheels = [
@@ -270,8 +273,8 @@ name = "colcon-devtools"
 version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "packaging", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
+    { name = "packaging" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c7/ca/35e914cc8d356f70c24662e5ba77dfa1e4151d6c7f16cb6f0dbd3d0536cd/colcon-devtools-0.3.0.tar.gz", hash = "sha256:34ae3877f60ce04f50acbf11ceadb660e6eaebde837e6d8b035ab9fb8ca36e05", size = 9753 }
 wheels = [
@@ -283,7 +286,7 @@ name = "colcon-library-path"
 version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7a/72/1427af79ac1265103b58ff6fbacd75d325f590ec0e3c1c98027ebd1fff12/colcon-library-path-0.2.1.tar.gz", hash = "sha256:8288fc911aab5682771b45fff6437adefefbd30adf38acd2adffeccf4a24e9e2", size = 3789 }
 wheels = [
@@ -295,8 +298,8 @@ name = "colcon-metadata"
 version = "0.2.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "pyyaml", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
+    { name = "pyyaml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9e/f9/a8cad1da3626ef7e94779fa395ca274fb265f59ae3151a62dae324f54076/colcon-metadata-0.2.5.tar.gz", hash = "sha256:137c740ce10e29219c4d89c4f0dac8549e46bfb6e3bc2296fe2d051bdb971ec8", size = 10861 }
 wheels = [
@@ -308,9 +311,9 @@ name = "colcon-notification"
 version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "notify2", marker = "python_full_version >= '3.13' and sys_platform == 'linux'" },
-    { name = "pywin32", marker = "python_full_version >= '3.13' and sys_platform == 'win32'" },
+    { name = "colcon-core" },
+    { name = "notify2", marker = "sys_platform == 'linux'" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/88/f3/86c64d465aa2704dc80aec9888be2f80f0030be548a196fa19d0b338a678/colcon-notification-0.3.0.tar.gz", hash = "sha256:c45b898073a8e98c4518333b7587f9ea49ac1bc129a7bc4e1390059057031fb8", size = 60486 }
 wheels = [
@@ -322,7 +325,7 @@ name = "colcon-output"
 version = "0.2.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/00/aa/80685c78aa55457365da5817f8f468d58004f031428568b42c8954276d40/colcon-output-0.2.13.tar.gz", hash = "sha256:44d2d349ebdb61688b41e00d565ea1a199e8fc5c2c77af279cfaac74dc01c04d", size = 12041 }
 wheels = [
@@ -334,8 +337,8 @@ name = "colcon-package-information"
 version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "packaging", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
+    { name = "packaging" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/bf/11/02adddd538a28d4ac792302156e90b200da396fe0fa8e3306eb11c481dd6/colcon-package-information-0.4.0.tar.gz", hash = "sha256:20f5184ae1b05db0a76f244bc85622f6b25e48ef7398f55784ccfe455d40bcfb", size = 14741 }
 wheels = [
@@ -347,7 +350,7 @@ name = "colcon-package-selection"
 version = "0.2.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/4e/bc/e06133c56ed4099b388949228e80194e460f156c4772e7b058f7ebf04e9e/colcon-package-selection-0.2.10.tar.gz", hash = "sha256:494493d836c7ac69ce6d5e9f69a6efca6619da8e691e5a4138c975e6f31103db", size = 8995 }
 wheels = [
@@ -359,7 +362,7 @@ name = "colcon-parallel-executor"
 version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9e/e8/5f259296441e3258ed9a7d2e5878570ebf154c74a4aaaacf7cc918f530e3/colcon-parallel-executor-0.3.0.tar.gz", hash = "sha256:e7137fcaf4c61db792955fd641bfad7dbad4b41928c6b81ff87a78339e116644", size = 11390 }
 wheels = [
@@ -371,7 +374,7 @@ name = "colcon-pkg-config"
 version = "0.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7c/3f/9979f90a2dc5fe5da4341fab6c3035aaf885f2bf7177fc9de1ea36f3eacb/colcon-pkg-config-0.1.0.tar.gz", hash = "sha256:81fc46d037159030ba7b23970c573a31cead315f3c2410101a3cec858ec6bfa3", size = 3411 }
 wheels = [
@@ -383,7 +386,7 @@ name = "colcon-powershell"
 version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/28/aa/fa529ed1b2cabe9fdbef5f714c667467ecc6e4d6b9fbcf8cf24964562ff6/colcon-powershell-0.4.0.tar.gz", hash = "sha256:1fb2a8dadaf547cfca9daaf1b94ffaee3e2958103d5aaadb84e072c4f526906f", size = 12442 }
 wheels = [
@@ -395,8 +398,8 @@ name = "colcon-python-setup-py"
 version = "0.2.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "setuptools", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
+    { name = "setuptools" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/32/86/e0e84172387635901a753c167a7fc152e3d066a9647ba10df11616830ef4/colcon-python-setup-py-0.2.9.tar.gz", hash = "sha256:4d8bab2e05ba334e29eee3715fbde490281342ed8e000e252130e5c51915383a", size = 12654 }
 wheels = [
@@ -408,7 +411,7 @@ name = "colcon-recursive-crawl"
 version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ae/68/fa5cdc569c826b4dee0c5b08401f40c4b27b4f830135122beac6871a28dc/colcon-recursive-crawl-0.2.3.tar.gz", hash = "sha256:fca5f619214d20306daaf012f91399d4d3b605364b121e5df80399432c55c603", size = 8726 }
 wheels = [
@@ -420,12 +423,12 @@ name = "colcon-ros"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "catkin-pkg", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-cmake", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-pkg-config", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-python-setup-py", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-recursive-crawl", marker = "python_full_version >= '3.13'" },
+    { name = "catkin-pkg" },
+    { name = "colcon-cmake" },
+    { name = "colcon-core" },
+    { name = "colcon-pkg-config" },
+    { name = "colcon-python-setup-py" },
+    { name = "colcon-recursive-crawl" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2e/96/b1d56219d3f3e5d128c11ecb197f7d74529dc3c609d928912b3f69f2bfd4/colcon-ros-0.5.0.tar.gz", hash = "sha256:79a7e89f6fa636f7e4fd44a88b7860fb1da99d51f0ba7bcf0b9b624a1a578365", size = 20852 }
 wheels = [
@@ -437,12 +440,12 @@ name = "colcon-ros-cargo"
 version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cargo-ament-build", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-cargo", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-library-path", marker = "python_full_version >= '3.13'" },
-    { name = "colcon-ros", marker = "python_full_version >= '3.13'" },
-    { name = "toml", marker = "python_full_version >= '3.13'" },
+    { name = "cargo-ament-build" },
+    { name = "colcon-cargo" },
+    { name = "colcon-core" },
+    { name = "colcon-library-path" },
+    { name = "colcon-ros" },
+    { name = "toml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/48/a6/0c083c097d6d5e875fd8c8233303f33e16307e6e04dad38db238a2a51818/colcon_ros_cargo-0.2.0.tar.gz", hash = "sha256:ef4b5a08c2513d2ab608fbcee5aaae76c73c44dd25d7de2f2db4f55195977d4f", size = 9824 }
 wheels = [
@@ -454,7 +457,7 @@ name = "colcon-test-result"
 version = "0.3.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7c/e5/690583c1bbb2c9958287e64a59014e69766644d900c4c10f4ed855bbc2d6/colcon-test-result-0.3.8.tar.gz", hash = "sha256:aa5225716a5bdd9f1df721e7a04f1e02150def8c86dd070793cb62e747c36ed3", size = 8077 }
 wheels = [
@@ -466,7 +469,7 @@ name = "colcon-zsh"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colcon-core", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-core" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e5/0a/e8495379bd5f555a27e42eed6317ff6f367732c191d7030ff63bf5601392/colcon-zsh-0.5.0.tar.gz", hash = "sha256:efff75c43ddab2649853529e41cee36e0f83b6d4c864c0736353d0dece78334a", size = 10766 }
 wheels = [
@@ -487,7 +490,7 @@ name = "coloredlogs"
 version = "15.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "humanfriendly", marker = "python_full_version >= '3.13'" },
+    { name = "humanfriendly", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cc/c7/eed8f27100517e8c0e6b923d5f0845d0cb99763da6fdee00478f91db7325/coloredlogs-15.0.1.tar.gz", hash = "sha256:7c991aa71a4577af2f82600d8f8f3a89f936baeaf9b50a9c197da014e5bf16b0", size = 278520 }
 wheels = [
@@ -527,8 +530,8 @@ name = "cst-lsp"
 version = "0.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "libcst", marker = "python_full_version >= '3.13'" },
-    { name = "pygls", marker = "python_full_version >= '3.13'" },
+    { name = "libcst" },
+    { name = "pygls" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/21/00/7c2a1357e34e78fb18dc3905ea5a32a6ebe2aaa13b696eafce9c8b2fccdc/cst_lsp-0.1.3.tar.gz", hash = "sha256:43df05f53bf76932766d01cad89081a06e3ef7f74a0c7bfab7d37409a884b2c8", size = 13881 }
 wheels = [
@@ -573,7 +576,7 @@ name = "geopy"
 version = "2.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "geographiclib", marker = "python_full_version >= '3.13'" },
+    { name = "geographiclib" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0e/fd/ef6d53875ceab72c1fad22dbed5ec1ad04eb378c2251a6a8024bad890c3b/geopy-2.4.1.tar.gz", hash = "sha256:50283d8e7ad07d89be5cb027338c6365a32044df3ae2556ad3f52f4840b3d0d1", size = 117625 }
 wheels = [
@@ -585,7 +588,7 @@ name = "humanfriendly"
 version = "10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyreadline3", marker = "python_full_version >= '3.13' and sys_platform == 'win32'" },
+    { name = "pyreadline3", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cc/3f/2c29224acb2e2df4d2046e4c73ee2662023c58ff5b113c4c1adac0886c43/humanfriendly-10.0.tar.gz", hash = "sha256:6b0b831ce8f15f7300721aa49829fc4e83921a9a301cc7f606be6686a2288ddc", size = 360702 }
 wheels = [
@@ -615,7 +618,7 @@ name = "libcst"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyyaml", marker = "python_full_version >= '3.13'" },
+    { name = "pyyaml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f4/ec/d24c0ad33838dfbfe20a760b301d529c63cef32f8b91dae380c97f8bf127/libcst-1.6.0.tar.gz", hash = "sha256:e80ecdbe3fa43b3793cae8fa0b07a985bd9a693edbe6e9d076f5422ecadbf0db", size = 776146 }
 wheels = [
@@ -633,14 +636,14 @@ name = "log-node"
 version = "0.1.0"
 source = { editable = "src/log_node" }
 dependencies = [
-    { name = "loguru", marker = "python_full_version >= '3.13'" },
-    { name = "numpy", marker = "python_full_version >= '3.13'" },
+    { name = "loguru" },
+    { name = "numpy" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "colcon-common-extensions", marker = "python_full_version >= '3.13'" },
-    { name = "ruff", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-common-extensions" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -660,8 +663,8 @@ name = "loguru"
 version = "0.7.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "python_full_version >= '3.13' and sys_platform == 'win32'" },
-    { name = "win32-setctime", marker = "python_full_version >= '3.13' and sys_platform == 'win32'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "win32-setctime", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3a/05/a1dae3dffd1116099471c643b8924f5aa6524411dc6c63fdae648c4f1aca/loguru-0.7.3.tar.gz", hash = "sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6", size = 63559 }
 wheels = [
@@ -673,8 +676,8 @@ name = "lsprotocol"
 version = "2023.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "attrs", marker = "python_full_version >= '3.13'" },
-    { name = "cattrs", marker = "python_full_version >= '3.13'" },
+    { name = "attrs" },
+    { name = "cattrs" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9d/f6/6e80484ec078d0b50699ceb1833597b792a6c695f90c645fbaf54b947e6f/lsprotocol-2023.0.1.tar.gz", hash = "sha256:cc5c15130d2403c18b734304339e51242d3018a05c4f7d0f198ad6e0cd21861d", size = 69434 }
 wheels = [
@@ -686,14 +689,14 @@ name = "navigator-node"
 version = "0.1.0"
 source = { editable = "src/navigator_node" }
 dependencies = [
-    { name = "numpy", marker = "python_full_version >= '3.13'" },
+    { name = "numpy" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "colcon-common-extensions", marker = "python_full_version >= '3.13'" },
-    { name = "pytest", marker = "python_full_version >= '3.13'" },
-    { name = "ruff", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-common-extensions" },
+    { name = "pytest" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -764,7 +767,7 @@ name = "opencv-python"
 version = "4.11.0.86"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", marker = "python_full_version >= '3.13'" },
+    { name = "numpy" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/17/06/68c27a523103dad5837dc5b87e71285280c4f098c60e4fe8a8db6486ab09/opencv-python-4.11.0.86.tar.gz", hash = "sha256:03d60ccae62304860d232272e4a4fda93c39d595780cb40b161b310244b736a4", size = 95171956 }
 wheels = [
@@ -799,8 +802,8 @@ name = "pygls"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cattrs", marker = "python_full_version >= '3.13'" },
-    { name = "lsprotocol", marker = "python_full_version >= '3.13'" },
+    { name = "cattrs" },
+    { name = "lsprotocol" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/86/b9/41d173dad9eaa9db9c785a85671fc3d68961f08d67706dc2e79011e10b5c/pygls-1.3.1.tar.gz", hash = "sha256:140edceefa0da0e9b3c533547c892a42a7d2fd9217ae848c330c53d266a55018", size = 45527 }
 wheels = [
@@ -830,10 +833,10 @@ name = "pytest"
 version = "8.3.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "python_full_version >= '3.13' and sys_platform == 'win32'" },
-    { name = "iniconfig", marker = "python_full_version >= '3.13'" },
-    { name = "packaging", marker = "python_full_version >= '3.13'" },
-    { name = "pluggy", marker = "python_full_version >= '3.13'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "iniconfig" },
+    { name = "packaging" },
+    { name = "pluggy" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/05/35/30e0d83068951d90a01852cb1cef56e5d8a09d20c7f511634cc2f7e0372a/pytest-8.3.4.tar.gz", hash = "sha256:965370d062bce11e73868e0335abac31b4d3de0e82f4007408d242b4f8610761", size = 1445919 }
 wheels = [
@@ -845,8 +848,8 @@ name = "pytest-cov"
 version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "coverage", marker = "python_full_version >= '3.13'" },
-    { name = "pytest", marker = "python_full_version >= '3.13'" },
+    { name = "coverage" },
+    { name = "pytest" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/be/45/9b538de8cef30e17c7b45ef42f538a94889ed6a16f2387a6c89e73220651/pytest-cov-6.0.0.tar.gz", hash = "sha256:fde0b595ca248bb8e2d76f020b465f3b107c9632e6a1d1705f17834c89dcadc0", size = 66945 }
 wheels = [
@@ -858,7 +861,7 @@ name = "pytest-repeat"
 version = "0.9.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pytest", marker = "python_full_version >= '3.13'" },
+    { name = "pytest" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/86/5e/99365eb229efff0b1bd475886150fc6db9937ab7e1bd21f6f65c1279e0eb/pytest_repeat-0.9.3.tar.gz", hash = "sha256:ffd3836dfcd67bb270bec648b330e20be37d2966448c4148c4092d1e8aba8185", size = 6272 }
 wheels = [
@@ -870,8 +873,8 @@ name = "pytest-rerunfailures"
 version = "15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "packaging", marker = "python_full_version >= '3.13'" },
-    { name = "pytest", marker = "python_full_version >= '3.13'" },
+    { name = "packaging" },
+    { name = "pytest" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/26/47/ec4e12f45f4b9fac027a41ccaabb353ed4f23695aae860258ba11a84ed9b/pytest-rerunfailures-15.0.tar.gz", hash = "sha256:2d9ac7baf59f4c13ac730b47f6fa80e755d1ba0581da45ce30b72fb3542b4474", size = 21816 }
 wheels = [
@@ -883,7 +886,7 @@ name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "six", marker = "python_full_version >= '3.13'" },
+    { name = "six" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432 }
 wheels = [
@@ -952,6 +955,15 @@ wheels = [
 ]
 
 [[package]]
+name = "simple-pid"
+version = "2.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/0a/c670a4f4dea4b21c0b074b193c54698e5e047479e688c8d5495d264c9921/simple_pid-2.0.1.tar.gz", hash = "sha256:5771761c54541c900e597d6c2e4ea93fd2cc98f4e48cb9eca265fba2e65be99e", size = 15577 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/0e/4d4fe01b21558a31a12e029a57cf677666c89c1b00cb82c1b53d0025cd63/simple_pid-2.0.1-py3-none-any.whl", hash = "sha256:1d53ed76b03d949ceea46b538fb22999d27899e2e655aa19b99c40f6edcedca6", size = 7194 },
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -965,14 +977,14 @@ name = "soro-simulator-driver"
 version = "0.1.0"
 source = { editable = "src/soro_simulator_driver" }
 dependencies = [
-    { name = "loguru", marker = "python_full_version >= '3.13'" },
-    { name = "webots-py", marker = "python_full_version >= '3.13'" },
+    { name = "loguru" },
+    { name = "webots-py" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "colcon-common-extensions", marker = "python_full_version >= '3.13'" },
-    { name = "ruff", marker = "python_full_version >= '3.13'" },
+    { name = "colcon-common-extensions" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -1001,7 +1013,7 @@ name = "webots-py"
 version = "0.1.1"
 source = { editable = "../../../../bin/webots/lib/controller" }
 dependencies = [
-    { name = "opencv-python", marker = "python_full_version >= '3.13'" },
+    { name = "opencv-python" },
 ]
 
 [package.metadata]
