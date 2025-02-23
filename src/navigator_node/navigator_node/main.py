@@ -182,7 +182,9 @@ class NavigatorNode(Node):
 
     _last_known_imu_data: ImuMessage | None = None
 
-    _coordinate_path_queue: list[GeoPoint] = []
+    _coordinate_path_queue: list[GeoPoint] = dataclasses.field(
+        default_factory=list
+    )
     """
     A coordinate queue where the first element of the queue holds whatever coordinate we want to go to next.
     This is initially set to only hold the given coordinate parameter. Then, if we are doing an ArUco or Object Detection task,
