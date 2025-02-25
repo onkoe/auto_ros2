@@ -18,6 +18,7 @@ members = [
     "autonomous",
     "log-node",
     "navigator-node",
+    "simulator",
 ]
 
 [[package]]
@@ -1088,6 +1089,27 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/78/0a/c670a4f4dea4b21c0b074b193c54698e5e047479e688c8d5495d264c9921/simple_pid-2.0.1.tar.gz", hash = "sha256:5771761c54541c900e597d6c2e4ea93fd2cc98f4e48cb9eca265fba2e65be99e", size = 15577 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ee/0e/4d4fe01b21558a31a12e029a57cf677666c89c1b00cb82c1b53d0025cd63/simple_pid-2.0.1-py3-none-any.whl", hash = "sha256:1d53ed76b03d949ceea46b538fb22999d27899e2e655aa19b99c40f6edcedca6", size = 7194 },
+]
+
+[[package]]
+name = "simulator"
+version = "0.1.0"
+source = { editable = "src/simulator" }
+
+[package.dev-dependencies]
+dev = [
+    { name = "colcon-common-extensions" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "colcon-common-extensions", specifier = ">=0.3.0" },
+    { name = "pytest", specifier = ">=8.3.4" },
+    { name = "ruff", specifier = ">=0.8.4" },
 ]
 
 [[package]]
