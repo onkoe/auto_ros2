@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 
 import rclpy
 from loguru import logger
@@ -73,7 +72,7 @@ class LogNode(Node):
         return super().__hash__()
 
 
-def main(args: List[str] | None = None):
+def main(args: list[str] | None = None):
     """
     Initializes the Node using `rcl`.
     """
@@ -98,14 +97,14 @@ def adjust_logger():
 
     # add new format
     fmt = "<light-black>{time:hh:mm:ss A}</light-black> <level>[{level}] {message}</level>"
-    logger.add(sys.stdout, format=fmt)
+    _ = logger.add(sys.stdout, format=fmt)
 
     # make colors closer to `tracing` :3
-    logger.level("DEBUG", color="<light-black>")
-    logger.level("INFO", color="<green>")
-    logger.level("WARNING", color="<yellow>")
-    logger.level("ERROR", color="<red>")
-    logger.level("CRITICAL", color="<RED><black>")
+    _ = logger.level("DEBUG", color="<light-black>")
+    _ = logger.level("INFO", color="<green>")
+    _ = logger.level("WARNING", color="<yellow>")
+    _ = logger.level("ERROR", color="<red>")
+    _ = logger.level("CRITICAL", color="<RED><black>")
 
 
 if __name__ == "__main__":
