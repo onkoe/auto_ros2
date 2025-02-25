@@ -268,13 +268,10 @@ class NavigatorNode(Node):
             srv_name="/control/lights",
         )
 
-        # give it one second to connect
-        llogger.debug("waiting for lights service...")
-        while not self._lights_client.wait_for_service(timeout_sec=1.0):
-            _ = self.get_logger().info(
-                "service not available, waiting again..."
-            )
-        llogger.debug("lights ")
+        # wait for the lights service to come up
+        llogger.debug("Attempting to connect to lights service...")
+        _ = self._lights_client.wait_for_service()
+        llogger.debug("Lights service is up!")
 
         # turn lights RED immediately upon startup.
         #
