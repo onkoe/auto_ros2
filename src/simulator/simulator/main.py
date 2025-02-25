@@ -76,6 +76,26 @@ class SoroBridge(Node):
             Lights, "/control/lights", self.lights_callback
         )
 
+        # make wheel publishers
+        self.__left_front_wheel_motor = self.create_publisher(
+            Float64, "/sim/left_front_wheel/vel", QOS_PROFILE
+        )
+        self.__left_middle_wheel_motor = self.create_publisher(
+            Float64, "/sim/left_middle_wheel/vel", QOS_PROFILE
+        )
+        self.__left_back_wheel_motor = self.create_publisher(
+            Float64, "/sim/left_back_wheel/vel", QOS_PROFILE
+        )
+        self.__right_front_wheel_motor = self.create_publisher(
+            Float64, "/sim/right_front_wheel/vel", QOS_PROFILE
+        )
+        self.__right_middle_wheel_motor = self.create_publisher(
+            Float64, "/sim/right_middle_wheel/vel", QOS_PROFILE
+        )
+        self.__right_back_wheel_motor = self.create_publisher(
+            Float64, "/sim/right_back_wheel/vel", QOS_PROFILE
+        )
+
     @override
     def __hash__(self) -> int:
         return super().__hash__()
@@ -101,18 +121,21 @@ class SoroBridge(Node):
         left_wheel_speed: float = BASE_SPEED * translate_u8(msg.left_wheels)
         right_wheel_speed: float = BASE_SPEED * translate_u8(msg.right_wheels)
 
+        # make float64 msgs
+        left_msg: Float64 = Float64()
+        left_msg.data = left_wheel_speed
+        right_msg: Float64 = Float64()
+        right_msg.data = right_wheel_speed
+
         # set left wheel speeds
-        #
-        # FIXME: this is wrong lol
-        self.__left_front_wheel_motor.publish(left_wheel_speed)
-        self.__left_middle_wheel_motor.publish(left_wheel_speed)
-        self.__left_back_wheel_motor.publish(left_wheel_speed)
+        self.__left_front_wheel_motor.publish(left_msg)
+        self.__left_middle_wheel_motor.publish(left_msg)
+        self.__left_back_wheel_motor.publish(left_msg)
 
         # set right wheel speeds
-        self.__right_front_wheel_motor.publish(right_wheel_speed)
-        self.__right_middle_wheel_motor.publish(right_wheel_speed)
-        self.__right_back_wheel_motor.publish(right_wheel_speed)
-        pass
+        self.__right_front_wheel_motor.publish(right_msg)
+        self.__right_middle_wheel_motor.publish(right_msg)
+        self.__right_back_wheel_motor.publish(right_msg)
 
     def sim_gps_callback(self, msg: NavSatFix):
         """immediately publishes to the `/sensors/gps` topic after translating"""
@@ -133,10 +156,11 @@ class SoroBridge(Node):
 
 
 def main(args: list[str] | None = None):
-    llogger.info("starting simulator driver...")
+    llogger.info("Starting simulator driver...")
     rclpy.init(args=args)
 
     bridge_node: SoroBridge = SoroBridge()
+    llogger.info("Simulator has been initialized.")
 
     # spawn a task on the executor that continues running the Node until it's
     # destroyed.
@@ -145,6 +169,7 @@ def main(args: list[str] | None = None):
     # the interpreter.
     #
     # slowdowns may occur, so consider benching anything questionable.
+    llogger.info("Simulator is spinning...")
     rclpy.spin(bridge_node)
 
     # destroy the Node explicitly
