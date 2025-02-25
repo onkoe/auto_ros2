@@ -190,7 +190,7 @@ class NavigatorNode(Node):
         # create a service client for lights node
         self._lights_client = self.create_client(
             srv_type=LightsRequest,
-            srv_name="lights",
+            srv_name="/control/lights",
         )
 
         # give it one second to connect
