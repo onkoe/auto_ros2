@@ -315,7 +315,8 @@ class NavigatorNode(Node):
         )
 
         # Add the given GPS coordinate to the coordinate queue
-        self._coordinate_path_queue.append(self._param_value.coord)
+        self._coordinate_path_queue = []
+        self._coordinate_path_queue.append(self.nav_parameters.coord)
         # Calculate and append search coordinates for GPS coord
         self._coordinate_path_queue.extend(
             generate_similar_coordinates(self.nav_parameters.coord, 10, 5)
