@@ -11,6 +11,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     PathJoinSubstitution,
 )
+from navigator_node.types import NavigationMode
 
 
 def generate_launch_description():
@@ -55,18 +56,20 @@ def generate_launch_description():
         }.items(),
     )
 
+    # add some coordinate to go to...
+    latitude = -0.1
+    longitude = 0.1
+
+    mode_int: int = NavigationMode.ARUCO.value
+
     # make an instance of the navigator node!
     navigator: Node = Node(
         executable="navigator_node",
         package="navigator_node",
         name="navigator",
-        # parameters=[
-        #     {
-        #         "navigator_parameters": LaunchConfiguration(
-        #             "navigator_parameters"
-        #         )
-        #     }
-        # ],
+        parameters=[
+            {"longitude": longitude, "latitude": latitude, "mode": mode_int}
+        ],
     )
 
     return LaunchDescription(
