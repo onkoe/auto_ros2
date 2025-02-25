@@ -1,16 +1,14 @@
-import rclpy
-from rclpy.node import Node
-from rclpy.subscription import Subscription
-
-from rpyutils.add_dll_directories import sys
-from rcl_interfaces.msg import Log
-
-from typing import List
 from dataclasses import dataclass
+from typing import List
 
+import rclpy
 from loguru import logger
-
-from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
+from rcl_interfaces.msg import Log
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.subscription import Subscription
+from rpyutils.add_dll_directories import sys
+from typing_extensions import override
 
 ## how long we'll keep the data (DDS).
 QUEUE_SIZE: int = 10
@@ -66,8 +64,11 @@ class LogNode(Node):
             case Log.FATAL:
                 logger.critical(msg)
             case other:
-                logger.trace(f"log level was a weird value: {other}. msg: {msg}")
+                logger.trace(
+                    f"log level was a weird value: {other}. msg: {msg}"
+                )
 
+    @override
     def __hash__(self) -> int:
         return super().__hash__()
 
