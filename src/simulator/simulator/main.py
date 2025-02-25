@@ -5,10 +5,14 @@ from gps_msgs.msg import GPSFix as GpsFix
 from loguru import logger as llogger
 from rclpy.node import Node
 from rclpy.publisher import Publisher
-from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.qos import (
+    QoSPresetProfiles,
+    QoSProfile,
+)
 from rclpy.service import Service
 from rclpy.subscription import Subscription
 from sensor_msgs.msg import NavSatFix
+from std_msgs.msg import Float64
 from typing_extensions import override
 
 from custom_interfaces.msg._gps_message import GpsMessage
@@ -19,11 +23,7 @@ from custom_interfaces.srv._lights import Lights_Response as LightsResponse
 
 from .wheel_speeds import translate_u8
 
-QOS_PROFILE = QoSProfile(
-    depth=10,
-    reliability=ReliabilityPolicy.BEST_EFFORT,
-    durability=DurabilityPolicy.VOLATILE,
-)
+QOS_PROFILE: QoSProfile = QoSPresetProfiles.SYSTEM_DEFAULT.value
 
 
 @dataclass(kw_only=True)
