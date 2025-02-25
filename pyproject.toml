@@ -1,22 +1,18 @@
 [project]
-name = "autonomous"
-version = "0.2.0"
-requires-python = ">=3.10"
 dependencies = [
     "loguru>=0.7.3",
     "opencv-contrib-python>=4.11.0.86",
     "scipy>=1.15.2",
     "simple-pid>=2.0.1",
     "webots-py",
+    "geopy>=2.4.1",
 ]
 
-[tool.uv.sources]
-webots-py = { path = "../../../../bin/webots/lib/controller", editable = true }
+name = "autonomous"
+version = "0.2.0"
+requires-python = ">=3.10"
 # if one python project depends on another, put it here!
-#
-# for now, though, it's empty. :D
-# webots-py = { path = "/home/barrett/bin/webots/lib/controller" }
-
+[tool.uv.sources]
 
 [tool.uv.workspace]
 members = [
