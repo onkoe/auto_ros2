@@ -8,9 +8,9 @@ translations to the physical Rover.
 
 import sys
 from math import sqrt
+
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from geometry_msgs.msg import Point, PoseStamped
-from geopy.distance import distance
 from loguru import logger as llogger
 
 
@@ -23,16 +23,17 @@ def coordinate_from_aruco_pose(
 
     These coordinates allow the Navigator to start moving toward an ArUco
     marker.
-    
+
     If we can get the current heading/bearing of the rover from compass info,
     we can use that and the distance to the marker to calculate the estimated
     coordinate.
     """
-    marker_position: Point = _pose.pose.point
-    marker_orientation = _pose.quaternion
+    marker_position: Point = _pose.pose.position
+    marker_orientation = _pose.pose.orientation
 
     llogger.error("coordinate estimation is unimplemented!")
     sys.exit(1)
+
 
 def get_distance_to_marker(marker: PoseStamped) -> float:
     """
@@ -40,9 +41,9 @@ def get_distance_to_marker(marker: PoseStamped) -> float:
     calculate the distance to the marker
     """
     marker_position: Point = marker.pose.point
-    distance_x: float = marker_position.x # forward/backward distance
-    distance_y: float = marker_position.y # left/right distance
-    
+    distance_x: float = marker_position.x  # forward/backward distance
+    distance_y: float = marker_position.y  # left/right distance
+
     # now we need to calculate the distance to the marker by taking the hypotenuse
     distance_to_marker: float = sqrt(distance_x**2 + distance_y**2)
     return distance_to_marker
