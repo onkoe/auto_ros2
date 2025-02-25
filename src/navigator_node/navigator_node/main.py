@@ -38,9 +38,9 @@ from geometry_msgs.msg import PoseStamped
 from geopy.distance import distance
 from loguru import logger as llogger
 from rclpy.client import Client
-from rclpy.node import Node
+from rclpy.node import Node, ParameterDescriptor
 from rclpy.publisher import Publisher
-from rclpy.qos import QoSProfile
+from rclpy.qos import QoSPresetProfiles, QoSProfile
 from rclpy.subscription import Subscription
 from rclpy.task import Future
 from rclpy.time import Time
@@ -69,7 +69,7 @@ from .search import generate_similar_coordinates
 from .types import GoToCoordinateReason, NavigationMode, NavigationParameters
 
 ## how long we'll keep the data (DDS).
-QUEUE_SIZE: int = 10
+QOS_PROFILE: QoSProfile = QoSPresetProfiles.SENSOR_DATA.value
 
 SENSOR_TIMEOUT_NS: float = 2.0 * 1_000_000_000
 """
@@ -191,7 +191,6 @@ class NavigatorNode(Node):
         self._lights_client = self.create_client(
             srv_type=LightsRequest,
             srv_name="lights",
-            qos_profile=QoSProfile(queue_size=QUEUE_SIZE),
         )
 
         # give it one second to connect
@@ -217,7 +216,7 @@ class NavigatorNode(Node):
         self._wheels_publisher = self.create_publisher(
             msg_type=WheelsMessage,
             topic="/controls/wheels",
-            qos_profile=QUEUE_SIZE,
+            qos_profile=QoSPresetProfiles.SENSOR_DATA.value,
         )
 
         # if in aruco mode, create a subscriber for aruco tracking
@@ -226,7 +225,7 @@ class NavigatorNode(Node):
                 msg_type=PoseStamped,  # TODO: change to wherever the ar message type is
                 topic="/aruco",  # TODO: change to whatever the markers topic is
                 callback=self.aruco_callback,
-                qos_profile=QUEUE_SIZE,
+                qos_profile=QOS_PROFILE,
             )
 
         # connect to our sensors using subscriptions
@@ -234,13 +233,13 @@ class NavigatorNode(Node):
             msg_type=GpsMessage,
             topic="/sensors/gps",
             callback=self.gps_callback,
-            qos_profile=QUEUE_SIZE,
+            qos_profile=QOS_PROFILE,
         )
         self._imu_subscription = self.create_subscription(
             msg_type=ImuMessage,
             topic="/sensors/imu",
             callback=self.imu_callback,
-            qos_profile=QUEUE_SIZE,
+            qos_profile=QOS_PROFILE,
         )
 
         # Add the given GPS coordinate to the coordinate queue
@@ -252,6 +251,7 @@ class NavigatorNode(Node):
 
         # Run navigator callback every 0.5 seconds
         self._navigator_callback_timer = self.create_timer(0.5, self.navigator)
+        _ = self.get_logger().info("Started nav timer. Navigating shortly...")
 
     # all ROS 2 nodes must be hashable!
     @override
