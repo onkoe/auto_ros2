@@ -47,4 +47,3 @@ def get_distance_to_marker(marker: PoseStamped) -> float:
     # now we need to calculate the distance to the marker by taking the hypotenuse
     distance_to_marker: float = sqrt(distance_x**2 + distance_y**2)
     return distance_to_marker
-
