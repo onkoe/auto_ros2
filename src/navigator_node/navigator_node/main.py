@@ -596,6 +596,12 @@ class NavigatorNode(Node):
             )
             pid_value = pid(angle_to_dest)
 
+            if pid_value is None:
+                _ = self.get_logger().error(
+                    f"PID returned none for angle: {angle_to_dest}"
+                )
+                continue
+
             wheel_speeds.right_wheels += pid_value
             wheel_speeds.left_wheels -= pid_value
 
