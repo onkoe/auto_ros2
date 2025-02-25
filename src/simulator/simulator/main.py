@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import rclpy
-from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from gps_msgs.msg import GPSFix as GpsFix
 from loguru import logger as llogger
 from rclpy.node import Node
@@ -117,15 +116,20 @@ class SoroBridge(Node):
 
     def sim_gps_callback(self, msg: NavSatFix):
         """immediately publishes to the `/sensors/gps` topic after translating"""
-        translated: GeoPoint = GeoPoint()
-        translated.latitude = msg.latitude
-        translated.longitude = msg.longitude
-        translated.altitude = msg.altitude
-        translated_stamped: GeoPointStamped = GeoPointStamped()
-        translated_stamped.position = translated
+        translated: GpsMessage = GpsMessage()
+
+        translated.lat = msg.latitude
+        translated.lon = msg.longitude
+        translated.height = msg.altitude
+
+        # using some default values for now.
+        #
+        # FIXME: iirc, there's a gz msg ty with real values for these
+        translated.error_mm = 0.0
+        translated.time_of_week = 0
 
         llogger.debug(f"publishing gps info: {translated}")
-        self.__gps_publisher.publish(translated_stamped)
+        self.__gps_publisher.publish(translated)
 
 
 def main(args: list[str] | None = None):
