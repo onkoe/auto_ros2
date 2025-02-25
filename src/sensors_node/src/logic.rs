@@ -1,8 +1,7 @@
 //! Logic is encapsulated here to avoid clutter in the `main` module.
 
 use ros2_client::{
-    log::LogLevel, ros2::QosPolicyBuilder, rosout, Context, MessageTypeName, Name, Node, NodeName,
-    NodeOptions,
+    log::LogLevel, rosout, Context, MessageTypeName, Name, Node, NodeName, NodeOptions,
 };
 use soro_gps::Gps;
 
@@ -25,13 +24,7 @@ pub fn create_node(ctx: &Context) -> Node {
 /// for competition.
 #[tracing::instrument]
 pub fn qos() -> ros2_client::ros2::QosPolicies {
-    QosPolicyBuilder::new()
-        .history(ros2_client::ros2::policy::History::KeepLast { depth: 10 })
-        .reliability(ros2_client::ros2::policy::Reliability::Reliable {
-            max_blocking_time: ros2_client::ros2::Duration::from_millis(100),
-        })
-        .durability(ros2_client::ros2::policy::Durability::TransientLocal)
-        .build()
+    ros2_client::DEFAULT_SUBSCRIPTION_QOS.clone()
 }
 
 /// Starts 'spinning' the given `Node`.
@@ -75,7 +68,7 @@ pub async fn spawn_sensor_publisher_tasks(
         let gps_topic = sensors_node
             .create_topic(
                 &Name::new("/sensors", "gps").expect("valid topic name"),
-                MessageTypeName::new("interfaces", "GpsMessage"),
+                MessageTypeName::new("custom_interfaces", "GpsMessage"),
                 &qos(),
             )
             .expect("create gps topic");
@@ -89,7 +82,7 @@ pub async fn spawn_sensor_publisher_tasks(
         //
         // note: we use `0` for the port we bind on since it doesn't matter.
         // we're just sending stuff to people and assuming they get it.
-        let gps = Gps::new(sensor_setup.gps_ip, sensor_setup.gps_port, 0_u16)
+        let gps = Gps::new(sensor_setup.gps_ip, sensor_setup.gps_port, 54555_u16)
             .await
             .expect("gps creation");
 
@@ -112,8 +105,10 @@ mod sensor_tasks {
         // every 1/20th of a second, check for any updates.
         //
         // if the data is different, we'll publish it in a message.
+        tracing::debug!("Trying to get GPS data from sensors node. If a freeze occurs here, we didn't see any GPS data.");
         loop {
             // check for gps data
+            tracing::debug!("Trying to get GPS data from sensors node. If a freeze occurs here, we didn't see any GPS data.");
             let gps_data = match gps.get().await {
                 Ok(info) => info,
                 Err(e) => {
@@ -131,7 +126,7 @@ mod sensor_tasks {
                 error_mm: 0.0,
                 time_of_week: gps_data.tow.0,
             };
-            tracing::debug!("Attempting to publish GPS message: {gps_message:?}");
+            tracing::debug!("Publishing GPS message: {gps_message:?}");
 
             // if we got all the values, publish them!
             _ = gps_pub
@@ -175,7 +170,7 @@ mod tests {
         let topic = node
             .create_topic(
                 &Name::new("/test", "gps_task_doesnt_panic_topic").unwrap(),
-                MessageTypeName::new("interfaces", "GpsMessage"),
+                MessageTypeName::new("custom_interfaces", "GpsMessage"),
                 &super::qos(),
             )
             .unwrap();
