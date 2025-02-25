@@ -692,7 +692,15 @@ class NavigatorNode(Node):
         return timed_out
 
     def gps_callback(self, msg: GpsMessage):
-        self._last_known_rover_coord = msg.coords()
+        coord: GeoPointStamped = GeoPointStamped()
+
+        # FIXME: need to stamp this message! consider changing msg types on
+        #        the Rust side!
+        coord.position.latitude = msg.lat
+        coord.position.longitude = msg.lon
+        coord.position.altitude = msg.height
+
+        self._last_known_rover_coord = coord
 
     def aruco_callback(self, msg: PoseStamped):
         self._curr_marker_transform = msg
