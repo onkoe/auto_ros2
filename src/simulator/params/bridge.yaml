@@ -6,7 +6,7 @@
   direction: GZ_TO_ROS
 
 # gps
-- ros_topic_name: "/gps_sim"
+- ros_topic_name: "/sim/gps"
   gz_topic_name: "/navsat"
   ros_type_name: "gps_msgs/msg/GPSFix"
   gz_type_name: "gz.msgs.NavSat"
