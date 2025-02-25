@@ -5,15 +5,19 @@ jobs:
     ci:
         # same as jetson :p
         runs-on: ubuntu-22.04 
+        container:
+          image: osrf/ros:humble-simulation
         steps:
             - uses: actions/checkout@v4
+              with:
+                fetch-depth: 0
 
-            # grab uv, cargo, and ros 2
+            # install node real quick
+            - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+
+            # grab uv and cargo
             - uses: astral-sh/setup-uv@v5
             - uses: moonrepo/setup-rust@v1
-            - uses: ros-tooling/setup-ros@v0.7
-              with:
-                required-ros-distributions: humble
 
             # grab a python binary
             - name: Set up Python
