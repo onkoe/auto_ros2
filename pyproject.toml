@@ -19,7 +19,7 @@ members = [
     "src/navigator_node",
     "src/log_node",
     "src/aruco_node",
-    "src/soro_simulator_driver",
+    "src/simulator",
 ]
 
 [dependency-groups]
