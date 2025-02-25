@@ -374,12 +374,17 @@ class NavigatorNode(Node):
             return
 
         # Ensure our current coordinate is updating
-        time_since_rover_coord: Time = Time().from_msg(
-            self._last_known_rover_coord.header.stamp
-        )
-        if self._sensor_data_timed_out(time_since_rover_coord):
-            llogger.warning("gps coord hasn't updated; cannot navigate")
-            return
+        #
+        # TODO: uncomment this! but, for now, we're still using our custom msg,
+        #       which isn't stamped...
+        #
+        # time_since_rover_coord: Time = Time().from_msg(
+        #     self._last_known_rover_coord.header.stamp
+        # )
+
+        # if self._sensor_data_timed_out(time_since_rover_coord):
+        #     llogger.warning("gps coord hasn't updated; cannot navigate")
+        #     return
 
         # when we haven't reached the coords yet (step 1), keep navigating to current coordinates (if not stopped to look at a tag)
         if not self.calculating_aruco_coord:
