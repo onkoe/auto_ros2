@@ -37,6 +37,7 @@ from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from geometry_msgs.msg import PoseStamped
 from geopy.distance import distance
 from loguru import logger as llogger
+from rcl_interfaces.msg import ParameterType
 from rclpy.client import Client
 from rclpy.node import Node, ParameterDescriptor
 from rclpy.publisher import Publisher
@@ -103,7 +104,7 @@ class NavigatorNode(Node):
     _lights_request_future: Future
     """A `Future` that we await to change the light color."""
 
-    _param_value: NavigationParameters | None
+    nav_parameters: NavigationParameters
 
     _given_aruco_marker_id: int | None = None
     """
@@ -176,17 +177,90 @@ class NavigatorNode(Node):
         Creates a new `NavigatorNode`.
         """
         super().__init__("navigator_node")
-        _ = self.declare_parameter("navigator_parameters", None)
+
+        _ = self.get_logger().info("Starting Navigator...")
+
+        # declare each parameter as required by ROS 2...
+        #
+        # coord
+        latitude_desc: ParameterDescriptor = ParameterDescriptor()
+        latitude_desc.description = "latitude for coordinate we'll nav to"
+        latitude_desc.type = ParameterType.PARAMETER_DOUBLE
+        _ = self.declare_parameter(name="latitude", descriptor=latitude_desc)
+        longitude_desc: ParameterDescriptor = ParameterDescriptor()
+        longitude_desc.description = "longitude for coordinate we'll nav to"
+        longitude_desc.type = ParameterType.PARAMETER_DOUBLE
+        _ = self.declare_parameter(name="longitude", descriptor=longitude_desc)
+
+        # mode
+        mode_desc: ParameterDescriptor = ParameterDescriptor()
+        mode_desc.description = "the thing we're doing right now. i.e. to do \
+            aruco tracking, use NavigationMode.ARUCO"
+        mode_desc.type = ParameterType.PARAMETER_INTEGER
+        _ = self.declare_parameter(name="mode", descriptor=mode_desc)
+
+        # pid controller controls
+        pid_desc: ParameterDescriptor = ParameterDescriptor()
+        pid_desc.type = ParameterType.PARAMETER_DOUBLE
+        _ = self.declare_parameter(name="pk", value=1.0, descriptor=pid_desc)
+        _ = self.declare_parameter(name="pi", value=1.0, descriptor=pid_desc)
+        _ = self.declare_parameter(name="pd", value=0.0, descriptor=pid_desc)
+        _ = self.get_logger().debug("declared all parameters.")
 
         # try to grab the instructions we're given over parameters.
         #
-        # if none are given, this is `None`, and will cause the program to go
+        # if none is given, this is `None`, and will cause the program to go
         # down
-        self._param_value = self.get_parameter("navigator_parameters").value
+        latitude: float | None = self.get_parameter("latitude").value
+        longitude: float | None = self.get_parameter("longitude").value
+        if latitude is None:
+            _ = self.get_logger().error(
+                "The `latitude` parameter is not set! The navigator will now exit."
+            )
+            sys.exit(1)
+        if longitude is None:
+            _ = self.get_logger().error(
+                "The `longitude` parameter is not set! The navigator will now exit."
+            )
+            sys.exit(1)
 
-        if self._param_value is None:
-            _ = self.get_logger().error("navigator_parameters is not set!")
-            return
+        # construct coordinate from lat + long
+        #
+        # FIXME: find out some kinda solution for the altitude. maybe a
+        #        quick n dirty estimation?
+        coord: GeoPoint = GeoPoint()
+        coord.latitude = latitude
+        coord.longitude = longitude
+        coord.altitude = 0.0  # TODO
+
+        # TODO: based off mode, we can require an aruco marker id upon startup,
+        #       but avoid that for coord-only instructions
+        mode_int: int | None = self.get_parameter("mode").value
+        if mode_int is None:
+            _ = self.get_logger().error(
+                "The `coord` parameter is not set! The navigator will now exit."
+            )
+            sys.exit(1)
+
+        pk: float | None = self.get_parameter("pk").value
+        pi: float | None = self.get_parameter("pi").value
+        pd: float | None = self.get_parameter("pd").value
+        if pd is None or pi is None or pk is None:
+            _ = self.get_logger().error(
+                "PID parameters were unset, but this should result in a default. \
+                This is unexpected behavior. The navigator will now exit."
+            )
+            sys.exit(1)
+
+        # construct the parameters
+        self.nav_parameters = NavigationParameters(
+            coord=coord,
+            mode=NavigationMode(mode_int),  # FIXME: do a safety check first
+            pk=pk,
+            pi=pi,
+            pd=pd,
+        )
+        _ = self.get_logger().debug("constructed all parameters.")
 
         # create a service client for lights node
         self._lights_client = self.create_client(
@@ -221,7 +295,7 @@ class NavigatorNode(Node):
         )
 
         # if in aruco mode, create a subscriber for aruco tracking
-        if self._param_value.mode == NavigationMode.ARUCO:
+        if self.nav_parameters.mode == NavigationMode.ARUCO:
             self._aruco_subscription = self.create_subscription(
                 msg_type=PoseStamped,  # TODO: change to wherever the ar message type is
                 topic="/aruco",  # TODO: change to whatever the markers topic is
@@ -247,7 +321,7 @@ class NavigatorNode(Node):
         self._coordinate_path_queue.append(self._param_value.coord)
         # Calculate and append search coordinates for GPS coord
         self._coordinate_path_queue.extend(
-            generate_similar_coordinates(self._param_value.coord, 10, 5)
+            generate_similar_coordinates(self.nav_parameters.coord, 10, 5)
         )  # takes source coordinate, radius in meters, and a number of points to generate
 
         # Run navigator callback every 0.5 seconds
@@ -278,10 +352,6 @@ class NavigatorNode(Node):
 
         Driven by a `rclpy::Timer`.
         """
-        # Ensure navigation parameters were specified
-        if self._param_value is None:
-            llogger.error("Called, but no parameters given.")
-            rclpy.shutdown()
 
         # If goal is reached, turn the node off
         if self.goal_reached:
@@ -330,10 +400,7 @@ class NavigatorNode(Node):
                 # in GPS mode, we're only navigating to a coordinate.
                 #
                 # so we stop here and return!
-                if (
-                    self._param_value is not None
-                    and self._param_value.mode == NavigationMode.GPS
-                ):
+                if self.nav_parameters.mode == NavigationMode.GPS:
                     # stop the coroutine
                     self._go_to_coordinate_cor = None
                     # stop the wheels
@@ -364,7 +431,7 @@ class NavigatorNode(Node):
                     self._last_searched_coord = target_coord
                 pass
 
-        match self._param_value.mode:
+        match self.nav_parameters.mode:
             case NavigationMode.GPS:
                 pass
 
@@ -435,7 +502,7 @@ class NavigatorNode(Node):
                         )
                         # Append original GPS coordinate to the end of the queue
                         self._coordinate_path_queue.append(
-                            self._param_value.coord
+                            self.nav_parameters.coord
                         )
                         # NOTE: Should we reset the times marker seen here?
                         self.calculating_aruco_coord = False
@@ -513,9 +580,9 @@ class NavigatorNode(Node):
         # pk = proportional, pi = integral, pd = derivative
         # pk determines the speed of error correction, pi determines how much the rover will correct itself, and pd determines how quickly the rover will stop correcting itself
         pk, pi, pd = (
-            self._param_value.pk,
-            self._param_value.pi,
-            self._param_value.pd,
+            self.nav_parameters.pk,
+            self.nav_parameters.pi,
+            self.nav_parameters.pd,
         )  # NOTE: We may not want to use all of these
         target_value = 0  # We want the rover's angle to the destination be 0
         pid = PID(pk, pi, pd, setpoint=target_value)
