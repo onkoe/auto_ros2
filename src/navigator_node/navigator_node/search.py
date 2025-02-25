@@ -45,17 +45,20 @@ def generate_similar_coordinates(
     This functions as a simplistic "search" strategy for the rover, where we can then feed
     the generated coordinates as our desired path while we look for a tag or object.
     """
-    new_points = []
+    new_points: list[GeoPoint] = []
 
     for i in range(num_points):
         angle = (360 / num_points) * i  # Evenly spaced angles around a circle
+
         # Calculates a new coordinate that is the given amount of meters away from source
-        new_location: Point = distance(meters=radius).destination(
-            src, bearing=angle
+        point: Point = distance(meters=radius).destination(
+            Point(src.latitude, src.longitude), bearing=angle
         )
+
+        # make that into a `GeoPoint` msg
         g: GeoPoint = GeoPoint()
-        g.latitude = new_location.latitude
-        g.longitude = new_location.longitude
+        g.latitude = point.latitude
+        g.longitude = point.longitude
 
         new_points.append(g)
 
