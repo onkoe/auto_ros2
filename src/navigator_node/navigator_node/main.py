@@ -56,6 +56,7 @@ from custom_interfaces.msg import (
     ImuMessage,
     WheelsMessage,
 )
+from custom_interfaces.srv import Lights
 from custom_interfaces.srv._lights import (
     Lights_Request as LightsRequest,
 )
@@ -189,7 +190,7 @@ class NavigatorNode(Node):
 
         # create a service client for lights node
         self._lights_client = self.create_client(
-            srv_type=LightsRequest,
+            srv_type=Lights,
             srv_name="/control/lights",
         )
 
