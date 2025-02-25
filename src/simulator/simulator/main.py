@@ -31,7 +31,9 @@ QOS_PROFILE = QoSProfile(
 class SoroBridge(Node):
     """Translates stuff from the simulator into the messages we use."""
 
-    # motors... there are quite a few
+    # motors... there are quite a few.
+    #
+    # these are directly from gazebo
     __left_front_wheel_motor: Publisher
     __left_middle_wheel_motor: Publisher
     __left_back_wheel_motor: Publisher
