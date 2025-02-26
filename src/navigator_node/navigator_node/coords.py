@@ -12,6 +12,7 @@ from math import sqrt
 
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from geometry_msgs.msg import Point, PoseStamped
+from geopy.distance import distance
 from loguru import logger as llogger
 
 
@@ -62,3 +63,19 @@ def get_angle_to_dest(
     # Normalize the angle to be between -pi and pi
     normalized_angle = (unnormalized_angle + math.pi) % (2 * math.pi) - math.pi
     return normalized_angle
+
+
+def dist_m_between_coords(coord1: GeoPoint, coord2: GeoPoint) -> float:
+    """
+    Returns the distance between two coordinates, in meters.
+    """
+    dist_m = distance(
+        [coord2.latitude, coord2.longitude],
+        [coord1.latitude, coord1.longitude],
+    ).meters
+
+    # log and return
+    llogger.trace(
+        f"dist from coord 1 ({coord1}) and coord 2 ({coord2}) is: {dist_m}m"
+    )
+    return dist_m
