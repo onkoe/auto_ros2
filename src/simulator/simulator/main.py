@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from time import sleep
 
 import rclpy
+from geometry_msgs.msg import Vector3
 from gps_msgs.msg import GPSFix as GpsFix
 from loguru import logger as llogger
 from rclpy.node import Node
@@ -12,11 +13,12 @@ from rclpy.qos import (
 )
 from rclpy.service import Service
 from rclpy.subscription import Subscription
-from sensor_msgs.msg import NavSatFix
+from sensor_msgs.msg import Imu, NavSatFix
 from std_msgs.msg import Float64
 from typing_extensions import override
 
 from custom_interfaces.msg._gps_message import GpsMessage
+from custom_interfaces.msg._imu_message import ImuMessage
 from custom_interfaces.msg._wheels_message import WheelsMessage
 from custom_interfaces.srv._lights import Lights
 from custom_interfaces.srv._lights import Lights_Request as LightsRequest
@@ -67,6 +69,12 @@ class SoroBridge(Node):
         )
         self.__sim_gps_subscriber = self.create_subscription(
             GpsFix, "/sim/gps", self.sim_gps_callback, QOS_PROFILE
+        )
+        self.__imu_publisher = self.create_publisher(
+            ImuMessage, "/sensors/imu", QOS_PROFILE
+        )
+        self.__sim_imu_subscriber = self.create_subscription(
+            Imu, "/sim/imu", self.sim_imu_callback, QOS_PROFILE
         )
 
         # react to controls
@@ -168,6 +176,25 @@ class SoroBridge(Node):
 
         llogger.debug(f"publishing gps info: {translated}")
         self.__gps_publisher.publish(translated)
+
+    def sim_imu_callback(self, msg: Imu):
+        """
+        publishes custom imu message from the ros 2 one (sensor_msgs/msg/Imu)!
+        """
+        translated: ImuMessage = ImuMessage()
+
+        translated.accel = msg.linear_acceleration
+        translated.gyro = msg.angular_velocity
+        translated.temp_c = 0.0
+
+        # FIXME: this is almost certainly wrong
+        translated.compass = Vector3()
+        translated.compass.x = msg.orientation.x
+        translated.compass.y = msg.orientation.y
+        translated.compass.z = msg.orientation.z
+        _nothing = msg.orientation.w  # yikes())
+
+        self.__imu_publisher.publish(translated)
 
 
 def main(args: list[str] | None = None):
