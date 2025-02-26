@@ -4,7 +4,6 @@ dependencies = [
     "opencv-contrib-python>=4.11.0.86",
     "scipy>=1.15.2",
     "simple-pid>=2.0.1",
-    "webots-py",
     "geopy>=2.4.1",
 ]
 
