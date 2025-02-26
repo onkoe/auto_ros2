@@ -287,8 +287,8 @@ class NavigatorNode(Node):
         # create wheels publisher
         self._wheels_publisher = self.create_publisher(
             msg_type=WheelsMessage,
-            topic="/controls/wheels",
-            qos_profile=QoSPresetProfiles.SENSOR_DATA.value,
+            topic="/control/wheels",
+            qos_profile=QOS_PROFILE,
         )
 
         # if in aruco mode, create a subscriber for aruco tracking
