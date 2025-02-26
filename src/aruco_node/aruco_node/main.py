@@ -142,9 +142,7 @@ class ArucoNode(Node):
         )
 
         # Aruco detector configuration
-        self.detector_params = (
-            aruco.DetectorParameters()
-        )  # TODO: Look into this
+        self.detector_params = aruco.DetectorParameters()  # TODO: Look into this
         self.tracker = aruco.ArucoDetector(
             aruco.getPredefinedDictionary(aruco_dict_map[self.aruco_dict]),
             self.detector_params,
@@ -197,17 +195,15 @@ class ArucoNode(Node):
         cv_image: cv.Mat = self.bridge.imgmsg_to_cv2(image)  # pyright: ignore[reportAssignmentType]
 
         # Detect the marker ids
-        detected_marker_corners, detected_marker_ids = (
-            self.detect_aruco_markers(cv_image)
+        detected_marker_corners, detected_marker_ids = self.detect_aruco_markers(
+            cv_image
         )
 
         # If we found the marker we're looking for,
         # calculate and publish its pose.
         if detected_marker_ids is not None:
             try:
-                marker_id_index = list(detected_marker_ids).index(
-                    self.marker_id
-                )
+                marker_id_index = list(detected_marker_ids).index(self.marker_id)
 
                 # Calculate the markers pose
                 calculated_pose, quaternion, tvec = self.calculate_pose(
@@ -218,9 +214,7 @@ class ArucoNode(Node):
                 # Publish the markers transform
                 if calculated_pose:
                     marker_pose_msg = PoseStamped()
-                    marker_pose_msg.header.stamp = (
-                        self.get_clock().now().to_msg()
-                    )
+                    marker_pose_msg.header.stamp = self.get_clock().now().to_msg()
                     # TODO: This should probably be a parameter
                     marker_pose_msg.header.frame_id = "camera"
 

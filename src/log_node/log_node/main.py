@@ -63,9 +63,7 @@ class LogNode(Node):
             case Log.FATAL:
                 logger.critical(msg)
             case other:
-                logger.trace(
-                    f"log level was a weird value: {other}. msg: {msg}"
-                )
+                logger.trace(f"log level was a weird value: {other}. msg: {msg}")
 
     @override
     def __hash__(self) -> int:
