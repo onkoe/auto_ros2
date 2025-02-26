@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from time import sleep
 
 import rclpy
 from gps_msgs.msg import GPSFix as GpsFix
@@ -117,7 +118,7 @@ class SoroBridge(Node):
     def wheels_callback(self, msg: WheelsMessage):
         llogger.debug(f"recv'd wheel speeds! see: {msg}")
 
-        BASE_SPEED: float = 1.0
+        BASE_SPEED: float = 0.2
         left_wheel_speed: float = BASE_SPEED * translate_u8(msg.left_wheels)
         right_wheel_speed: float = BASE_SPEED * translate_u8(msg.right_wheels)
 
@@ -127,12 +128,26 @@ class SoroBridge(Node):
         right_msg: Float64 = Float64()
         right_msg.data = right_wheel_speed
 
+        # don't send wheel speeds before we have subscribers
+        while (
+            self.__left_back_wheel_motor.get_subscription_count() == 0
+            or self.__left_middle_wheel_motor.get_subscription_count() == 0
+            or self.__left_front_wheel_motor.get_subscription_count() == 0
+            or self.__right_back_wheel_motor.get_subscription_count() == 0
+            or self.__right_middle_wheel_motor.get_subscription_count() == 0
+            or self.__right_front_wheel_motor.get_subscription_count() == 0
+        ):
+            llogger.debug("won't send speeds to sim until motor bridge is up")
+            sleep(0.25)
+
         # set left wheel speeds
+        _ = self.get_logger().debug(f"left wheel speed: {left_wheel_speed}")
         self.__left_front_wheel_motor.publish(left_msg)
         self.__left_middle_wheel_motor.publish(left_msg)
         self.__left_back_wheel_motor.publish(left_msg)
 
         # set right wheel speeds
+        _ = self.get_logger().debug(f"right wheel speed: {right_wheel_speed}")
         self.__right_front_wheel_motor.publish(right_msg)
         self.__right_middle_wheel_motor.publish(right_msg)
         self.__right_back_wheel_motor.publish(right_msg)
