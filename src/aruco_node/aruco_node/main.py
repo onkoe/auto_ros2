@@ -1,22 +1,27 @@
-import rclpy
-from rclpy.node import Node
-from rcl_interfaces.msg import ParameterDescriptor
+from collections.abc import Sequence
+from dataclasses import dataclass
+
 import cv2 as cv
-import cv2.typing
 import cv2.aruco as aruco
 import numpy as np
-from loguru import logger as llogger
-from typing import Dict, Tuple, Sequence, Optional
-from dataclasses import dataclass
-from scipy.spatial.transform import Rotation as R  # SciPy for quaternion conversion
+import rclpy
 
 # Used to convert OpenCV Mat type to ROS Image type
 # NOTE: This may not be the most effective, we could turn the image into an AVIF string or even define a custom ROS data type.
 import rclpy.subscription
-from sensor_msgs.msg import Image as RosImage
-from geometry_msgs.msg import PoseStamped
+from cv2.typing import MatLike
 from cv_bridge import CvBridge
-from aruco_dict_map import aruco_dict_map
+from geometry_msgs.msg import PoseStamped
+from loguru import logger as llogger
+from rcl_interfaces.msg import ParameterDescriptor
+from rclpy.node import Node, Publisher
+from scipy.spatial.transform import (
+    Rotation as R,  # SciPy for quaternion conversion
+)
+from sensor_msgs.msg import Image as RosImage
+from typing_extensions import override
+
+from .aruco_dict_map import aruco_dict_map
 
 
 @dataclass(kw_only=True)
@@ -42,7 +47,7 @@ class ArucoNode(Node):
     camera_config_file: str
     """Filename of the config file."""
 
-    aruco_dict_map: Dict
+    aruco_dict_map: dict[str, int]
     """The set of marker's we're looking for"""
 
     aruco_dict: str
@@ -57,14 +62,27 @@ class ArucoNode(Node):
     aruco_detector: aruco.ArucoDetector
     """Detects aruco markers."""
 
+    tracker: aruco.ArucoDetector
+    """TODO: how is this different from the detector? same class lol"""
+
     detector_params: aruco.DetectorParameters
     """Used to change the defaults in the detector's initializer."""
 
     image_subscription: rclpy.subscription.Subscription
     """Image subscriber for aruco."""
 
-    bridge = CvBridge()
+    marker_pose_publisher: Publisher
+    """Publishes marker poses for other nodes."""
+
+    bridge: CvBridge = CvBridge()
     """Converts images from ROS to cv2.Mat types"""
+
+    obj_points: MatLike
+
+    # camera configuration variables
+    camera_mat: MatLike
+    dist_coeffs: MatLike
+    rep_error: float
 
     def __init__(self):
         super().__init__("aruco_node")
@@ -119,20 +137,40 @@ class ArucoNode(Node):
         (self.camera_mat, self.dist_coeffs, self.rep_error) = (
             self.read_camera_config_file()
         )
-        self.get_logger().debug("Finished reading calibration information for camera")
+        _ = self.get_logger().debug(
+            "Finished reading calibration information for camera"
+        )
 
         # Aruco detector configuration
-        self.detector_params = aruco.DetectorParameters()  # TODO: Look into this
+        self.detector_params = (
+            aruco.DetectorParameters()
+        )  # TODO: Look into this
         self.tracker = aruco.ArucoDetector(
             aruco.getPredefinedDictionary(aruco_dict_map[self.aruco_dict]),
             self.detector_params,
         )
         self.obj_points = np.array(
             [  # Real world 3D coordinates of the marker corners
-                [-self.marker_length / 2, 0, self.marker_length / 2],  # Top-left
-                [self.marker_length / 2, 0, self.marker_length / 2],  # Top-right
-                [self.marker_length / 2, 0, -self.marker_length / 2],  # Bottom-right
-                [-self.marker_length / 2, 0, -self.marker_length / 2],  # Bottom-left
+                [
+                    -self.marker_length / 2,
+                    0,
+                    self.marker_length / 2,
+                ],  # Top-left
+                [
+                    self.marker_length / 2,
+                    0,
+                    self.marker_length / 2,
+                ],  # Top-right
+                [
+                    self.marker_length / 2,
+                    0,
+                    -self.marker_length / 2,
+                ],  # Bottom-right
+                [
+                    -self.marker_length / 2,
+                    0,
+                    -self.marker_length / 2,
+                ],  # Bottom-left
             ]
         )
         llogger.debug("Finished creating aruco tracker")
@@ -156,18 +194,20 @@ class ArucoNode(Node):
         """Get an image from the image topic and look for aruco tags."""
 
         # Convert ROS image to cv2.Mat
-        cv_image: cv.Mat = self.bridge.imgmsg_to_cv2(image)
+        cv_image: cv.Mat = self.bridge.imgmsg_to_cv2(image)  # pyright: ignore[reportAssignmentType]
 
         # Detect the marker ids
-        detected_marker_corners, detected_marker_ids = self.detect_aruco_markers(
-            cv_image
+        detected_marker_corners, detected_marker_ids = (
+            self.detect_aruco_markers(cv_image)
         )
 
         # If we found the marker we're looking for,
         # calculate and publish its pose.
         if detected_marker_ids is not None:
             try:
-                marker_id_index = list(detected_marker_ids).index(self.marker_id)
+                marker_id_index = list(detected_marker_ids).index(
+                    self.marker_id
+                )
 
                 # Calculate the markers pose
                 calculated_pose, quaternion, tvec = self.calculate_pose(
@@ -178,7 +218,9 @@ class ArucoNode(Node):
                 # Publish the markers transform
                 if calculated_pose:
                     marker_pose_msg = PoseStamped()
-                    marker_pose_msg.header.stamp = self.get_clock().now().to_msg()
+                    marker_pose_msg.header.stamp = (
+                        self.get_clock().now().to_msg()
+                    )
                     # TODO: This should probably be a parameter
                     marker_pose_msg.header.frame_id = "camera"
 
@@ -193,8 +235,7 @@ class ArucoNode(Node):
 
                     self.marker_pose_publisher.publish(marker_pose_msg)
                     llogger.debug(
-                        "Publishing pose of marker:\n"
-                        f"- {tvec[0]}, {tvec[0]}, {tvec[0]}\n"
+                        f"Publishing pose of marker:\n {tvec[0]}, {tvec[0]}, {tvec[0]}"
                     )
                 else:
                     llogger.error("Could not calculate pose of detected marker")
@@ -207,18 +248,20 @@ class ArucoNode(Node):
 
     def detect_aruco_markers(
         self, image: cv.Mat
-    ) -> Tuple[Sequence[cv.typing.MatLike], Optional[cv.typing.MatLike]]:
+    ) -> tuple[Sequence[cv.typing.MatLike], cv.typing.MatLike | None]:
         """
         Given an image, return detected aruco markers and rejected markers
         (candidates for aruco markers)
         """
         # Detect markers (corners and ids) and possible corners (rejected)
-        (detected_marker_corners, detected_marker_ids, rejected_marker_ids) = (
+        (detected_marker_corners, detected_marker_ids, _rejected_marker_ids) = (
             self.tracker.detectMarkers(image)
         )
         return detected_marker_corners, detected_marker_ids
 
-    def calculate_pose(self, img_points):
+    def calculate_pose(
+        self, img_points: MatLike
+    ) -> tuple[bool, MatLike, list[MatLike]]:
         """Given a set of image points (detected aruco corners), return the pose for the marker"""
         img_points = np.array(img_points, dtype=np.float32).reshape(4, 2)
         retval, cv_rvec, cv_tvec = cv.solvePnP(
@@ -231,7 +274,9 @@ class ArucoNode(Node):
 
         # Convert axis-angle format to rotation matrix format
         cv_rmatrix, __ = cv.Rodrigues(cv_rvec)
-        cam_rmatrix = np.matmul(cv_rmatrix, np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]))
+        cam_rmatrix: MatLike = np.matmul(
+            cv_rmatrix, np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+        )
         cam_quaternion = R.from_matrix(cam_rmatrix).as_quat()
 
         return retval, cam_quaternion, cam_tvec
@@ -254,11 +299,12 @@ class ArucoNode(Node):
 
         return camera_mat, dist_coeffs, rep_error
 
+    @override
     def __hash__(self) -> int:
         return super().__hash__()
 
 
-def main(args=None):
+def main(args: list[str] | None = None):
     """Handle spinning up and destroying a node"""
     rclpy.init(args=args)
     aruco_node = ArucoNode()
