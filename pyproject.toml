@@ -30,7 +30,7 @@ dev = [
     "ruff>=0.9.4",
     "empy==3.3.4",
     "lark==1.2.2",
-    "numpy>=2.2.2",
+    "numpy>=1.26.4",
     "cst-lsp>=0.1.3",
     "basedpyright>=1.27.1",
     "rust-just>=1.39.0",
