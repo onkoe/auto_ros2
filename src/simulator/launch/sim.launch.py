@@ -51,6 +51,7 @@ def generate_launch_description():
                 PathJoinSubstitution(
                     [pkg_simulator, "resource", "world.sdf.xml"]
                 ),
+                " -r",
             ],
             "on_exit_shutdown": "True",
         }.items(),
