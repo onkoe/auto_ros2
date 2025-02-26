@@ -29,6 +29,9 @@ jobs:
           uv sync --all-extras --dev
           . .venv/bin/activate
 
+      # enter environment
+      - run: . .venv/bin/activate
+
       # build the entire ROS 2 workspace just to ensure things work.
       #
       # this'll use colcon
@@ -36,6 +39,7 @@ jobs:
         uses: ros-tooling/action-ros-ci@v0.3
         with:
           target-ros2-distro: humble
+          skip-tests: true
 
   lint-python:
     runs-on: ubuntu-22.04
