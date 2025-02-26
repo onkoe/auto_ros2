@@ -2,49 +2,97 @@ name: CI
 on: ["push"]
 
 jobs:
-    ci:
-        # same as jetson :p
-        runs-on: ubuntu-22.04 
-        container:
-          image: osrf/ros:humble-simulation
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                fetch-depth: 0
+  ci:
+    # same as jetson :p
+    runs-on: ubuntu-22.04
+    container:
+      image: osrf/ros:humble-simulation
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            # install node real quick
-            - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+      # install node real quick
+      - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
 
-            # grab uv and cargo
-            - uses: astral-sh/setup-uv@v5
-            - uses: moonrepo/setup-rust@v1
+      # grab uv and cargo
+      - uses: astral-sh/setup-uv@v5
+      - uses: moonrepo/setup-rust@v1
 
-            # grab a python binary
-            - name: Set up Python
-              run: uv python install
+      # grab a python binary
+      - name: Set up Python
+        run: uv python install
 
-            # set up environment
-            - name: Install the project
-              run: |
-                uv sync --all-extras --dev
-                . .venv/bin/activate
+      # set up environment
+      - name: Install the project
+        run: |
+          uv sync --all-extras --dev
+          . .venv/bin/activate
 
-            # check python lints
-            - name: Lint and Format (Python)
-              run: |
-                uv tool run ruff check
-                uv tool run ruff format --check
-                
-            # and rust too
-            - name: Lint and Format (Rust)
-              run: |
-                cargo clippy
-                cargo fmt --check
+      # build the entire ROS 2 workspace just to ensure things work.
+      #
+      # this'll use colcon
+      - name: Build ROS 2 workspace
+        uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          target-ros2-distro: humble
 
-            # build the entire ROS 2 workspace just to ensure things work.
-            #
-            # this'll use colcon
-            - name: Build ROS 2 workspace
-              uses: ros-tooling/action-ros-ci@v0.3
-              with:
-                target-ros2-distro: humble
+  lint-python:
+    runs-on: ubuntu-22.04
+    container:
+      image: osrf/ros:humble-simulation
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # install node real quick
+      - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+
+      # grab uv
+      - uses: astral-sh/setup-uv@v5
+
+      # grab a python binary
+      - name: Set up Python
+        run: uv python install
+
+      # set up environment
+      - name: Install the project
+        run: |
+          uv sync --all-extras --dev
+          . .venv/bin/activate
+
+      # check python lints
+      - name: Lint and Format (Python)
+        run: |
+          uv tool run ruff check
+          uv tool run ruff format --check
+
+  lint-rust:
+    runs-on: ubuntu-22.04
+    container:
+      image: osrf/ros:humble-simulation
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # install node real quick
+      - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+
+      - uses: moonrepo/setup-rust@v1
+        with:
+          components: clippy, rustfmt
+          bins: cargo-nextest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # run rust lints
+      - name: Lint and Format (Rust)
+        run: |
+          cargo clippy --workspace
+          cargo fmt --check
+
+      # run tests
+      - name: Run Rust workspace tests
+        run: cargo nextest run --test-threads 1 --no-fail-fast
