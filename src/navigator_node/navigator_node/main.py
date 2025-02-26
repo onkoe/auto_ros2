@@ -446,7 +446,10 @@ class NavigatorNode(Node):
                 # doing so will have the Rover moving while we make decisions.
                 #
                 # we can also cancel the Task
-                if self._last_searched_coord != target_coord:
+                if (
+                    self._last_searched_coord != target_coord
+                    and self._go_to_coordinate_cor is None
+                ):
                     _ = self.get_logger().info(
                         f"creating task to head to target coordinate! coord: {target_coord}"
                     )
