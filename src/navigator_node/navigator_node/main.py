@@ -457,7 +457,13 @@ class NavigatorNode(Node):
                         self._go_to_coordinate(target_coord)
                     )
                     self._last_searched_coord = target_coord
-                pass
+                elif self._near_coordinate(target_coord, MIN_GPS_DISTANCE):
+                    _ = self.get_logger().info(
+                        f"we're near the target! stopping async task. coord: {target_coord}"
+                    )
+                    if self._go_to_coordinate_cor is not None:
+                        _stop_res: bool = self._go_to_coordinate_cor.cancel()
+                        self._go_to_coordinate_cor = None
 
         match self.nav_parameters.mode:
             case NavigationMode.GPS:
