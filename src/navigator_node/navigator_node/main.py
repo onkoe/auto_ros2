@@ -25,16 +25,17 @@ stuff that the navigator node does:
 - launches other nodes necessary for requested form of navigation
 """
 
+import asyncio
 import dataclasses
 import sys
-from collections.abc import Coroutine
+import threading
+from asyncio import AbstractEventLoop, Task
 from dataclasses import dataclass
-from typing import Any
 from time import sleep
 
 import rclpy
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Vector3
 from geopy.distance import distance
 from loguru import logger as llogger
 from rcl_interfaces.msg import ParameterType
@@ -154,9 +155,9 @@ class NavigatorNode(Node):
     """
 
     # TODO: use... not bools for that
-    _search_algo_cor: Coroutine[Any, Any, None] | None = None
+    _search_algo_cor: Task[None] | None = None
     """search algo if we're doin it"""
-    _go_to_coordinate_cor: Coroutine[Any, Any, None] | None = None
+    _go_to_coordinate_cor: Task[None] | None = None
     """
     we replace this with a Coroutine (running async function) when we want
     to go somewhere.
@@ -172,6 +173,11 @@ class NavigatorNode(Node):
     _last_searched_coord: GeoPoint | None = None
     """
     The coordinate we were searching at during the previous callback iteration.
+    """
+
+    exec: AbstractEventLoop
+    """
+    The async executor we use to spawn tasks onto for asynchronous completion.
     """
 
     # current gps attribute
@@ -265,6 +271,15 @@ class NavigatorNode(Node):
             pd=pd,
         )
         _ = self.get_logger().debug("constructed all parameters.")
+
+        # start the asyncio executor
+        #
+        # this lets us spawn tasks onto it, even in synchronous code :)
+        exec: AbstractEventLoop = asyncio.new_event_loop()
+        self.exec = exec
+        thread = threading.Thread(target=self.exec.run_forever, daemon=True)
+        thread.start()
+        llogger.debug("asyncio executor has now started!")
 
         # create a service client for lights node
         self._lights_client = self.create_client(
@@ -432,8 +447,11 @@ class NavigatorNode(Node):
                 #
                 # we can also cancel the Task
                 if self._last_searched_coord != target_coord:
-                    self._go_to_coordinate_cor = self._go_to_coordinate(
-                        target_coord
+                    _ = self.get_logger().info(
+                        f"creating task to head to target coordinate! coord: {target_coord}"
+                    )
+                    self._go_to_coordinate_cor = self.exec.create_task(
+                        self._go_to_coordinate(target_coord)
                     )
                     self._last_searched_coord = target_coord
                 pass
