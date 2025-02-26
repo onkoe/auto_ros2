@@ -26,11 +26,11 @@ stuff that the navigator node does:
 """
 
 import dataclasses
-import math
 import sys
 from collections.abc import Coroutine
 from dataclasses import dataclass
 from typing import Any
+from time import sleep
 
 import rclpy
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
@@ -66,7 +66,11 @@ from custom_interfaces.srv._lights import (
 )
 
 # from custom_interfaces.msg import ArMessage as ArucoMessage
-from .coords import coordinate_from_aruco_pose, get_distance_to_marker
+from .coords import (
+    coordinate_from_aruco_pose,
+    get_angle_to_dest,
+    get_distance_to_marker,
+)
 from .search import generate_similar_coordinates
 from .types import GoToCoordinateReason, NavigationMode, NavigationParameters
 
@@ -559,24 +563,15 @@ class NavigatorNode(Node):
             )
             return
 
-        # get magnetometer info from IMU
-        # compass_info: Vector3 = self._last_known_imu_data.compass # gives us x, y, z compass data
-
-        # Utility functions
-        def get_angle_to_dest(
-            dest_coord: GeoPoint, current_coord: GeoPointStamped
-        ) -> float:
-            """Calculate the angle from the robot to the destination."""
-            # TODO: Double check trigonometry
-            unnormalized_angle = math.atan2(
-                dest_coord.latitude - current_coord.position.latitude,
-                dest_coord.longitude - current_coord.position.longitude,
+        # block on getting magnetometer info from IMU
+        while self._last_known_imu_data is None:
+            _ = self.get_logger().warn(
+                "no IMU data yet. waiting to navigate..."
             )
-            # Normalize the angle to be between -pi and pi
-            normalized_angle = (unnormalized_angle + math.pi) % (
-                2 * math.pi
-            ) - math.pi
-            return normalized_angle
+            sleep(0.25)
+
+        # grab the x, y, z compass data
+        _compass_info: Vector3 = self._last_known_imu_data.compass
 
         # Start navigating to the coordinates using a PID controller
         # NOTE: I have a funny feeling this will send wheel speeds too fast
@@ -675,7 +670,7 @@ class NavigatorNode(Node):
         # perform the actual check
         within_distance: bool = dist_to_target_coord_m < distance_m
         llogger.debug(
-            f"Rover is near coordinate {target_coordinate}: {within_distance}"
+            f"Rover is {dist_to_target_coord_m} meters away from target (at {target_coordinate})."
         )
         return within_distance
 
