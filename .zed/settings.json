@@ -2,7 +2,7 @@
   "format_on_save": "on",
   "languages": {
     "Python": {
-      "language_servers": ["ruff", "basedpyright", "!pyright"],
+      "language_servers": ["ruff", "basedpyright", "!pyright", "!prettier"],
       "format_on_save": "on",
       "formatter": [
         {
@@ -60,5 +60,12 @@
     "show_parameter_hints": true,
     "show_other_hints": true,
     "show_background": true
-  }
+  },
+  "file_scan_exclusions": [
+    "install/**",
+    "build/**",
+    ".venv/**",
+    ".cargo/**",
+    "log/**"
+  ]
 }
