@@ -177,7 +177,7 @@ class ArucoNode(Node):
         # TODO: Should we crash if we can't connect to image topic?
         # self.latest_image = None # Most recent video capture frame from subscriber
         self.image_subscription = self.create_subscription(
-            RosImage, "image", self.image_callback, 1
+            RosImage, "/sensors/mono_image", self.image_callback, 1
         )
         llogger.debug("Finished creating image subscriber")
 
