@@ -583,8 +583,8 @@ class NavigatorNode(Node):
         method will check if it's too old to use ("has timed out").
         """
 
-        current_time: int = self.get_clock().now().nanoseconds
-        time_since_sensor_data: int = sensor_data_timestamp.nanoseconds
+        current_time: int = self.get_clock().now().nanoseconds  # pyright: ignore[reportAny]
+        time_since_sensor_data: int = sensor_data_timestamp.nanoseconds  # pyright: ignore[reportAny]
 
         # check if it's timed out
         timed_out: bool = (current_time - time_since_sensor_data) > SENSOR_TIMEOUT_NS
