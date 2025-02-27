@@ -374,6 +374,7 @@ class NavigatorNode(Node):
                         )
                         await self._go_to_coordinate(target_coord)
                     else:
+                        self.calculating_aruco_coord = True
                         break
                 pass
 
