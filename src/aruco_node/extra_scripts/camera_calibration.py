@@ -188,7 +188,7 @@ def main():
             captured_image_points.append(img_points)
             captured_object_points.append(obj_points)
             captured_images.append(frame)
-            image_size = frame.shape[0:2]  # pyright: ignore[reportAny]
+            image_size = frame.shape[0:2]
 
         if key == ord("q"):
             logger.info("Quitting...")

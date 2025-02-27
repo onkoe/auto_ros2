@@ -11,6 +11,9 @@
 
   <license>TODO</license>
 
+  <!-- dependencies -->
+  <depend>tf_transformations</depend>
+
   <!-- note: these are optional and only for testing -->
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>

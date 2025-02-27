@@ -16,6 +16,18 @@
             <heading_deg>0</heading_deg>
         </spherical_coordinates>
 
+        <!--
+        <include>
+            <uri>model://arcuo_marker</uri>
+        </include>
+        -->
+
+        <include>
+              <uri
+            >https://fuel.ignitionrobotics.org/1.0/PX4/models/arucotag</uri>
+            <pose>5.00 0.00 1.20 0.00 -1.57 0.00</pose>
+        </include>
+
         <plugin
             filename="libignition-gazebo-physics-system.so"
             name="ignition::gazebo::systems::Physics"
@@ -39,8 +51,8 @@
         <plugin
             filename="libignition-gazebo-navsat-system.so"
             name="ignition::gazebo::systems::NavSat"
-        >
-            </plugin>
+        />
+
 
         <light type="directional" name="sun">
             <cast_shadows>true</cast_shadows>
@@ -165,6 +177,23 @@
                         <update_rate>1</update_rate>
                         <topic>/navsat</topic>
                     </sensor>
+                    <sensor name="mono_image" type="camera">
+                        <visualize>true</visualize>
+                        <pose relative_to="chassis">0 0 1.0 0 0 0</pose>
+                        <update_rate>15</update_rate>
+                        <topic>/sensors/mono_image</topic>
+                        <camera>
+                            <horizontal_fov>1.05</horizontal_fov>
+                            <image>
+                                <width>1280</width>
+                                <height>720</height>
+                            </image>
+                            <clip>
+                                <near>0.1</near>
+                                <far>150.0</far>
+                            </clip>
+                        </camera>
+                    </sensor>
 
                     <!--inertial properties of the link mass, inertia matix-->
                     <inertial>
@@ -181,16 +210,16 @@
 
                     <visual name="chassis_visual">
                             <geometry>
-                            <box>
-                                <!-- 549.3mm long, 514.4mm wide, 127mm tall -->
-                                <!-- NOTE: if you change these, also change the collision below! -->
-                                <size>0.5493 0.5144 0.127</size>
-                            </box>
+                                <box>
+                                    <!-- 549.3mm long, 514.4mm wide, 127mm tall -->
+                                    <!-- NOTE: if you change these, also change the collision below! -->
+                                    <size>0.5493 0.5144 0.127</size>
+                                </box>
                             </geometry>
                             <material>
-                            <ambient>0.0 0.0 1.0 1</ambient>
-                            <diffuse>0.0 0.0 1.0 1</diffuse>
-                            <specular>0.0 0.0 1.0 1</specular>
+                                <ambient>0.0 0.0 1.0 1</ambient>
+                                <diffuse>0.0 0.0 1.0 1</diffuse>
+                                <specular>0.0 0.0 1.0 1</specular>
                             </material>
                         </visual>
 
@@ -577,5 +606,11 @@
                     </axis>
                 </joint>
             </model>
+
+            <scene>
+                  <ambient>1.0 1.0 1.0</ambient>
+                  <background>0.8 0.8 0.8</background>
+                  <sky />
+            </scene>
     </world>
 </sdf>

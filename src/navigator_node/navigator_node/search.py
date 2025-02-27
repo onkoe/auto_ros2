@@ -11,7 +11,7 @@ from rclpy.publisher import Publisher
 
 # FIXME: this needs to be a class method. we can't just navigate without `self` :(
 async def search_for_target(
-    lead_coordinates: list[GeoPoint], wheel_publisher: Publisher
+    lead_coordinates: list[GeoPoint], _wheel_publisher: Publisher
 ):
     """
     Moves the Rover to each potential target location we've collected. The info
