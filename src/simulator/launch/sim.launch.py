@@ -17,13 +17,13 @@ from navigator_node.types import NavigationMode
 def generate_launch_description():
     pkg_simulator = get_package_share_directory("simulator")
 
-    # bridge for ros 2 <---> gazebo
+    # bridge for ros 2 <---> gazebo topics, minus cameras
     bridge_params: str = os.path.join(
         pkg_simulator,
         "params",
         "bridge.yaml",
     )
-    imu_bridge: Node = Node(
+    bridge: Node = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
         arguments=[
@@ -70,5 +70,5 @@ def generate_launch_description():
     )
 
     return LaunchDescription(
-        [imu_bridge, navigator, gz_server, soro_bridge],
+        [bridge, navigator, aruco, gz_server, soro_bridge],
     )
