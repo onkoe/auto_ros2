@@ -78,7 +78,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget htop ripgrep \
     sudo net-tools zenity xz-utils xinput xterm \
     openssh-server \
-    fonts-inter gtk2-engines adwaita-icon-theme \
+    && rm -rf /var/lib/apt/lists/*
+
+# theming
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends xfce4-whiskermenu-plugin adwaita-icon-theme-full fonts-inter gtk2-engines adwaita-icon-theme \
+    && rm -rf /var/lib/apt/lists/*
+
+# also grab alacritty, a fast (and kinda mid) terminal
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common \
+    && add-apt-repository ppa:aslatter/ppa -y \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends alacritty \
+    && rm -rf /var/lib/apt/lists/*
+
+# other userspace stuff
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 ################
@@ -99,6 +115,28 @@ RUN mkdir -p /home/$USER/.vnc
 RUN touch /home/$USER/.vnc/passwd && chmod 600 /home/$USER/.vnc/passwd
 RUN echo "$PASS" | /opt/TurboVNC/bin/vncpasswd -f >> /home/$USER/.vnc/passwd
 RUN chown -R $USER /home/$USER/
+
+# download + copy the theme over
+RUN curl --location --output /tmp/adw-gtk3.tar.xz \
+    https://github.com/lassekongo83/adw-gtk3/releases/download/v5.6/adw-gtk3v5.6.tar.xz \
+    && xz --decompress /tmp/adw-gtk3.tar.xz \
+    && tar -xf /tmp/adw-gtk3.tar --directory=/home/$USER/.local/share/themes/ \
+    && rm -rf /tmp/adw-gtk3.tar
+
+# do the same for the xfwm4 theme
+RUN git clone --depth 1 --quiet \
+    https://github.com/onkoe/adw-xfwm4.git \
+    /tmp/adw-xfwm4 \
+    && mv /tmp/adw-xfwm4/themes/adw-gtk3-dark/xfwm4 /home/soro/.local/share/themes/adw-gtk3-dark/ \
+    && mv /tmp/adw-xfwm4/themes/adw-gtk3/xfwm4 /home/soro/.local/share/themes/adw-gtk3/ \
+    && rm -rfd /tmp/adw-xfwm4
+
+# install the `iosevka` font (not packaged in ubuntu 22.04)
+RUN wget -O /tmp/fonts-iosevka.deb \
+    http://phd-sid.ethz.ch/debian/fonts-iosevka/fonts-iosevka_22.0.0%2Bds-1_all.deb \
+    && sudo dpkg -i /tmp/fonts-iosevka.deb \
+    && rm /tmp/fonts-iosevka.deb \
+    && sudo fc-cache -fv
 
 # expose ports to host
 EXPOSE $VNC_PORT
