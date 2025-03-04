@@ -6,3 +6,6 @@ build:
     - sudo docker stop soro
     - sudo docker rm soro
     sudo docker build . -t ros2-soro --network host
+
+run:
+    sudo docker compose up

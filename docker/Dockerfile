@@ -95,9 +95,10 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 COPY sysroot/ /
 
 # make a password file for vnc
-RUN mkdir -p /root/.vnc
-RUN touch /root/.vnc/passwd && chmod 600 /root/.vnc/passwd
-RUN echo "$PASS" | /opt/TurboVNC/bin/vncpasswd -f >> /root/.vnc/passwd
+RUN mkdir -p /home/$USER/.vnc
+RUN touch /home/$USER/.vnc/passwd && chmod 600 /home/$USER/.vnc/passwd
+RUN echo "$PASS" | /opt/TurboVNC/bin/vncpasswd -f >> /home/$USER/.vnc/passwd
+RUN chown -R $USER /home/$USER/
 
 # expose ports to host
 EXPOSE $VNC_PORT
