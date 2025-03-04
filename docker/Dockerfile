@@ -75,7 +75,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xorg xserver-xorg-video-dummy \
     xfce4 xfwm4 xfce4-panel xfce4-settings xfce4-clipman xfce4-session \
     thunar mousepad xfce4-terminal xfce4-taskmanager \
-    wget htop \
+    wget htop ripgrep \
     sudo net-tools zenity xz-utils xinput xterm \
     openssh-server \
     fonts-inter gtk2-engines adwaita-icon-theme \
