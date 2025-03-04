@@ -1,0 +1,10 @@
+services:
+  soro:
+    image: ros2-soro
+    container_name: soro
+    ports:
+      - "5901:5901"
+      - "5801:5801"
+    tty: true
+    stdin_open: true
+    restart: unless-stopped

@@ -1,0 +1,8 @@
+# Some basic commands to help build the simulator image.
+
+set shell := ["fish", "-c"]
+
+build:
+    - sudo docker stop soro
+    - sudo docker rm soro
+    sudo docker build . -t ros2-soro --network host
