@@ -6,7 +6,7 @@ import cv2
 import cv2.aruco as aruco
 from loguru import logger
 
-from aruco_node.aruco_dict_map import aruco_dict_map
+from ..aruco_node.aruco_dict_map import aruco_dict_map
 
 
 @dataclasses.dataclass

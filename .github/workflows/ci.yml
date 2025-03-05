@@ -36,7 +36,7 @@ jobs:
       #
       # this'll use colcon
       - name: Build ROS 2 workspace
-        uses: ros-tooling/action-ros-ci@v0.3
+        uses: ros-tooling/action-ros-ci@christophebedard/add-option-disable-coverage
         with:
           target-ros2-distro: humble
           skip-tests: true

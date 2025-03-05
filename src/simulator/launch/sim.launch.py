@@ -70,5 +70,5 @@ def generate_launch_description():
     )
 
     return LaunchDescription(
-        [bridge, navigator, aruco, gz_server, soro_bridge],
+        [bridge, navigator, gz_server, soro_bridge],
     )
