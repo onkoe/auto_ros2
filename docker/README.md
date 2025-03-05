@@ -2,6 +2,8 @@
 
 A Docker image containing everything you need to get up and running. It has the same Ubuntu and ROS 2 version as the Rover.
 
+![Screenshot of the image running ROS 2](./.docker_screenie.avif)
+
 ## Usage
 
 1. Install Docker and Docker Compose (you **don't** need Docker Desktop!)
