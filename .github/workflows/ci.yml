@@ -39,7 +39,7 @@ jobs:
         uses: ros-tooling/action-ros-ci@christophebedard/add-option-disable-coverage
         with:
           target-ros2-distro: humble
-          skip-tests: true
+          coverage-result: false
 
   lint-python:
     runs-on: ubuntu-22.04
