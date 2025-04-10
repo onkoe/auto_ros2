@@ -71,6 +71,7 @@ def get_angle_to_target(
     error: float = normalized_angle - compass_z_degrees
     return error
 
+
 def dist_m_between_coords(coord1: GeoPoint, coord2: GeoPoint) -> float:
     """
     Returns the distance between two coordinates, in meters.
@@ -81,5 +82,7 @@ def dist_m_between_coords(coord1: GeoPoint, coord2: GeoPoint) -> float:
     ).meters
 
     # log and return
-    llogger.trace(f"dist from coord 1 ({coord1}) and coord 2 ({coord2}) is: {dist_m}m")
+    llogger.trace(
+        f"dist from coord 1 ({coord1}) and coord 2 ({coord2}) is: {dist_m}m"
+    )
     return dist_m

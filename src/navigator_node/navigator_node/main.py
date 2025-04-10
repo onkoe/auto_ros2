@@ -1,30 +1,3 @@
-"""
-stuff that the navigator node does:
-- takes a coordinate and an indicator of which of the following we're doing: GPS, Aruco, or Object Detection
-- turn lights RED (for Autonomous mode)
-- no matter what, drive to a GPS coordinate (near a goal)
-    - subscribe to GPS topic
-    - receive messages repeatedly on current location
-    - within class, save coordinate + time recv'd to use later
-    - that includes distance calculation (how far are we from coordinate)
-        - note: consider using WSG83 instead of flat coordinates for correct result
-    - create a wheels publisher
-    - based on distance, how far do we need to move, and in which direction?
-        - PID controller (DO NOT IMPLEMENT MANUALLY @tyler)
-    - send wheel speeds
-- if Aruco, we need to subscribe to Aruco topic once coordinate is reached
-    - this will return a pose of the marker
-    - if marker found, we need to calculate distance to the marker
-        - based on distance, we need to calculate how/where to move
-    - if marker not found, we need to change strategy
-- if Object Detection, we'll do something! but let's not care right now
-- CALLBACK:
-    - oh we received new gps info! now, let's move wheels, turn on lights, or exit
-        - if we have reached coordinate and we are doing GPS, flash green lights, stop Rover
-    - oh we received new aruco info! now, let's change strategy
-- launches other nodes necessary for requested form of navigation
-"""
-
 import asyncio
 import dataclasses
 import sys
