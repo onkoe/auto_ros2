@@ -268,9 +268,13 @@ class NavigatorNode(Node):
 
     async def navigator(self):
         """
-        TODO: docs...
+        This is an async function driven by the `asyncio` runtime created in
+        the `main()` function at the bottom of this file.
 
-        Driven by `asyncio`.
+        It's async such that any async functions we `await` in here have access
+        to the runtime. (Otherwise, they wouldn't be able to run async.)
+
+        Note that this function will stop running after it reaches its goal.
         """
 
         # If goal is reached, turn the node off
