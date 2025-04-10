@@ -441,16 +441,21 @@ class NavigatorNode(Node):
                 self._last_known_rover_coord.position, self.nav_parameters.coord
             )
             if dist_to_target_coord_m < MIN_GPS_DISTANCE:
-                _ = self.get_logger().info("at the coordinate! stopping navigation...")
+                _ = self.get_logger().info(
+                    "at the coordinate! stopping navigation..."
+                )
                 break
 
-            angle_to_dest = get_angle_to_dest(dest_coord, self._last_known_rover_coord)
-            pid_value: float | None = pid(angle_to_dest)
-            llogger.debug(f"angle to target: {angle_to_dest}, pid value: {pid_value}.")
+            angle_to_target = get_angle_to_target(
+                dest_coord, self._last_known_rover_coord, compass_info.z
+            )
+
+            pid_value: float | None = pid(angle_to_target)
+            llogger.debug(f"angle target: {angle_to_target}, pid: {pid_value}.")
 
             if pid_value is None:
                 _ = self.get_logger().error(
-                    f"PID returned none for angle: {angle_to_dest}"
+                    f"PID returned none for angle: {angle_to_target}"
                 )
                 continue
             llogger.debug("got a pid value!")
@@ -472,8 +477,12 @@ class NavigatorNode(Node):
             # - make sure they aren't above max or min
             #
             # max speed (forward) = 255, max speed (reverse) = 0, stopped = 126
-            wheel_speeds.left_wheels = max(0, min(255, wheel_speeds.left_wheels))
-            wheel_speeds.right_wheels = max(0, min(255, wheel_speeds.right_wheels))
+            wheel_speeds.left_wheels = max(
+                0, min(255, wheel_speeds.left_wheels)
+            )
+            wheel_speeds.right_wheels = max(
+                0, min(255, wheel_speeds.right_wheels)
+            )
             llogger.debug(f"filtered speeds: {wheel_speeds}.")
 
             # Publish the wheel speeds
