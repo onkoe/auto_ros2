@@ -19,8 +19,6 @@ from simple_pid import PID
 from typing_extensions import override
 
 # sudo apt install ros-jazzy-geographic-msgs
-# FIXME: make this use the fr module!
-#        seems like there's some kinda Python glue missing...
 from custom_interfaces.msg import (
     GpsMessage,
     ImuMessage,
@@ -92,23 +90,8 @@ class NavigatorNode(Node):
     _last_known_imu_data: ImuMessage | None = None
 
     _curr_marker_transform: PoseStamped | None = None
-    _coordinate_path_queue: list[GeoPoint] = dataclasses.field(default_factory=list)
     _times_marker_seen: int = 0
 
-    """
-    A coordinate queue where the first element of the queue holds whatever coordinate we want to go to next.
-    This is initially set to only hold the given coordinate parameter. Then, if we are doing an ArUco or Object Detection task,
-    further coordinates are added to the queue in order to determine where the Rover searches next. If we find the coordinate for
-    an ArUco tag or object, we add that tag to the front of the queue and generate more search coordinates around that area.
-    No matter what task we're performing, we know we are going to navigate to the parameter coordinate. If we're doing the GPS task,
-    this will be the only element in the queue.
-
-    If not, we can work off of the current element (which could be the original coordinate, or the estimated coordinate for a tag)
-    in order to give ourselves a planned path for each location we want the Rover to go to.
-
-    Then, in the Navigator logic, it follows a simple structure of driving to whatever is at the front, while at the same time,
-    looking for the desired ArUco tag/object.
-    """
 
     _last_searched_coord: GeoPoint | None = None
     """
@@ -170,16 +153,11 @@ class NavigatorNode(Node):
             sys.exit(1)
 
         # construct coordinate from lat + long
-        #
-        # FIXME: find out some kinda solution for the altitude. maybe a
-        #        quick n dirty estimation?
         coord: GeoPoint = GeoPoint()
         coord.latitude = latitude
         coord.longitude = longitude
-        coord.altitude = 0.0  # TODO
+        coord.altitude = 0.0  # TODO(bray): literally just take this from the rust library lol
 
-        # TODO: based off mode, we can require an aruco marker id upon startup,
-        #       but avoid that for coord-only instructions
         mode_int: int | None = self.get_parameter("mode").value
         if mode_int is None:
             _ = self.get_logger().error(
@@ -239,8 +217,8 @@ class NavigatorNode(Node):
         # if in aruco mode, create a subscriber for aruco tracking
         if self.nav_parameters.mode == NavigationMode.ARUCO:
             self._aruco_subscription = self.create_subscription(
-                msg_type=PoseStamped,  # TODO: change to wherever the ar message type is
-                topic="/aruco",  # TODO: change to whatever the markers topic is
+                msg_type=PoseStamped,
+                topic="/marker_pose",
                 callback=self.aruco_callback,
                 qos_profile=QOS_PROFILE,
             )
@@ -260,12 +238,17 @@ class NavigatorNode(Node):
         )
 
         # Add the given GPS coordinate to the coordinate queue
+        #
+        # TODO(bray): we still want to perform a search, but we should try
+        #             doing so in a functional way...
+        """
         self._coordinate_path_queue = []
         self._coordinate_path_queue.append(self.nav_parameters.coord)
         # Calculate and append search coordinates for GPS coord
         self._coordinate_path_queue.extend(
             generate_similar_coordinates(self.nav_parameters.coord, 10, 5)
         )  # takes source coordinate, radius in meters, and a number of points to generate
+        """
 
     # all ROS 2 nodes must be hashable!
     @override
@@ -273,7 +256,9 @@ class NavigatorNode(Node):
         return super().__hash__()
 
     # Function to send lights request given a LightsRequest class instance
-    def send_lights_request(self, lights_info: LightsRequest) -> LightsResponse | None:
+    def send_lights_request(
+        self, lights_info: LightsRequest
+    ) -> LightsResponse | None:
         """
         Send a request to the lights service to turn the lights red.
         """
