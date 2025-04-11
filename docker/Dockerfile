@@ -1,7 +1,5 @@
-# we'll use a base image for ros 2 humble desktop!
-#
-# note: this comes without the simulator, so we'll install that separately...
-FROM osrf/ros:humble-simulation
+# we'll use Ubuntu 22.04, the only version of Ubuntu supported by ROS 2 Humble
+FROM ubuntu:22.04
 
 ################
 # environment variables
@@ -18,13 +16,76 @@ ENV SSHD_PORT=22
 # ...user/password
 ENV USER=soro
 ENV PASS=NotIan!
+#
+# ...language
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+#
+# ...ros2 version
+ENV ROS_DISTRO=humble
 
 ################
 # setup stuff
 ################
 
+# use bash for everything while installing.
+#
+# this is important for ros 2...
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
 # install the shell
 RUN apt-get update && apt-get install -y --no-install-recommends fish curl && rm -rf /var/lib/apt/lists/*
+
+# use the correct timezone
+RUN echo 'Etc/UTC' > /etc/timezone \
+    && ln -s /usr/share/zoneinfo/Etc/UTC /etc/localtime \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# set up ROS 2 packages
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends dirmngr gnupg2 \
+    && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    key='C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654'; \
+    export GNUPGHOME="$(mktemp -d)"; \
+    gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
+    mkdir -p /usr/share/keyrings; \
+    gpg --batch --export "$key" > /usr/share/keyrings/ros2-latest-archive-keyring.gpg; \
+    gpgconf --kill all; \
+    rm -rf "$GNUPGHOME"
+RUN echo "deb [ signed-by=/usr/share/keyrings/ros2-latest-archive-keyring.gpg ] \
+    http://packages.ros.org/ros2/ubuntu jammy main" \
+    > /etc/apt/sources.list.d/ros2-latest.list
+
+# install a few dependencies before using `rosdep`...
+#
+# this includes ros 2 humble core!
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+    build-essential git python3-colcon-common-extensions python3-colcon-mixin python3-rosdep python3-vcstool \
+    ros-humble-ros-core=0.10.0-1* \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# use `rosdep` to install (a lot) of humble pkgs
+RUN . /opt/ros/humble/setup.bash \
+    && rosdep init \
+    && rosdep update --rosdistro $ROS_DISTRO
+
+# update colon mixins
+RUN colcon mixin add default \
+    https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml \
+    && colcon mixin update \
+    && colcon metadata add default \
+    https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml \
+    && colcon metadata update
+
+# install ros 2 humble base + simulation pkgs
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ros-humble-ros-base=0.10.0-1* ros-humble-simulation=0.10.0-1* \
+    && rm -rf /var/lib/apt/lists/*
 
 # default user
 #
@@ -50,8 +111,25 @@ RUN su - $USER -c "fish -c 'curl -sL https://raw.githubusercontent.com/jorgebuca
     fisher install edc/bass && \
     fish_add_path /home/$USER/bin'"
 
+# turn on ubuntu universe repos (required for common ros 2/etc. tools)
+RUN apt-get update \
+    && apt-get install -y software-properties-common \
+    && add-apt-repository -y universe \
+    && rm -rf /var/lib/apt/lists/*
+
+# set up simulator repos and install gazebo fortress
+RUN curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg \
+    && "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y ignition-fortress \
+    && rm -rf /var/lib/apt/lists/*
+
 # install the simulator
-RUN apt-get update && apt-get install -y ros-humble-ros-ign-bridge ros-humble-ros-gz ros-humble-ros-gz-sim ros-humble-ros-gz ros-humble-ros-gz gazebo ros-humble-geographic-msgs ros-humble-geometry-msgs && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y \
+    ros-humble-ros-ign-bridge ros-humble-ros-gz ros-humble-ros-gz-sim ros-humble-ros-gz \
+    ros-humble-ros-gz ros-humble-geographic-msgs ros-humble-geometry-msgs \
+    && rm -rf /var/lib/apt/lists/*
 
 # grab rust and uv
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs
@@ -75,8 +153,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xorg xserver-xorg-video-dummy \
     xfce4 xfwm4 xfce4-panel xfce4-settings xfce4-clipman xfce4-session \
     thunar mousepad xfce4-terminal xfce4-taskmanager \
-    wget htop ripgrep \
-    sudo net-tools zenity xz-utils xinput xterm \
+    wget htop ripgrep unzip \
+    sudo net-tools iputils-ping zenity xz-utils xinput xterm \
     openssh-server \
     && rm -rf /var/lib/apt/lists/*
 
@@ -85,11 +163,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends xfce4-whiskermenu-plugin adwaita-icon-theme-full fonts-inter gtk2-engines adwaita-icon-theme \
     && rm -rf /var/lib/apt/lists/*
 
-# also grab alacritty, a fast (and kinda mid) terminal
+# also grab kitty, a terminal emulator
 RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common \
-    && add-apt-repository ppa:aslatter/ppa -y \
     && apt-get update \
-    && apt-get install -y --no-install-recommends alacritty \
+    && apt-get install -y --no-install-recommends kitty \
     && rm -rf /var/lib/apt/lists/*
 
 # other userspace stuff
@@ -97,15 +174,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
+# install UTF-8 locale stuff, if needed
+RUN apt-get update \
+    && apt-get install locales -y \
+    && locale-gen en_US en_US.UTF-8 \
+    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+# install rust
+RUN su soro -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+
 ################
 # finishing touches
 ################
 
 # prep for sshd
 RUN mkdir /var/run/sshd
-
-# by default, use bash for system stuff
-RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # sysroot
 COPY sysroot/ /
@@ -132,10 +216,10 @@ RUN git clone --depth 1 --quiet \
     && rm -rfd /tmp/adw-xfwm4
 
 # install the `iosevka` font (not packaged in ubuntu 22.04)
-RUN wget -O /tmp/fonts-iosevka.deb \
-    http://phd-sid.ethz.ch/debian/fonts-iosevka/fonts-iosevka_22.0.0%2Bds-1_all.deb \
-    && sudo dpkg -i /tmp/fonts-iosevka.deb \
-    && rm /tmp/fonts-iosevka.deb \
+RUN wget -O /tmp/fonts-iosevka.zip \
+    https://github.com/be5invis/Iosevka/releases/download/v33.2.0/PkgTTC-Iosevka-33.2.0.zip \
+    && unzip /tmp/fonts-iosevka.zip -d /usr/share/fonts/truetype/iosevka \
+    && rm /tmp/fonts-iosevka.zip \
     && sudo fc-cache -fv
 
 # expose ports to host
