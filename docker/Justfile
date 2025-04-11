@@ -5,9 +5,14 @@ ros2_workspace_dir := justfile_directory()
 
 
 build:
-    - sudo docker stop soro
-    - sudo docker rm soro
-    sudo docker build . -t ros2-soro --network host
+    #!/usr/bin/env bash
+    #
+    # check if we need sudo
+    source ./scripts/find_sudo.bash
+
+    $OPTIONAL_SUDO docker stop soro &> /dev/null || true
+    $OPTIONAL_SUDO docker rm soro &> /dev/null || true
+    $OPTIONAL_SUDO docker build . -t ros2-soro --network host
 
 run:
     #!/usr/bin/env bash
