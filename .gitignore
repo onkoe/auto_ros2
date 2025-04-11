@@ -21,3 +21,9 @@ target/
 **/.vscode
 **/.zed
 **/videos
+
+# act, the local github actions runner, will sometimes install to a `bin/`
+# folder when used locally.
+#
+# we'll ignore that here
+bin/**
