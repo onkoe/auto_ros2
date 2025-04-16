@@ -30,8 +30,14 @@ from custom_interfaces.srv._lights import (
 )
 
 # from custom_interfaces.msg import ArMessage as ArucoMessage
-from .coords import dist_m_between_coords, get_angle_to_target
-from .types import NavigationMode, NavigationParameters
+from .coords import calc_angle_to_target, dist_m_between_coords
+from .types import (
+    DEFAULT_PID_DERIVATIVE_GAIN,
+    DEFAULT_PID_INTEGRAL_GAIN,
+    DEFAULT_PID_PROPORTIONAL_GAIN,
+    NavigationMode,
+    NavigationParameters,
+)
 
 ## how long we'll keep the data (DDS)
 QOS_PROFILE: QoSProfile = QoSPresetProfiles.SENSOR_DATA.value
@@ -120,9 +126,15 @@ class NavigatorNode(Node):
         # pid controller controls
         pid_desc: ParameterDescriptor = ParameterDescriptor()
         pid_desc.type = ParameterType.PARAMETER_DOUBLE
-        _ = self.declare_parameter(name="pk", value=1.0, descriptor=pid_desc)
-        _ = self.declare_parameter(name="pi", value=1.2, descriptor=pid_desc)
-        _ = self.declare_parameter(name="pd", value=0.0, descriptor=pid_desc)
+        _ = self.declare_parameter(
+            name="pk", value=DEFAULT_PID_PROPORTIONAL_GAIN, descriptor=pid_desc
+        )
+        _ = self.declare_parameter(
+            name="pi", value=DEFAULT_PID_INTEGRAL_GAIN, descriptor=pid_desc
+        )
+        _ = self.declare_parameter(
+            name="pd", value=DEFAULT_PID_DERIVATIVE_GAIN, descriptor=pid_desc
+        )
         _ = self.get_logger().debug("declared all parameters.")
 
         # try to grab the instructions we're given over parameters.
