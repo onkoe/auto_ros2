@@ -63,8 +63,8 @@ def calc_angle_to_target(
     """
     # Angle from the robot to the target (bearing)
     bearing_radians = math.atan2(
-        dest_coord.longitude - current_coord.longitude,
-        dest_coord.latitude - current_coord.latitude,
+        dest_coord.longitude - current_coord.position.longitude,
+        dest_coord.latitude - current_coord.position.latitude,
     )
     bearing_degrees = math.degrees(bearing_radians)
 
@@ -73,6 +73,7 @@ def calc_angle_to_target(
 
     # Normalize the error to be between -180 and 180
     normalized_error_degrees = ((error_degrees + 180) % 360) - 180
+
     return normalized_error_degrees
 
 
