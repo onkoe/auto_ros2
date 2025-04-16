@@ -171,7 +171,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends software-proper
 
 # other userspace stuff
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    vim \
+    vim psmisc \
     && rm -rf /var/lib/apt/lists/*
 
 # install UTF-8 locale stuff, if needed
