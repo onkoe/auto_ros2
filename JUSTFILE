@@ -13,4 +13,5 @@ sim: build
     ros2 launch simulator sim.launch.py
 
 clean:
-    rm -rfd install/ install/ log/ .venv/ .cargo/
+    rm -rfd install/ install/ log/ .cargo/
+    - rm -rfd .venv/
