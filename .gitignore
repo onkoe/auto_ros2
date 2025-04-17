@@ -5,6 +5,7 @@ src/**/uv.lock
 
 # rust build stuff
 target/
+.cargo/
 
 # top-level build (i think by colcon?)
 **/build/
