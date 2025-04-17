@@ -58,8 +58,8 @@ def generate_launch_description():
     )
 
     # add some coordinate to go to...
-    latitude = 0.00002
-    longitude = 0.00002
+    latitude = 0.0002
+    longitude = 0.0002
 
     mode_int: int = NavigationMode.ARUCO.value
 
