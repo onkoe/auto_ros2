@@ -1,7 +1,6 @@
 import asyncio
 import sys
 from dataclasses import dataclass
-from math import abs
 
 import rclpy
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
