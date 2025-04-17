@@ -82,3 +82,16 @@ run:
     echo -e "${LIGHTPURPLE}localhost:5901${NOCOLOR}"
     echo
     echo -e "${LIGHTRED}Note that the password is \`${LIGHTPURPLE}NotIan!${LIGHTRED}\`, with the punctuation.${NOCOLOR}"
+
+# cleans up **ALL** Docker stuff on your computer.
+#
+# this can result in a lot more storage space on your computer,
+# but please avoid doing it if you've got a lot of Docker images and such.
+#
+# they will all be removed - even if unrelated to SoRo!
+clean:
+    #!/usr/bin/env bash
+    source ./scripts/find_sudo.bash
+
+    # prune everything
+    $OPTIONAL_SUDO docker system prune --volumes
