@@ -122,17 +122,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
-name = "autonomous_node"
-version = "0.1.0"
-dependencies = [
- "log4rs",
- "ros2-client",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "backtrace"
 version = "0.3.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2146,3 +2135,15 @@ dependencies = [
  "quote",
  "syn 2.0.98",
 ]
+
+[[patch.unused]]
+name = "lights_node"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "sensors_node"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "wheels_node"
+version = "0.1.0"
