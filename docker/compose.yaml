@@ -19,3 +19,11 @@ services:
         bind:
           propagation: rprivate
           selinux: Z
+      - type: volume
+        source: auto_ros2_venv
+        target: /home/soro/auto_ros2/.venv
+
+# force the container's virtual environment to use a fake mount (not accessible
+# on the host)
+volumes:
+  auto_ros2_venv:
