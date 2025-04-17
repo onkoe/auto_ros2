@@ -123,3 +123,75 @@ class MyClass(Node):
     def __hash__(self) -> int:
         return super().__hash__()
 ```
+
+## Unknown command: just
+
+We use [`just`](https://just.systems/man/en/) to build the code! However, it's included in the virtual environment - not on your system.
+
+To use `just`, run the `uv sync` command first, then source the virtual environment. The `SOURCE_SCRIPT` (either for Fish or Bash shell) will work great for that!
+
+```fish
+soro@71b7d4dde026 ~/auto_ros2 (feat/docker_better_compat)> just sim
+fish: Unknown command: just
+soro@71b7d4dde026 ~/auto_ros2 (feat/docker_better_compat)> uv sync
+Resolved 90 packages in 7ms
+Audited 68 packages in 0.02ms
+soro@71b7d4dde026 ~/auto_ros2 (feat/docker_better_compat)> . ./SOURCE_SCRIPT.fish
+You should be running this script using `. ./SOURCE_SCRIPT.fish`.
+If you didn't do so, please restart the script.
+
+Sourcing virtual environment...
+Done!
+Sourcing ROS 2 environment files...
+Done!
+(autonomous) soro@71b7d4dde026 ~/auto_ros2 (feat/docker_better_compat)> just sim
+Building the ROS 2 workspace...
+colcon build --symlink-install
+Starting >>> aruco_node
+```
+
+## I can't run the simulator!
+
+If you're coming from a clean repo, with no build files, then you try to run the simulator, it'll complain loudly:
+
+```fish
+soro@71b7d4dde026 ~/auto_ros2 (feat/docker_better_compat)> just sim
+fish: Unknown command: just
+soro@71b7d4dde026 ~/auto_ros2 (feat/docker_better_compat) [127]> uv sync
+Resolved 90 packages in 7ms
+Audited 68 packages in 0.02ms
+soro@71b7d4dde026 ~/auto_ros2 (feat/docker_better_compat)> . ./SOURCE_SCRIPT.fish
+You should be running this script using `. ./SOURCE_SCRIPT.fish`.
+If you didn't do so, please restart the script.
+
+Sourcing virtual environment...
+Done!
+Sourcing ROS 2 environment files...
+bass: line 1: install/local_setup.bash: No such file or directory
+Done!
+(autonomous) soro@71b7d4dde026 ~/auto_ros2 (feat/docker_better_compat)> just sim
+Building the ROS 2 workspace...
+colcon build --symlink-install
+Starting >>> aruco_node
+# (...)
+Finished <<< sensors_node [7.14s]
+
+Sourcing virtual environment...
+gazebo: no process found
+ruby: no process found
+gzserver: no process found
+gzclient: no process found
+ign: no process found
+Done!
+
+Sourcing ROS 2 environment files...
+
+The simulation is about to begin...
+ros2 launch simulator sim.launch.py
+Done!
+Package 'simulator' not found: "package 'simulator' not found, searching: ['/opt/ros/humble']"
+error: Recipe `sim` failed on line 13 with exit code 1
+(autonomous) soro@71b7d4dde026 ~/auto_ros2 (feat/docker_better_compat) [1]>
+```
+
+You'll need to source again after [building a new ROS 2 package](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Creating-Your-First-ROS2-Package.html).
