@@ -1,7 +1,9 @@
+import math
 from dataclasses import dataclass
 from time import sleep
 
 import rclpy
+from geographic_msgs.msg import GeoPointStamped
 from geometry_msgs.msg import Vector3
 from gps_msgs.msg import GPSFix as GpsFix
 from loguru import logger as llogger
@@ -17,7 +19,6 @@ from sensor_msgs.msg import Imu, NavSatFix
 from std_msgs.msg import Float64
 from typing_extensions import override
 
-from custom_interfaces.msg._gps_message import GpsMessage
 from custom_interfaces.msg._imu_message import ImuMessage
 from custom_interfaces.msg._wheels_message import WheelsMessage
 from custom_interfaces.srv._lights import Lights
@@ -65,7 +66,7 @@ class SoroBridge(Node):
         super().__init__("soro_bridge")
 
         self.__gps_publisher = self.create_publisher(
-            GpsMessage, "/sensors/gps", QOS_PROFILE
+            GeoPointStamped, "/sensors/gps", QOS_PROFILE
         )
         self.__sim_gps_subscriber = self.create_subscription(
             GpsFix, "/sim/gps", self.sim_gps_callback, QOS_PROFILE
@@ -162,17 +163,11 @@ class SoroBridge(Node):
 
     def sim_gps_callback(self, msg: NavSatFix):
         """immediately publishes to the `/sensors/gps` topic after translating"""
-        translated: GpsMessage = GpsMessage()
+        translated: GeoPointStamped = GeoPointStamped()
 
-        translated.lat = msg.latitude
-        translated.lon = msg.longitude
-        translated.height = msg.altitude
-
-        # using some default values for now.
-        #
-        # FIXME: iirc, there's a gz msg ty with real values for these
-        translated.error_mm = 0.0
-        translated.time_of_week = 0
+        translated.position.latitude = msg.latitude
+        translated.position.longitude = msg.longitude
+        translated.position.altitude = msg.altitude
 
         llogger.debug(f"publishing gps info: {translated}")
         self.__gps_publisher.publish(translated)
@@ -214,6 +209,9 @@ class SoroBridge(Node):
         translated.compass.x = 0.0
         translated.compass.y = 0.0
         translated.compass.z = compass_degrees
+
+        # TODO: remove
+        llogger.warning(f"compass degrees: {compass_degrees}")
 
         self.__imu_publisher.publish(translated)
 

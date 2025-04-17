@@ -1,1 +1,11 @@
-[patch.crates-io]
+[patch.crates-io.wheels_node]
+path = "/home/soro/auto_ros2/install/wheels_node/share/wheels_node/rust"
+
+[patch.crates-io.sensors_node]
+path = "/home/soro/auto_ros2/install/sensors_node/share/sensors_node/rust"
+
+[patch.crates-io.lights_node]
+path = "/home/soro/auto_ros2/install/lights_node/share/lights_node/rust"
+
+[patch.crates-io.autonomous_node]
+path = "/home/soro/auto_ros2/install/autonomous_node/share/autonomous_node/rust"

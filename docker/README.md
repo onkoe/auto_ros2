@@ -6,8 +6,12 @@ A Docker image containing everything you need to get up and running. It has the 
 
 ## Usage
 
-1. Install Docker and Docker Compose (you **don't** need Docker Desktop!)
+1. Install Docker and Docker Compose
+
+- On Windows, use WSL 2 to install it on Ubuntu. The general installation steps for Linux on the Docker website will apply.
+
 1. Clone this repo
+1. `cd docker/` if you haven't already :D
 1. `uv sync`, `. .venv/bin/activate`
 1. Build the image with `just build`
 1. Run it with `just run`

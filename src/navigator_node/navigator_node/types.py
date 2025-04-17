@@ -24,9 +24,9 @@ class GoToCoordinateReason(Enum):
 
 # these are used by the PID controller... if not given through the ROS 2
 # parameters!
-DEFAULT_PID_PROPORTIONAL_GAIN: float = 0.0
-DEFAULT_PID_INTEGRAL_GAIN: float = 0.0
-DEFAULT_PID_DERIVATIVE_GAIN: float = 0.0
+DEFAULT_PID_PROPORTIONAL_GAIN: float = 0.08
+DEFAULT_PID_INTEGRAL_GAIN: float = 0.04
+DEFAULT_PID_DERIVATIVE_GAIN: float = 0.08
 
 
 @dataclass(kw_only=True)
