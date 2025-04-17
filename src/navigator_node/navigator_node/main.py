@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import rclpy
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Vector3
 from loguru import logger as llogger
 from rcl_interfaces.msg import ParameterType
 from rclpy.client import Client
@@ -396,75 +396,60 @@ class NavigatorNode(Node):
         right_wheels: float
 
         # continue moving while we're not near the coordinate
-        while (
-            dist_m_between_coords(
-                self._last_known_rover_coord.position, self.nav_parameters.coord
-            )
-            > MIN_GPS_DISTANCE
-        ):
+        distance_from_target_m: float = dist_m_between_coords(
+            self._last_known_rover_coord.position, self.nav_parameters.coord
+        )
+        while distance_from_target_m > MIN_GPS_DISTANCE:
             # grab the imu info
             # grab the x, y, z compass data
             compass_info: Vector3 = self._last_known_imu_data.compass
 
             # reset wheel speeds before adjustment
-            left_wheels: float = 1.0
-            right_wheels: float = 1.0
-
-            # if we're at the coordinate, stop trying to go there lol
-            dist_to_target_coord_m: float = dist_m_between_coords(
-                self._last_known_rover_coord.position, self.nav_parameters.coord
-            )
-            if dist_to_target_coord_m < MIN_GPS_DISTANCE:
-                _ = self.get_logger().info(
-                    "at the coordinate! stopping navigation..."
-                )
-                break
+            left_wheels = 1.0
+            right_wheels = 1.0
 
             # check our angle to the target coordinate
             angle_to_target: float = calc_angle_to_target(
                 dest_coord, self._last_known_rover_coord, compass_info.z
             )
 
-            # if that angle is a particularly low value, we shouldn't use it.
-            #
-            # instead, we'll just say the pid controller specified a value
-            # close to zero
-            if abs(angle_to_target) < 4.0:
-                pid_value = 0.0
-
+            # grab the pid output (which is the error correction FROM NEUTRAL POSITION, SPEED 0)
             pid_value: float | None = pid(angle_to_target)
-            llogger.debug(f"angle target: {angle_to_target}, pid: {pid_value}.")
-
             if pid_value is None:
                 _ = self.get_logger().error(
                     f"PID returned none for angle: {angle_to_target}"
                 )
                 continue
+            llogger.debug(f"angle target: {angle_to_target}, pid: {pid_value}.")
 
-            # apply pid value to float repr
-            try:
-                right_wheels += pid_value
-                left_wheels -= pid_value
+            # adjust them by the pid correction output
+            left_wheels += pid_value
+            right_wheels -= pid_value
 
-                # offset them by 126, as 126_u8 is the neutral value
-                # (not moving) speed for the Rover's wheels.
-                offset_right_wheels = right_wheels + 126
-                offset_left_wheels = left_wheels + 126
+            # offset them by 126, as 126_u8 is the neutral value
+            # (not moving) speed for the Rover's wheels.
+            offset_right_wheels = right_wheels + 126
+            offset_left_wheels = left_wheels + 126
 
-                # clamp values beforehand - make sure they aren't above max or
-                # below min.
-                #
-                # max speed (forward) = 255, max speed (reverse) = 0, stopped = 126
-                offset_right_wheels = max(0.0, min(255.0, offset_right_wheels))
-                offset_left_wheels = max(0.0, min(255.0, offset_left_wheels))
+            # clamp values beforehand - make sure they aren't above max or
+            # below min.
+            #
+            # max speed (forward) = 255, max speed (reverse) = 0, stopped = 126
+            offset_right_wheels = max(0.0, min(255.0, offset_right_wheels))
+            offset_left_wheels = max(0.0, min(255.0, offset_left_wheels))
 
-                # cast float -> int, set on message type
-                wheel_speeds.right_wheels = int(offset_right_wheels)
-                wheel_speeds.left_wheels = int(offset_left_wheels)
-            except Exception as e:
-                llogger.error(f"exception while modifying wheel speeds: {e}")
-                await asyncio.sleep(0.10)
-                continue
+            # cast float -> int, set on message type
+            wheel_speeds.right_wheels = int(offset_right_wheels)
+            wheel_speeds.left_wheels = int(offset_left_wheels)
+
+            # if the angle to the target is low, we're in line with it.
+            #
+            # so... we can just start moving toward it :D
+            if abs(angle_to_target) < 10.0:  # degrees
+                llogger.error("TODO: REMOVE")
+                llogger.error("set same wheel speeds (we're facing the target)")
+                wheel_speeds.right_wheels = 126 + 80
+                wheel_speeds.left_wheels = 126 + 80
 
             # Publish the wheel speeds
             self._wheels_publisher.publish(wheel_speeds)
@@ -474,6 +459,16 @@ class NavigatorNode(Node):
 
             # Small delay to prevent flooding messages
             await asyncio.sleep(0.1)
+
+            # finally, we'll set our distance again for the while loop condition.
+            #
+            # (in other words, stop when we're close)
+            distance_from_target_m = dist_m_between_coords(
+                self._last_known_rover_coord.position, self.nav_parameters.coord
+            )
+            llogger.error(
+                f"distance from target: {int(distance_from_target_m)} meters"
+            )
 
         # when we're done running, stop the wheels explicitly
         self.stop_wheels()
