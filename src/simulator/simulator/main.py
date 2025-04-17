@@ -187,12 +187,33 @@ class SoroBridge(Node):
         translated.gyro = msg.angular_velocity
         translated.temp_c = 0.0
 
-        # FIXME: this is almost certainly wrong
+        # get compass in deg from quat.
+        #
+        # we're gonna assume +z is forward, so it's just typical 3d space
+        qx = msg.orientation.x
+        qy = msg.orientation.y
+        qz = msg.orientation.z
+        qw = msg.orientation.w
+
+        # this is the rotation on the z-axis
+        #
+        # from wikipedia:
+        #
+        # https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+        yaw = math.atan2(
+            2.0 * (qw * qz + qx * qy), 1.0 - (2.0 * (qy * qy + qz * qz))
+        )
+
+        # convert it into degrees
+        compass_degrees = (math.degrees(yaw) + 360) % 360
+
+        # FIXME(bray): make this just one value
+        #
+        # ...to save my poor innocent heart from more nonsense
         translated.compass = Vector3()
-        translated.compass.x = msg.orientation.x
-        translated.compass.y = msg.orientation.y
-        translated.compass.z = msg.orientation.z
-        _nothing = msg.orientation.w  # yikes())
+        translated.compass.x = 0.0
+        translated.compass.y = 0.0
+        translated.compass.z = compass_degrees
 
         self.__imu_publisher.publish(translated)
 
