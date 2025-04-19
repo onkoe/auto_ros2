@@ -1,5 +1,6 @@
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
+from navigator_node.types import NavigationMode
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
@@ -7,7 +8,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     PathJoinSubstitution,
 )
-from navigator_node.types import NavigationMode
 
 
 def generate_launch_description():
@@ -34,6 +34,29 @@ def generate_launch_description():
 
     mode_int: int = NavigationMode.ARUCO.value
 
+    nav2_bringup_node: Node = Node(
+        name="nav2_bringup_node",
+        namespace="",
+        package="rclcpp_components",
+        executable="component_container",
+        output="screen",
+    )
+
+    # start nav2 using our bringup script
+    nav2_bringup_dir: str = get_package_share_directory("drive_launcher")
+    nav2_bringup: LaunchDescription = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [nav2_bringup_dir, "/launch", "/helpers", "/start_nav2.py"],
+        ),
+        launch_arguments={
+            "use_sim_time": "True",
+            "namespace": "",
+            "container_name": "nav2_bringup_node",
+            "params_file": PathJoinSubstitution([pkg_simulator, "params", "nav2.yaml"]),
+            "autostart": "True",
+        }.items(),
+    )
+
     # make an instance of the navigator node!
     navigator: Node = Node(
         executable="navigator_node",
@@ -54,5 +77,7 @@ def generate_launch_description():
             gazebo_launch_file,
             navigator,
             log_setting,
+            nav2_bringup_node,
+            nav2_bringup,
         ],
     )
