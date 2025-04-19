@@ -14,4 +14,5 @@ sim: build
 
 clean:
     rm -rfd install/ install/ log/ .cargo/
+    rm -rfd build/
     - rm -rfd .venv/
