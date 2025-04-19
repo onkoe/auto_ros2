@@ -9,10 +9,11 @@ build:
     #
     # check if we need sudo
     source ./scripts/find_sudo.bash
+    source ./scripts/find_docker.bash
 
-    $OPTIONAL_SUDO docker stop soro &> /dev/null || true
-    $OPTIONAL_SUDO docker rm soro &> /dev/null || true
-    $OPTIONAL_SUDO docker build . -t ros2-soro --network host
+    $OPTIONAL_SUDO $DOCKER stop soro &> /dev/null || true
+    $OPTIONAL_SUDO $DOCKER rm soro &> /dev/null || true
+    $OPTIONAL_SUDO $DOCKER build . -t ros2-soro
 
 run:
     #!/usr/bin/env bash
@@ -40,15 +41,18 @@ run:
     # (we don't want it on macOS)
     source ./scripts/find_sudo.bash
 
+    # use podman or docker depending on what's present...
+    source ./scripts/find_docker.bash
+
     # if we're on linux, fix the networking
-    if [ "$(uname)" = "Linux" ]; then
+    if [ "$(uname)" = "Linux" ] && ! command -v podman &> /dev/null; then
         echo "Attempting to fix networking on Linux..."
         echo "${LIGHTRED}Please enter your password if prompted!${NOCOLOR}"
 
         # find docker's bridge network ip range
         #
         # note: copilot made that regex, dont trust it 100%
-        DOCKER_SUBNET=$(sudo docker network inspect bridge | grep -oP '"Subnet": "\K[^"]+')
+        DOCKER_SUBNET=$(sudo $DOCKER network inspect bridge | grep -oP '"Subnet": "\K[^"]+')
         DOCKER_INTERFACE="docker0"
 
         # on that range, we'll want to allow it on iptables
@@ -61,12 +65,18 @@ run:
     fi
 
     # remove any existing container. we dont want that mf around
-    $OPTIONAL_SUDO docker compose down
-    $OPTIONAL_SUDO docker rm soro >> /dev/null || true
+    $OPTIONAL_SUDO $DOCKER compose down
+    $OPTIONAL_SUDO $DOCKER rm soro >> /dev/null || true
+
+    # set any parameters (currently just for rootless podman)
+    set DOCKER_ARGS=""
+    if [ "$DOCKER" = "podman" ]; then
+        set DOCKER_ARGS="--pod-args=\"--userns=keep-id\""
+    fi
 
     echo -e "Starting Docker container..."
     echo -e "${LIGHTRED}If requested, please enter your password.${NOCOLOR}"
-    $OPTIONAL_SUDO docker compose up -d
+    $OPTIONAL_SUDO $DOCKER-compose $DOCKER_ARGS up -d
     echo
     echo -e "${GREEN}Container started successfully!${NOCOLOR}"
     echo
@@ -92,6 +102,7 @@ run:
 clean:
     #!/usr/bin/env bash
     source ./scripts/find_sudo.bash
+    source ./scripts/find_docker.bash
 
     # prune everything
-    $OPTIONAL_SUDO docker system prune --volumes
+    $OPTIONAL_SUDO $DOCKER system prune --volumes
