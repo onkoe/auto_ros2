@@ -2,7 +2,7 @@ name: CI
 on: ["push"]
 
 jobs:
-  ci:
+  check-ros2-workspace:
     # same as jetson :p
     runs-on: ubuntu-22.04
     container:
@@ -67,12 +67,10 @@ jobs:
           . .venv/bin/activate
 
       # check python lints
-      - name: Lint and Format (Python)
-        run: |
-          uv tool run ruff check
-          uv tool run ruff format --check
+      - name: Lint (Python)
+        run: uv tool run ruff check
 
-  lint-rust:
+  format-python:
     runs-on: ubuntu-22.04
     container:
       image: osrf/ros:humble-simulation
@@ -84,6 +82,34 @@ jobs:
       # install node real quick
       - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
 
+      # grab uv
+      - uses: astral-sh/setup-uv@v5
+
+      # grab a python binary
+      - name: Set up Python
+        run: uv python install
+
+      # set up environment
+      - name: Install the project
+        run: |
+          uv sync --all-extras --dev
+          . .venv/bin/activate
+
+      # check python lints
+      - name: Format with Ruff (Python)
+        run: uv tool run ruff format --check
+
+  lint-rust:
+    runs-on: ubuntu-22.04
+    container:
+      image: osrf/ros:humble-simulation
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+
       - uses: moonrepo/setup-rust@v1
         with:
           components: clippy, rustfmt
@@ -92,11 +118,49 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # run rust lints
-      - name: Lint and Format (Rust)
-        run: |
-          cargo clippy --workspace
-          cargo fmt --check
+      - name: Lint with Clippy (Rust)
+        run: cargo clippy --workspace
+
+  test-rust:
+    runs-on: ubuntu-22.04
+    container:
+      image: osrf/ros:humble-simulation
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+
+      - uses: moonrepo/setup-rust@v1
+        with:
+          components: clippy, rustfmt
+          bins: cargo-nextest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # run tests
-      - name: Run Rust workspace tests
+      - name: Test with Nextest (Rust)
         run: cargo nextest run --test-threads 1 --no-fail-fast
+
+  format-rust:
+    runs-on: ubuntu-22.04
+    container:
+      image: osrf/ros:humble-simulation
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+
+      - uses: moonrepo/setup-rust@v1
+        with:
+          components: clippy, rustfmt
+          bins: cargo-nextest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # run the formatter
+      - name: Format with `rustfmt` (Rust)
+        run: cargo fmt --check
