@@ -18,7 +18,7 @@ services:
         read_only: false
         bind:
           propagation: rprivate
-          selinux: Z
+          selinux: z # note: comment this out if rootless
       - type: volume
         source: auto_ros2_venv
         target: /home/soro/auto_ros2/.venv
