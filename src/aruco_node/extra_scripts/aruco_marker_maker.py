@@ -5,13 +5,6 @@ from cv2.typing import MatLike  # something that behaves like a matrix
 from typing_extensions import Annotated
 
 
-def show_image(image_name: str, image: MatLike):
-    # Show the resulting image
-    cv.imshow("Image with ArUco Marker", image)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-
-
 def create_perfect_camera(image_width: int, image_height: int) -> list[MatLike]:
     # Calculate image center
     cx = image_width / 2
