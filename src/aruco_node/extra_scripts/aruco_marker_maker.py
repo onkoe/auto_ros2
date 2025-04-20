@@ -6,6 +6,7 @@ from typing_extensions import Annotated
 
 
 def create_perfect_camera(image_width: int, image_height: int) -> list[MatLike]:
+    """Create camera matrix and distance coefficients for a perfect camera (no distortions) with images that are 640x480."""
     # Calculate image center
     cx = image_width / 2
     cy = image_height / 2
@@ -53,15 +54,11 @@ def main(
         ],
         dtype=np.float32,
     )
-    marker_rvec = np.array(
-        [0.0, 0.0, 0.0], dtype=np.float32
-    )  # No marker roatation!
+    marker_rvec = np.array([0.0, 0.0, 0.0], dtype=np.float32)  # No marker rotation!
 
     # Calculate where the aruco marker corners are in relation to the center of the aruco marker in 3D space
     marker_length = 0.175  # correlates to URC standard marker length in meters
-    half_size = (
-        marker_length / 2
-    )  # distance from center of aruco marker to perimeter
+    half_size = marker_length / 2  # distance from center of aruco marker to perimeter
     object_points: MatLike = np.array(
         [
             [-half_size, half_size, 0],  # Top-left
@@ -73,9 +70,7 @@ def main(
     )
 
     # Assume we have a perfect camera (no distortions, rotation, etc.)
-    camera_matrix, dist_coeffs = create_perfect_camera(
-        image_width, image_height
-    )
+    camera_matrix, dist_coeffs = create_perfect_camera(image_width, image_height)
 
     # Create an empty white image
     image: MatLike = np.ones((480, 640, 3), dtype=np.uint8) * 255
@@ -94,9 +89,7 @@ def main(
     bottom_right = image_points[1]
 
     # Resize the aruco (shrink or stretch) image based on the calcualed image points
-    marker_image: MatLike = cv.imread(
-        "extra_scripts/aruco_markers/aruco_marker_1.png"
-    )
+    marker_image: MatLike = cv.imread("extra_scripts/aruco_markers/aruco_marker_1.png")
     side_length = bottom_right[0] - top_left[0]
     marker_image = cv.resize(
         marker_image,
@@ -104,9 +97,7 @@ def main(
     )
 
     # Add the aruco marker to the image
-    image[top_left[1] : bottom_right[1], top_left[0] : bottom_right[0]] = (
-        marker_image
-    )
+    image[top_left[1] : bottom_right[1], top_left[0] : bottom_right[0]] = marker_image
 
     cv.imwrite(
         f"aruco_marker_dist_{str(marker_distance).replace('.', '_')}m.jpg",

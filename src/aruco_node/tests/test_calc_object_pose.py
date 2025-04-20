@@ -19,9 +19,7 @@ def sim_aruco_dist_and_images() -> list[tuple[float, MatLike]]:
     dist_and_images: list[tuple[float, MatLike]] = []
     for image_filename in image_filenames:
         # Get the meter distance from the filename
-        dist = float(
-            image_filename.split("dist_")[1].split("m")[0].replace("_", ".")
-        )
+        dist = float(image_filename.split("dist_")[1].split("m")[0].replace("_", "."))
 
         # Read the image
         image = cv.imread(f"{directory_path}/{image_filename}")
@@ -40,9 +38,7 @@ def sim_aruco_dist_and_images() -> list[tuple[float, MatLike]]:
 def aruco_object_points() -> MatLike:
     # Calculate where the aruco marker corners are in relation to the center of the aruco marker in 3D space
     marker_length = 0.175  # correlates to URC standard marker length in meters
-    half_size = (
-        marker_length / 2
-    )  # distance from center of aruco marker to perimeter
+    half_size = marker_length / 2  # distance from center of aruco marker to perimeter
 
     aruco_object_points: MatLike = np.array(
         [
@@ -103,12 +99,6 @@ def test_aruco_dist_from_sim_image(
         ) = aruco_detector.detectMarkers(image)
 
         # Calculate the distance from the camera to the marker
-        # success, rvev, tvec = cv.solvePnP(
-        #     aruco_object_points,
-        #     detected_marker_corners[0],
-        #     camera_matrix,
-        #     dist_coeffs,
-        # )
         success, quat, tvec = calc_object_pose(
             aruco_object_points,
             detected_marker_corners[0],
