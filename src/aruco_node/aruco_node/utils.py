@@ -23,7 +23,7 @@ def calc_object_pose(
     # Convert OpencCV's rotation vector to a rotation matrix
     rotation_matrix_cv, _ = cv.Rodrigues(rotation_vector)
 
-    # A transformation matrix to conver from OpenCV's coordinate system (x: right, y: down, z: forward)
+    # A transformation matrix to convert from OpenCV's coordinate system (x: right, y: down, z: forward)
     # to the robot's coordinate system (z: right, x: up, y: forward)
     # OpenCV's Coordinate system
     cv_to_robot = np.array(

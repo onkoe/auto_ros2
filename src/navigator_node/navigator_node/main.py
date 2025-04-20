@@ -17,7 +17,6 @@ from typing_extensions import override
 
 # sudo apt install ros-jazzy-geographic-msgs
 from custom_interfaces.msg import (
-    GpsMessage,
     ImuMessage,
     WheelsMessage,
 )
@@ -30,8 +29,14 @@ from custom_interfaces.srv._lights import (
 )
 
 # from custom_interfaces.msg import ArMessage as ArucoMessage
-from .coords import dist_m_between_coords, get_angle_to_target
-from .types import NavigationMode, NavigationParameters
+from .coords import calc_angle_to_target, dist_m_between_coords
+from .types import (
+    DEFAULT_PID_DERIVATIVE_GAIN,
+    DEFAULT_PID_INTEGRAL_GAIN,
+    DEFAULT_PID_PROPORTIONAL_GAIN,
+    NavigationMode,
+    NavigationParameters,
+)
 
 ## how long we'll keep the data (DDS)
 QOS_PROFILE: QoSProfile = QoSPresetProfiles.SENSOR_DATA.value
@@ -120,9 +125,15 @@ class NavigatorNode(Node):
         # pid controller controls
         pid_desc: ParameterDescriptor = ParameterDescriptor()
         pid_desc.type = ParameterType.PARAMETER_DOUBLE
-        _ = self.declare_parameter(name="pk", value=1.0, descriptor=pid_desc)
-        _ = self.declare_parameter(name="pi", value=1.2, descriptor=pid_desc)
-        _ = self.declare_parameter(name="pd", value=0.0, descriptor=pid_desc)
+        _ = self.declare_parameter(
+            name="pk", value=DEFAULT_PID_PROPORTIONAL_GAIN, descriptor=pid_desc
+        )
+        _ = self.declare_parameter(
+            name="pi", value=DEFAULT_PID_INTEGRAL_GAIN, descriptor=pid_desc
+        )
+        _ = self.declare_parameter(
+            name="pd", value=DEFAULT_PID_DERIVATIVE_GAIN, descriptor=pid_desc
+        )
         _ = self.get_logger().debug("declared all parameters.")
 
         # try to grab the instructions we're given over parameters.
@@ -217,7 +228,7 @@ class NavigatorNode(Node):
 
         # connect to our sensors using subscriptions
         self._gps_subscription = self.create_subscription(
-            msg_type=GpsMessage,
+            msg_type=GeoPointStamped,
             topic="/sensors/gps",
             callback=self.gps_callback,
             qos_profile=QOS_PROFILE,
@@ -337,7 +348,6 @@ class NavigatorNode(Node):
         llogger.info(f"Async task is up! Going to coordinate at {dest_coord}...")
 
         # Make sure that we are receiving rover imu and coordinates
-        # TODO: Implement a version of this function that actually uses the IMU compass data. For now, we're just using the GPS data
         while self._last_known_rover_coord is None:
             _ = self.get_logger().warn("no GPS data yet; waiting to navigate...")
             await asyncio.sleep(0.25)
@@ -346,9 +356,6 @@ class NavigatorNode(Node):
         while self._last_known_imu_data is None:
             _ = self.get_logger().warn("no IMU data yet. waiting to navigate...")
             await asyncio.sleep(0.25)
-
-        # grab the x, y, z compass data
-        compass_info: Vector3 = self._last_known_imu_data.compass
 
         # Start navigating to the coordinates using a PID controller
         # NOTE: I have a funny feeling this will send wheel speeds too fast
@@ -369,55 +376,72 @@ class NavigatorNode(Node):
         #             degrees of range
         TARGET_ANGLE_VALUE: float = 0.0
 
-        pid = PID(pk, pi, pd, setpoint=TARGET_ANGLE_VALUE)
+        pid = PID(
+            pk,
+            pi,
+            pd,
+            setpoint=TARGET_ANGLE_VALUE,
+            output_limits=(-128.0, 128.0),
+        )
         wheel_speeds: WheelsMessage = WheelsMessage()
-        left_wheels: float = 0.0
-        right_wheels: float = 0.0
-        llogger.debug("made wheel speeds.")
+        left_wheels: float
+        right_wheels: float
 
-        while True:
-            # if we're at the coordinate, stop trying to go there lol
-            dist_to_target_coord_m: float = dist_m_between_coords(
-                self._last_known_rover_coord.position, self.nav_parameters.coord
-            )
-            if dist_to_target_coord_m < MIN_GPS_DISTANCE:
-                _ = self.get_logger().info("at the coordinate! stopping navigation...")
-                break
+        # continue moving while we're not near the coordinate
+        distance_from_target_m: float = dist_m_between_coords(
+            self._last_known_rover_coord.position, self.nav_parameters.coord
+        )
+        while distance_from_target_m > MIN_GPS_DISTANCE:
+            # grab the imu info
+            # grab the x, y, z compass data
+            compass_info: Vector3 = self._last_known_imu_data.compass
 
-            angle_to_target = get_angle_to_target(
+            # reset wheel speeds before adjustment
+            left_wheels = 1.0
+            right_wheels = 1.0
+
+            # check our angle to the target coordinate
+            angle_to_target: float = calc_angle_to_target(
                 dest_coord, self._last_known_rover_coord, compass_info.z
             )
 
+            # grab the pid output (which is the error correction FROM NEUTRAL POSITION, SPEED 0)
             pid_value: float | None = pid(angle_to_target)
-            llogger.debug(f"angle target: {angle_to_target}, pid: {pid_value}.")
-
             if pid_value is None:
                 _ = self.get_logger().error(
                     f"PID returned none for angle: {angle_to_target}"
                 )
                 continue
-            llogger.debug("got a pid value!")
+            llogger.debug(f"angle target: {angle_to_target}, pid: {pid_value}.")
 
-            # apply pid value to float repr
-            try:
-                right_wheels += pid_value
-                left_wheels -= pid_value
+            # adjust them by the pid correction output
+            left_wheels += pid_value
+            right_wheels -= pid_value
 
-                # cast float -> int, set on message type
-                wheel_speeds.right_wheels = int(left_wheels)
-                wheel_speeds.left_wheels = int(right_wheels)
-                llogger.debug(f"modified speeds: {wheel_speeds}.")
-            except Exception as e:
-                llogger.error(f"exception while modifying wheel speeds: {e}")
-                await asyncio.sleep(0.10)
+            # offset them by 126, as 126_u8 is the neutral value
+            # (not moving) speed for the Rover's wheels.
+            offset_right_wheels = right_wheels + 126
+            offset_left_wheels = left_wheels + 126
 
-            # Filter the wheel speeds
-            # - make sure they aren't above max or min
+            # clamp values beforehand - make sure they aren't above max or
+            # below min.
             #
             # max speed (forward) = 255, max speed (reverse) = 0, stopped = 126
-            wheel_speeds.left_wheels = max(0, min(255, wheel_speeds.left_wheels))
-            wheel_speeds.right_wheels = max(0, min(255, wheel_speeds.right_wheels))
-            llogger.debug(f"filtered speeds: {wheel_speeds}.")
+            offset_right_wheels = max(0.0, min(255.0, offset_right_wheels))
+            offset_left_wheels = max(0.0, min(255.0, offset_left_wheels))
+
+            # cast float -> int, set on message type
+            wheel_speeds.right_wheels = int(offset_right_wheels)
+            wheel_speeds.left_wheels = int(offset_left_wheels)
+
+            # if the angle to the target is low, we're in line with it.
+            #
+            # so... we can just start moving toward it :D
+            if abs(angle_to_target) < 10.0:  # degrees
+                llogger.error("TODO: REMOVE")
+                llogger.error("set same wheel speeds (we're facing the target)")
+                wheel_speeds.right_wheels = 126 + 80
+                wheel_speeds.left_wheels = 126 + 80
 
             # Publish the wheel speeds
             self._wheels_publisher.publish(wheel_speeds)
@@ -425,7 +449,20 @@ class NavigatorNode(Node):
                 f"Sending wheel speeds: left: {wheel_speeds.left_wheels}, right: {wheel_speeds.right_wheels}"
             )
 
-    llogger.warning("escaped")
+            # Small delay to prevent flooding messages
+            await asyncio.sleep(0.1)
+
+            # finally, we'll set our distance again for the while loop condition.
+            #
+            # (in other words, stop when we're close)
+            distance_from_target_m = dist_m_between_coords(
+                self._last_known_rover_coord.position, self.nav_parameters.coord
+            )
+            llogger.error(f"distance from target: {int(distance_from_target_m)} meters")
+
+        # when we're done running, stop the wheels explicitly
+        self.stop_wheels()
+        llogger.warning("escaped")
 
     # TODO(log): implement
     async def handle_aruco_navigation(self):
@@ -483,14 +520,8 @@ class NavigatorNode(Node):
             await asyncio.sleep(0.25)
         pass
 
-    def gps_callback(self, msg: GpsMessage):
-        coord: GeoPointStamped = GeoPointStamped()
-
-        coord.position.latitude = msg.lat
-        coord.position.longitude = msg.lon
-        coord.position.altitude = msg.height
-
-        self._last_known_rover_coord = coord
+    def gps_callback(self, msg: GeoPointStamped):
+        self._last_known_rover_coord = msg
 
     def aruco_callback(self, msg: PoseStamped):
         self._curr_marker_transform = msg
