@@ -33,10 +33,10 @@ def create_perfect_camera(image_width: int, image_height: int) -> list[MatLike]:
 
 def main(
     image_width: Annotated[
-        str, typer.Argument(help="The width of the image with the aruco marker")
+        int, typer.Argument(help="The width of the image with the aruco marker")
     ],
     image_height: Annotated[
-        str,
+        int,
         typer.Argument(help="The height of the image with the aruco marker"),
     ],
     marker_distance: Annotated[
@@ -101,7 +101,9 @@ def main(
     bottom_right = image_points[1]
 
     # Resize the aruco (shrink or stretch) image based on the calcualed image points
-    marker_image: MatLike = cv.imread("aruco_marker_1.png")
+    marker_image: MatLike = cv.imread(
+        "extra_scripts/aruco_markers/aruco_marker_1.png"
+    )
     side_length = bottom_right[0] - top_left[0]
     marker_image = cv.resize(
         marker_image,
@@ -113,9 +115,10 @@ def main(
         marker_image
     )
 
-    # Show and save the aruco marker image
-    show_image("test image", image)
-    cv.imwrite(f"aruco_marker_dist_{marker_distance}m.jpg", image)
+    cv.imwrite(
+        f"aruco_marker_dist_{str(marker_distance).replace('.', '_')}m.jpg",
+        image,
+    )
 
 
 if __name__ == "__main__":
