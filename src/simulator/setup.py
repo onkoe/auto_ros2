@@ -14,6 +14,7 @@ _ = setup(
         ),
         ("share/" + package_name, ["package.xml"]),
         ("share/" + package_name + "/launch", ["launch/sim.launch.py"]),
+        ("share/" + package_name + "/launch", ["launch/gazebo_only.launch.py"]),
         ("share/" + package_name + "/resource", ["resource/world.sdf.xml"]),
         (
             "share/" + package_name + "/resource",
