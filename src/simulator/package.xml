@@ -10,8 +10,10 @@
 
   <license>TODO</license>
 
+  <depend>robot_state_publisher</depend>
   <depend>ros_gz_bridge</depend>
   <depend>ros_gz_sim</depend>
+  <depend>xacro</depend>
 
   <export>
     <build_type>ament_python</build_type>
