@@ -102,8 +102,8 @@ def generate_launch_description() -> LaunchDescription:
         launch_arguments={
             "gz_args": [
                 PathJoinSubstitution([pkg_simulator, "resource", "world.sdf.xml"]),
-                " -r" if LaunchConfiguration("run_sim_immediately") else "",
-                " -s" if LaunchConfiguration("run_headless") else "",
+                " -r" if run_sim_immediately else "",
+                " -s" if run_headless else "",
             ],
             "on_exit_shutdown": "True",
         }.items(),
