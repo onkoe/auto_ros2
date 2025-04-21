@@ -1,4 +1,6 @@
 import math
+import signal
+import sys
 from dataclasses import dataclass
 from time import sleep
 
@@ -215,6 +217,14 @@ class SoroBridge(Node):
 
 
 def main(args: list[str] | None = None):
+    # exit gracefully when Ctrl^C'd
+    def exit_ctrl_c(_handler: int, _):
+        llogger.info("Asked to shutdown! Doing so gracefully...")
+        rclpy.try_shutdown()
+        sys.exit(0)
+
+    _ = signal.signal(signal.SIGINT, exit_ctrl_c)
+
     llogger.info("Starting simulator driver...")
     rclpy.init(args=args)
 
@@ -235,8 +245,13 @@ def main(args: list[str] | None = None):
     #
     # this is optional - otherwise, the garbage collector does it automatically
     # when it runs.
-    bridge_node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(bridge_node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        bridge_node.destroy_node()
+        rclpy.try_shutdown()
 
 
 # runs the main function - Python doesn't do this automatically.
