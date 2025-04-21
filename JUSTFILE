@@ -16,3 +16,8 @@ clean:
     rm -rfd install/ install/ log/ .cargo/
     rm -rfd build/
     - rm -rfd .venv/
+
+test: build
+    @ echo "Running tests..."
+    colcon test --event-handlers console_direct+
+    @ echo "Test run complete!"
