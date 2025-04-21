@@ -1,0 +1,245 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="remi">
+
+<!--
+
+the following are properties defined for Xacro, a tool that generates a model
+file for the Rover based on a templating language.
+
+we can use these variables in the file below, reducing the reptitive nature of
+our work in here... :D
+
+-->
+<!-- wheel properties -->
+<xacro:property name="wheel_radius" value="0.08" />  <!-- TODO(bray): confirm real wheel radius -->
+<xacro:property name="wheel_thickness" value="0.05" />
+<xacro:property name="middle_wheel_location" value="0.0" />
+<xacro:property name="wheel_spacing_len" value="0.194" />
+<xacro:property name="wheel_spacing_width" value="0.2872" />
+<xacro:property name="wheel_ground_offset" value="-1.5707" />
+
+<!-- ebox ("chassis") properties, in meters-->
+<xacro:property name="chassis_length" value="0.55245" />
+<xacro:property name="chassis_width" value="0.51435" />
+<xacro:property name="chassis_height" value="0.127" />
+
+<!-- sensor properties -->
+<xacro:property name="imu_topic" value="/imu" />
+<xacro:property name="imu_update_speed" value="20" />
+<xacro:property name="gps_topic" value="/navsat" />
+<xacro:property name="gps_update_speed" value="1" />
+<xacro:property name="color_camera_topic" value="/sensors/mono_image" />
+<xacro:property name="color_camera_refresh_speed" value="15" />
+<xacro:property name="color_camera_frame_width" value="1280" />
+<xacro:property name="color_camera_frame_height" value="720" />
+<xacro:property name="color_camera_fov" value="1.05" />
+
+<!--
+
+and most importantly, these are macros!
+
+they generate entire sections of the model. macros are powerful, but dangerous.
+
+please take care when editing, and consider testing your work before pushing.
+
+-->
+
+<!--
+# `make_wheel`
+
+generates a wheel for the Rover model.
+
+## Params
+
+- `name`: the name of this wheel.
+    - ex. "left_front"
+- `length_offset`: the length offset of this wheel.
+    - ex. "${middle_wheel_location + wheel_spacing_len}" for a front wheel
+    - ex. "${middle_wheel_location}" for middle wheel
+    - ex. "${middle_wheel_location - wheel_spacing_len}" for back wheel
+- `width_offset`: the width offset of this wheel.
+    - ex. "${wheel_spacing_width}" for left wheels
+    - ex. "${-wheel_spacing_width}" for right wheels
+-->
+<xacro:macro name="make_wheel" params="name length_offset width_offset">
+    <!--
+    we'll need a "link" for each wheel, alongside all its makeup components
+    inside it.
+
+    wheels use the defined offsets as specified above.
+    -->
+    <link name="${name}_wheel">
+        <origin xyz="${length_offset} ${width_offset} 0" rpy="${wheel_ground_offset} 0 0" />
+        <inertial>
+            <mass value="1.5"/>
+            <inertia ixx="0.043333" ixy="0.0" ixz="0.0" iyy="0.043333" iyz="0" izz="0.08" />
+        </inertial>
+        <visual name="${name}_wheel_visual">
+            <geometry>
+                <cylinder radius="${wheel_radius}" length="${wheel_thickness}" />
+            </geometry>
+            <material name="red"/>
+        </visual>
+        <collision name="${name}_wheel_collision">
+            <geometry>
+                <cylinder radius="${wheel_radius}" length="${wheel_thickness}" />
+            </geometry>
+
+            <gazebo>
+                <surface>
+                    <friction>
+                        <ode>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </gazebo>
+        </collision>
+    </link>
+
+    <!--
+    each wheel also has a "wheel joint", which keeps things attached
+    correctly.
+    -->
+    <joint name="${name}_wheel_joint" type="revolute">
+        <origin xyz="${length_offset} ${width_offset} 0" rpy="${wheel_ground_offset} 0 0" />
+        <parent link="chassis" />
+        <child link="${name}_wheel" />
+        <limit lower="-1000" upper="1000" effort="1000" velocity="1000" />
+        <axis xyz="0 0 1"/>
+        <dynamics damping="0.5" />
+    </joint>
+</xacro:macro>
+
+<!--
+# `make_wheel_plugin`
+
+links a wheel to a controller plugin in the simulator.
+
+## Params
+
+- `name`: the name of the referenced wheel.
+    - ex. "left_front"
+-->
+<xacro:macro name="make_wheel_plugin" params="name">
+    <plugin
+        name="gz::sim::systems::JointController"
+        filename="gz-sim-joint-controller-system"
+    >
+        <joint_name>${name}_wheel_joint</joint_name>
+        <topic>/${name}_wheel/cmd_vel</topic>
+    </plugin>
+</xacro:macro>
+
+    <material name="red">
+    <color rgba="1.0 0.0 0.0 1.0"/>
+    </material>
+
+    <material name="blue">
+    <color rgba="0.0 0.0 1.0 1.0"/>
+    </material>
+
+    <!-- the actual model is defined below... -->
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <gazebo>
+        <pose relative_to='world'>0 0 0 0 0 0</pose>
+    </gazebo>
+
+    <!-- plugins to control each wheel :D -->
+    <gazebo>
+        <xacro:make_wheel_plugin name="left_front" />
+        <xacro:make_wheel_plugin name="left_middle" />
+        <xacro:make_wheel_plugin name="left_back" />
+        <xacro:make_wheel_plugin name="right_front" />
+        <xacro:make_wheel_plugin name="right_middle" />
+        <xacro:make_wheel_plugin name="right_back" />
+    </gazebo>
+
+    <!--
+    apply weird root link fix for KDL parser
+
+    see: https://github.com/husarion/panther_description/issues/2
+    -->
+    <link name="dummy"/>
+
+    <joint name="dummy_to_chassis" type="fixed">
+        <parent link="dummy" />
+        <child link="chassis" />
+        <origin xyz="0 0 0.2" rpy="0 0 0"/>
+    </joint>
+
+
+    <link name="chassis">
+        <origin xyz="0 0 0.2" rpy="0 0 0" />
+        <gazebo>
+            <pose relative_to="__model__">0 0 0.2 0 0 0</pose>
+        </gazebo>
+
+        <!-- set up physics stuff for the ebox -->
+        <inertial>
+            <mass value="35.0" />
+            <inertia ixx="0.095329" ixy="0.0" ixz="0.0" iyy="0.381317" iyz="0.0" izz="0.476646" />
+        </inertial>
+
+        <!-- make an object to represent the ebox -->
+        <visual name="chassis_visual">
+            <geometry>
+                <box size="${chassis_length} ${chassis_width} ${chassis_height}" />
+            </geometry>
+            <material name="blue"/>
+        </visual>
+
+        <!-- give ebox collision -->
+        <collision name="chassis_collision">
+            <geometry>
+                <box size="${chassis_length} ${chassis_width} ${chassis_height}" />
+            </geometry>
+        </collision>
+    </link>
+
+    <!-- make all six wheels (and their joints)! -->
+    <xacro:make_wheel name="left_front" length_offset="${middle_wheel_location + wheel_spacing_len}" width_offset="${wheel_spacing_width}" />
+    <xacro:make_wheel name="left_middle" length_offset="${middle_wheel_location}" width_offset="${wheel_spacing_width}" />
+    <xacro:make_wheel name="left_back" length_offset="${middle_wheel_location - wheel_spacing_len}" width_offset="${wheel_spacing_width}" />
+    <xacro:make_wheel name="right_front" length_offset="${middle_wheel_location + wheel_spacing_len}" width_offset="${-wheel_spacing_width}" />
+    <xacro:make_wheel name="right_middle" length_offset="${middle_wheel_location}" width_offset="${-wheel_spacing_width}" />
+    <xacro:make_wheel name="right_back" length_offset="${middle_wheel_location - wheel_spacing_len}" width_offset="${-wheel_spacing_width}" />
+
+    <!-- add our sensors... -->
+    <gazebo reference="chassis">
+        <!-- imu -->
+        <sensor name="imu_sensor" type="imu">
+            <always_on>1</always_on>
+            <update_rate>${imu_update_speed}</update_rate>
+            <visualize>true</visualize>
+            <topic>${imu_topic}</topic>
+        </sensor>
+
+        <!-- gps -->
+        <sensor name="navsat" type="navsat">
+            <!-- note: "navsat" is used as a fancy name for gps -->
+            <always_on>1</always_on>
+            <update_rate>${gps_update_speed}</update_rate>
+            <topic>${gps_topic}</topic>
+        </sensor>
+
+        <!-- color camera -->
+        <sensor name="mono_image" type="camera">
+            <visualize>true</visualize>
+            <update_rate>${color_camera_refresh_speed}</update_rate>
+            <topic>${color_camera_topic}</topic>
+            <camera>
+                <horizontal_fov>${color_camera_fov}</horizontal_fov>
+                <image>
+                    <width>${color_camera_frame_width}</width>
+                    <height>${color_camera_frame_height}</height>
+                </image>
+                <clip>
+                    <near>0.1</near>
+                    <far>150.0</far>
+                </clip>
+            </camera>
+        </sensor>
+    </gazebo>
+</robot>
