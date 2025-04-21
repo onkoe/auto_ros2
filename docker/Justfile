@@ -76,7 +76,7 @@ run:
 
     echo -e "Starting Docker container..."
     echo -e "${LIGHTRED}If requested, please enter your password.${NOCOLOR}"
-    $OPTIONAL_SUDO $DOCKER-compose $DOCKER_ARGS up -d
+    $OPTIONAL_SUDO $DOCKER compose $DOCKER_ARGS up -d
     echo
     echo -e "${GREEN}Container started successfully!${NOCOLOR}"
     echo
