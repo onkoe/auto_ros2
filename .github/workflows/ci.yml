@@ -8,43 +8,108 @@ jobs:
     container:
       image: osrf/ros:humble-simulation
     steps:
+      # we'll install `node` on the "host" image if we're running on `act`...
+      #
+      # for more info, see: https://github.com/nektos/act/issues/973
+      - name: Workaround for Act runner
+        if: ${{ env.ACT }}
+        run: apt update && apt install curl && curl -fsSL https://deb.nodesource.com/setup_22.x | bash && apt update && apt install -y nodejs
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # install node real quick
-      - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+      - uses: tecolicom/actions-use-apt-tools@v1
+        with:
+          tools: clang curl
 
-      # grab uv and cargo
-      - uses: astral-sh/setup-uv@v5
-      - uses: moonrepo/setup-rust@v1
+      - run: |
+          curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+      - uses: tecolicom/actions-use-apt-tools@v1
+        with:
+          tools: nodejs
+
+      # grab uv...
+      - name: Get `uv` for Python
+        uses: astral-sh/setup-uv@v5
+
+      # ...and cargo
+      - name: Set up Rust
+        uses: moonrepo/setup-rust@v1
+        with:
+          components: clippy, rustfmt
 
       # grab a python binary
       - name: Set up Python
         run: uv python install
 
-      - name: Install dependencies
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: clang
-
       # set up environment
       - name: Install the project
-        run: |
-          uv sync --all-extras --dev
-          . .venv/bin/activate
+        run: uv sync
 
       # enter environment
       - run: . .venv/bin/activate
+
+      # cache all our rosdep dependencies
+      - name: Grab `rosdep` dependencies
+        run: |
+          # we're going to grab all the `rosdep` stuff and use a cache to speed
+          # things up...
+          #
+          # first, we gotta update our repos. otherwise, we won't know what
+          # pkgs are out of date
+          apt update && rosdep update
+          echo "completed repo updates"
+
+          # make a list of each project in the workspace
+          PROJECT_PATHS=$(colcon list --paths-only | tr '\n' ' ')
+          echo "found workspace entry paths: $PROJECT_PATHS"
+
+          # now, grab a list of the dependencies
+          rosdep install --from-paths $PROJECT_PATHS -y -r --rosdistro humble -s --skip-keys="opencv-python ament_cargo" > /tmp/rosdep.out
+          echo "got system package manager dep list: $(cat /tmp/rosdep.out)"
+
+          # let's parse the output!
+          #
+          # there isn't any way to get dependencies from rosdep directly, so we
+          # need to remove the `apt` stuff ourselves...
+          cat /tmp/rosdep.out | grep 'apt-get' | sed 's/^.*apt-get install -y //' | xargs > /tmp/parsed_rosdep.out
+          echo "got the following dependencies: $(cat /tmp/parsed_rosdep.out)"
+
+          echo "current directory: $(pwd)"
+          echo
+          echo "listing: $(ls)"
+          echo
+
+          # save that into a variable in the workflow
+          echo "ROSDEP_PKGS=$(cat /tmp/parsed_rosdep.out)" >> $GITHUB_ENV
+          echo "saved into workflow"
+
+      # install these based on the cache
+      - uses: tecolicom/actions-use-apt-tools@v1
+        if: env.ROSDEP_PKGS != ''
+        with:
+          tools: ${{ env.ROSDEP_PKGS }}
 
       # build the entire ROS 2 workspace just to ensure things work.
       #
       # this'll use colcon
       - name: Build ROS 2 workspace
-        uses: ros-tooling/action-ros-ci@v0.4
-        with:
-          target-ros2-distro: humble
-          coverage-result: false
+        shell: bash
+        run: |
+          . .venv/bin/activate
+          . /opt/ros/humble/setup.bash
+          just build
+
+      - name: Run ROS 2 tests
+        shell: bash
+        run: |
+          . .venv/bin/activate
+          . /opt/ros/humble/setup.bash
+          . install/local_setup.bash
+          just test
 
   lint-python:
     runs-on: ubuntu-22.04
