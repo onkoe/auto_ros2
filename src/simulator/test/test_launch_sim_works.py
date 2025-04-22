@@ -48,7 +48,7 @@ def generate_test_description() -> LaunchDescription:
         ],
     )
 
-    # test start condition (wait 5s for everything to launch)
+    # test start condition (wait a sec for everything to launch)
     start_cond: TimerAction = TimerAction(period=1.5, actions=[ReadyToTest()])
 
     return LaunchDescription([gazebo_launch_file, start_cond])
