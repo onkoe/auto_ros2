@@ -218,12 +218,13 @@ class SoroBridge(Node):
 
 def main(args: list[str] | None = None):
     # exit gracefully when Ctrl^C'd
-    def exit_ctrl_c(_handler: int, _):
+    def exit_handler(_handler: int, _):
         llogger.info("Asked to shutdown! Doing so gracefully...")
         rclpy.try_shutdown()
         sys.exit(0)
 
-    _ = signal.signal(signal.SIGINT, exit_ctrl_c)
+    _ = signal.signal(signal.SIGINT, exit_handler)
+    _ = signal.signal(signal.SIGTERM, exit_handler)
 
     llogger.info("Starting simulator driver...")
     rclpy.init(args=args)
