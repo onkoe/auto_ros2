@@ -65,6 +65,11 @@ jobs:
       - name: Set up Python
         run: uv python install
 
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: clang
+
       # set up environment
       - name: Install the project
         run: |
@@ -102,6 +107,11 @@ jobs:
       - name: Set up Python
         run: uv python install
 
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: clang
+
       # set up environment
       - name: Install the project
         run: |
@@ -136,6 +146,11 @@ jobs:
         run: |
           uv sync --all-extras --dev
           . .venv/bin/activate
+
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: clang
 
       # check python lints
       - name: Format with Ruff (Python)
