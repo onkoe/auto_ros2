@@ -49,8 +49,10 @@ jobs:
           context: ./docker
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ env.ORGNAME }}/auto_ros2:latest
+            type=inline
+          cache-to: type=inline
           tags: ghcr.io/${{ env.ORGNAME }}/auto_ros2:latest
 
   check-ros2-workspace:
