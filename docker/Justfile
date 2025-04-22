@@ -73,7 +73,7 @@ run $DOWNLOAD_IMAGE='true':
     # download the image, if requested, to avoid building it ourselves
     if [ "$DOWNLOAD_IMAGE" = "true" ]; then
         # set the "image name" for the docker compose file
-        export IMAGE_NAME="ghcr.io/sooner-rover-team/auto-ros2:latest"
+        export IMAGE_NAME="ghcr.io/sooner-rover-team/auto_ros2:latest"
 
         # perform the download
         echo -e "Downloading Docker image..."

@@ -49,9 +49,9 @@ jobs:
           context: ./docker
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          tags: ghcr.io/${{ env.ORGNAME }}/auto-ros2:latest
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
+          tags: ghcr.io/${{ env.ORGNAME }}/auto_ros2:latest
 
   check-ros2-workspace:
     # same as jetson :p
