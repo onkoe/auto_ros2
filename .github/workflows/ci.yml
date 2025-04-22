@@ -23,6 +23,11 @@ jobs:
       - name: Set up Python
         run: uv python install
 
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: clang
+
       # set up environment
       - name: Install the project
         run: |
@@ -60,6 +65,11 @@ jobs:
       - name: Set up Python
         run: uv python install
 
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: clang
+
       # set up environment
       - name: Install the project
         run: |
@@ -88,6 +98,11 @@ jobs:
       # grab a python binary
       - name: Set up Python
         run: uv python install
+
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: clang
 
       # set up environment
       - name: Install the project
