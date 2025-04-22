@@ -22,6 +22,11 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# and make that script executable
+#
+# (yes this is insane, shoutout copilot for matching my freak)
+install(CODE "execute_process(COMMAND chmod +x \${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}/simulator)")
+
 # test stuff
 if(BUILD_TESTING)
     find_package(launch_testing_ament_cmake)

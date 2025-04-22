@@ -5,7 +5,6 @@ dependencies = [
     "scipy>=1.15.2",
     "simple-pid>=2.0.1",
     "geopy>=2.4.1",
-    "pickle5>=0.0.12",
 ]
 
 name = "autonomous"
