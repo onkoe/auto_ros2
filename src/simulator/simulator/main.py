@@ -127,8 +127,6 @@ class SoroBridge(Node):
         return resp  # FIXME: add fields
 
     def wheels_callback(self, msg: WheelsMessage):
-        llogger.debug(f"recv'd wheel speeds! see: {msg}")
-
         BASE_SPEED: float = 0.2
         left_wheel_speed: float = BASE_SPEED * translate_u8(msg.left_wheels)
         right_wheel_speed: float = BASE_SPEED * translate_u8(msg.right_wheels)
@@ -171,7 +169,6 @@ class SoroBridge(Node):
         translated.position.longitude = msg.longitude
         translated.position.altitude = msg.altitude
 
-        llogger.debug(f"publishing gps info: {translated}")
         self.__gps_publisher.publish(translated)
 
     def sim_imu_callback(self, msg: Imu):
@@ -209,9 +206,6 @@ class SoroBridge(Node):
         translated.compass.x = 0.0
         translated.compass.y = 0.0
         translated.compass.z = compass_degrees
-
-        # TODO: remove
-        llogger.warning(f"compass degrees: {compass_degrees}")
 
         self.__imu_publisher.publish(translated)
 
