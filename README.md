@@ -54,7 +54,7 @@ Audited 68 packages in 0.02ms
 # we'll also need the ROS 2 dependencies, which are different.
 #
 # grab a drink, this command can take a bit...
-soro@71b7d4dde026 ~/auto_ros2 (docs/april_pass)> sudo apt update && rosdep update && rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
+soro@71b7d4dde026 ~/auto_ros2 (docs/april_pass)> . .venv/bin/activate.fish && just get
 
 # we have the dependencies now!
 #

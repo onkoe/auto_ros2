@@ -3,6 +3,10 @@ set shell := ["bash", "-c"]
 
 ros2_workspace_dir := justfile_directory()
 
+# aliases let users provide multiple commands for one
+alias fetch := get
+alias update := get
+
 # Prints this help message.
 help:
     @ echo "Welcome to the SoRo Justfile! Here are the commands you can run:"
@@ -44,3 +48,13 @@ test: build
     @ echo "Running tests..."
     colcon test --event-handlers console_direct+
     @ echo "Test run complete!"
+
+# Fetches all the newest dependencies. (including `rosdep`)
+get:
+    @ echo "Fetching newest dependencies..."
+    @ echo "If prompted, please type in your password..."
+    sudo apt update
+    uv sync
+    rosdep update
+    rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
+    @ echo "Dependencies fetched successfully!"
