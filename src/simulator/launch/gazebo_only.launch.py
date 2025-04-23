@@ -1,13 +1,11 @@
 import os
 
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.actions import Node
-from launch_ros.parameter_descriptions import ParameterValue
-
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    SetEnvironmentVariable,
 )
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
@@ -15,6 +13,8 @@ from launch.substitutions import (
     LaunchConfiguration,
     PathJoinSubstitution,
 )
+from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -112,7 +112,7 @@ def generate_launch_description() -> LaunchDescription:
             "gz_args": [
                 PathJoinSubstitution([pkg_simulator, "resource", "world.sdf.xml"]),
                 " -r" if run_sim_immediately else "",
-                " -s" if run_headless else "",
+                " -s" if not run_headless else "",
             ],
             "on_exit_shutdown": "True",
         }.items(),
@@ -120,6 +120,7 @@ def generate_launch_description() -> LaunchDescription:
 
     return LaunchDescription(
         [
+            SetEnvironmentVariable(name="LIBGL_ALWAYS_SOFTWARE", value="1"),
             DeclareLaunchArgument(
                 name="run_headless",
                 default_value="False",
