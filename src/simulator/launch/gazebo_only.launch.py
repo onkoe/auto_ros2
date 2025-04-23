@@ -87,6 +87,15 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
     )
 
+    # bridge node for the cameras...
+    camera_bridge: Node = Node(
+        package="ros_gz_image",
+        executable="image_bridge",
+        arguments=["/sensors/mono_image"],
+        parameters=[{"qos": "sensor_data"}],
+        output="screen",  # print any logs to terminal
+    )
+
     # a custom bridge to use our message types.
     #
     # yea... it's goin through three layers lol
@@ -122,6 +131,7 @@ def generate_launch_description() -> LaunchDescription:
                 description="whether Gazebo will start running immediately. defaults to running immediately.",
             ),
             bridge,
+            camera_bridge,
             gz_server,
             soro_bridge,
             rover_state_publisher_node,
