@@ -1,13 +1,12 @@
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.actions import Node
-from navigator_node.types import NavigationMode
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     PathJoinSubstitution,
 )
+from launch_ros.actions import Node, SetParameter
+from navigator_node.types import NavigationMode
 
 
 def generate_launch_description():
@@ -74,6 +73,7 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            SetParameter(name="use_sim_time", value=True),
             gazebo_launch_file,
             navigator,
             log_setting,
