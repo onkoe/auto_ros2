@@ -10,7 +10,12 @@ from rclpy.subscription import Subscription
 from sensor_msgs.msg import Image
 from typing_extensions import override
 
-TOPIC: str = "/sensors/mono_image"
+# these both need to be changed.
+#
+# - ("/sensors/mono_image", "bgr8")
+# - ("/sensors/depth_image", "32FC1")
+TOPIC: str = "/sensors/depth_image"
+COLOR_CODE: str = "32FC1"
 
 
 @dataclass(kw_only=True)
@@ -30,7 +35,7 @@ class ImageSaver(Node):
     def image_callback(self, msg):
         if not self.saved:
             try:
-                cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+                cv_image = self.bridge.imgmsg_to_cv2(msg, COLOR_CODE)
                 cv2.imwrite("camera_image.png", cv_image)
                 print("Image saved as camera_image.png")
                 self.saved = True
