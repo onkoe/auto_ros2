@@ -91,7 +91,7 @@ def generate_launch_description() -> LaunchDescription:
     camera_bridge: Node = Node(
         package="ros_gz_image",
         executable="image_bridge",
-        arguments=["/sensors/mono_image"],
+        arguments=["/sensors/mono_image", "/sensors/depth_image"],
         parameters=[{"qos": "sensor_data"}],
         output="screen",  # print any logs to terminal
     )
