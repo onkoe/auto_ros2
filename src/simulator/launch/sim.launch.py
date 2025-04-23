@@ -27,6 +27,12 @@ def generate_launch_description():
         )
     )
 
+    # launch rviz2
+    rviz2: Node = Node(
+        package="rviz2",
+        executable="rviz2",
+    )
+
     # add some coordinate to go to...
     latitude = 0.0002
     longitude = 0.0002
@@ -79,5 +85,6 @@ def generate_launch_description():
             log_setting,
             nav2_bringup_node,
             nav2_bringup,
+            rviz2,
         ],
     )
