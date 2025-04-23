@@ -233,18 +233,16 @@ def main(args: list[str] | None = None):
     # the interpreter.
     #
     # slowdowns may occur, so consider benching anything questionable.
-    llogger.info("Simulator is spinning...")
-    rclpy.spin(bridge_node)
-
-    # destroy the Node explicitly
-    #
-    # this is optional - otherwise, the garbage collector does it automatically
-    # when it runs.
     try:
         rclpy.spin(bridge_node)
+        llogger.info("Simulator is spinning...")
     except KeyboardInterrupt:
         pass
     finally:
+        # destroy the Node explicitly
+        #
+        # this is optional - otherwise, the garbage collector does it automatically
+        # when it runs.
         bridge_node.destroy_node()
         rclpy.try_shutdown()
 
