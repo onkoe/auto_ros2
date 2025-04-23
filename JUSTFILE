@@ -3,11 +3,18 @@ set shell := ["bash", "-c"]
 
 ros2_workspace_dir := justfile_directory()
 
+# Prints this help message.
+help:
+    @ echo "Welcome to the SoRo Justfile! Here are the commands you can run:"
+    @ just --list
+
+# Builds the project using ROS 2 tooling.
 build:
     @ echo "Building the ROS 2 workspace...";
     colcon build --symlink-install
     @ echo "Build complete!";
 
+# Runs the Gazebo simulation.
 sim: build
     #!/usr/bin/env bash
 
@@ -24,6 +31,7 @@ sim: build
     echo "The simulation is about to begin...";
     ros2 launch simulator sim.launch.py
 
+# Removes extra build files.
 clean:
     @ echo "Attempting to clean build files...";
     rm -rfd install/ install/ log/ .cargo/
@@ -31,6 +39,7 @@ clean:
     - rm -rfd .venv/
     @ echo "Build files have been removed!";
 
+# Runs our test suite through `colcon`.
 test: build
     @ echo "Running tests..."
     colcon test --event-handlers console_direct+
