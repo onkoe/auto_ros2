@@ -68,7 +68,7 @@ jobs:
           echo "found workspace entry paths: $PROJECT_PATHS"
 
           # now, grab a list of the dependencies
-          rosdep install --from-paths $PROJECT_PATHS -y -r --rosdistro humble -s --skip-keys="opencv-python ament_cargo" > /tmp/rosdep.out
+          rosdep install --from-paths $PROJECT_PATHS -y -r --rosdistro humble -s > /tmp/rosdep.out
           echo "got system package manager dep list: $(cat /tmp/rosdep.out)"
 
           # let's parse the output!
