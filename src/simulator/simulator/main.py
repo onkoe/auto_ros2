@@ -1,13 +1,9 @@
-import math
 import signal
 import sys
 from dataclasses import dataclass
 from time import sleep
 
 import rclpy
-from geographic_msgs.msg import GeoPointStamped
-from geometry_msgs.msg import Vector3
-from gps_msgs.msg import GPSFix as GpsFix
 from loguru import logger as llogger
 from rclpy.node import Node
 from rclpy.publisher import Publisher
@@ -17,11 +13,9 @@ from rclpy.qos import (
 )
 from rclpy.service import Service
 from rclpy.subscription import Subscription
-from sensor_msgs.msg import Imu, NavSatFix
 from std_msgs.msg import Float64
 from typing_extensions import override
 
-from custom_interfaces.msg._imu_message import ImuMessage
 from custom_interfaces.msg._wheels_message import WheelsMessage
 from custom_interfaces.srv._lights import Lights
 from custom_interfaces.srv._lights import Lights_Request as LightsRequest
@@ -58,27 +52,10 @@ class SoroBridge(Node):
     #
     # these are used to publish messages like the `sensors_node` :D
     __sim_imu_subscriber: Subscription
-    # __sim_gyro_subscriber: Subscription
-    # __sim_accel_subscriber: Subscription
-    # __sim_compass_subscriber: Subscription
-    __sim_gps_subscriber: Subscription
 
     def __init__(self):
         # initialize the `Robot` superclass
         super().__init__("soro_bridge")
-
-        self.__gps_publisher = self.create_publisher(
-            GeoPointStamped, "/sensors/gps", QOS_PROFILE
-        )
-        self.__sim_gps_subscriber = self.create_subscription(
-            GpsFix, "/sim/gps", self.sim_gps_callback, QOS_PROFILE
-        )
-        self.__imu_publisher = self.create_publisher(
-            ImuMessage, "/sensors/imu", QOS_PROFILE
-        )
-        self.__sim_imu_subscriber = self.create_subscription(
-            Imu, "/sim/imu", self.sim_imu_callback, QOS_PROFILE
-        )
 
         # react to controls
         self.__wheels_subscriber = self.create_subscription(
@@ -160,54 +137,6 @@ class SoroBridge(Node):
         self.__right_front_wheel_motor.publish(right_msg)
         self.__right_middle_wheel_motor.publish(right_msg)
         self.__right_back_wheel_motor.publish(right_msg)
-
-    def sim_gps_callback(self, msg: NavSatFix):
-        """immediately publishes to the `/sensors/gps` topic after translating"""
-        translated: GeoPointStamped = GeoPointStamped()
-
-        translated.position.latitude = msg.latitude
-        translated.position.longitude = msg.longitude
-        translated.position.altitude = msg.altitude
-
-        self.__gps_publisher.publish(translated)
-
-    def sim_imu_callback(self, msg: Imu):
-        """
-        publishes custom imu message from the ros 2 one (sensor_msgs/msg/Imu)!
-        """
-        translated: ImuMessage = ImuMessage()
-
-        translated.accel = msg.linear_acceleration
-        translated.gyro = msg.angular_velocity
-        translated.temp_c = 0.0
-
-        # get compass in deg from quat.
-        #
-        # we're gonna assume +z is forward, so it's just typical 3d space
-        qx = msg.orientation.x
-        qy = msg.orientation.y
-        qz = msg.orientation.z
-        qw = msg.orientation.w
-
-        # this is the rotation on the z-axis
-        #
-        # from wikipedia:
-        #
-        # https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-        yaw = math.atan2(2.0 * (qw * qz + qx * qy), 1.0 - (2.0 * (qy * qy + qz * qz)))
-
-        # convert it into degrees
-        compass_degrees = (math.degrees(yaw) + 360) % 360
-
-        # FIXME(bray): make this just one value
-        #
-        # ...to save my poor innocent heart from more nonsense
-        translated.compass = Vector3()
-        translated.compass.x = 0.0
-        translated.compass.y = 0.0
-        translated.compass.z = compass_degrees
-
-        self.__imu_publisher.publish(translated)
 
 
 def main(args: list[str] | None = None):

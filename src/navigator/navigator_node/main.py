@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import rclpy
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
-from geometry_msgs.msg import PoseStamped, Vector3
+from geometry_msgs.msg import PoseStamped
 from loguru import logger as llogger
 from rcl_interfaces.msg import ParameterType
 from rclpy.client import Client
@@ -12,12 +12,11 @@ from rclpy.node import Node, ParameterDescriptor
 from rclpy.publisher import Publisher
 from rclpy.qos import QoSPresetProfiles, QoSProfile
 from rclpy.subscription import Subscription
+from sensor_msgs.msg import Imu, NavSatFix
 from simple_pid import PID
 from typing_extensions import override
 
-# sudo apt install ros-jazzy-geographic-msgs
 from custom_interfaces.msg import (
-    ImuMessage,
     WheelsMessage,
 )
 from custom_interfaces.srv import Lights
@@ -27,6 +26,8 @@ from custom_interfaces.srv._lights import (
 from custom_interfaces.srv._lights import (
     Lights_Response as LightsResponse,
 )
+
+from .convert import compass_degrees_z
 
 # from custom_interfaces.msg import ArMessage as ArucoMessage
 from .coords import calc_angle_to_target, dist_m_between_coords
@@ -83,7 +84,8 @@ class NavigatorNode(Node):
     """The coordinate last recv'd from the GPS."""
     _last_known_marker_coord: GeoPointStamped | None = None
     """Coordinate pair where the target was last known to be located."""
-    _last_known_imu_data: ImuMessage | None = None
+    _last_known_compass_direction: float | None = None
+    """The direction in which the compass was last known to be pointing."""
 
     _curr_marker_transform: PoseStamped | None = None
     _times_marker_seen: int = 0
@@ -228,13 +230,13 @@ class NavigatorNode(Node):
 
         # connect to our sensors using subscriptions
         self._gps_subscription = self.create_subscription(
-            msg_type=GeoPointStamped,
+            msg_type=NavSatFix,
             topic="/sensors/gps",
             callback=self.gps_callback,
             qos_profile=QOS_PROFILE,
         )
         self._imu_subscription = self.create_subscription(
-            msg_type=ImuMessage,
+            msg_type=Imu,
             topic="/sensors/imu",
             callback=self.imu_callback,
             qos_profile=QOS_PROFILE,
@@ -347,13 +349,13 @@ class NavigatorNode(Node):
         """
         llogger.info(f"Async task is up! Going to coordinate at {dest_coord}...")
 
-        # Make sure that we are receiving rover imu and coordinates
+        # ensure we're receiving rover imu and coordinates
         while self._last_known_rover_coord is None:
             _ = self.get_logger().warn("no GPS data yet; waiting to navigate...")
             await asyncio.sleep(0.25)
 
-        # block on getting magnetometer info from IMU
-        while self._last_known_imu_data is None:
+        # block on getting compass direction from IMU
+        while self._last_known_compass_direction is None:
             _ = self.get_logger().warn("no IMU data yet. waiting to navigate...")
             await asyncio.sleep(0.25)
 
@@ -394,7 +396,8 @@ class NavigatorNode(Node):
         while distance_from_target_m > MIN_GPS_DISTANCE:
             # grab the imu info
             # grab the x, y, z compass data
-            compass_info: Vector3 = self._last_known_imu_data.compass
+            compass_info: float = self._last_known_compass_direction
+            llogger.trace(f"Got compass info: {compass_info}")
 
             # reset wheel speeds before adjustment
             left_wheels = 1.0
@@ -402,7 +405,7 @@ class NavigatorNode(Node):
 
             # check our angle to the target coordinate
             angle_to_target: float = calc_angle_to_target(
-                dest_coord, self._last_known_rover_coord, compass_info.z
+                dest_coord, self._last_known_rover_coord, compass_info
             )
 
             # grab the pid output (which is the error correction FROM NEUTRAL POSITION, SPEED 0)
@@ -510,22 +513,43 @@ class NavigatorNode(Node):
         pass
 
         # wait for the GPS and IMU to do something before we begin navigating
-        while self._last_known_imu_data is None or self._last_known_rover_coord is None:
+        while (
+            self._last_known_compass_direction is None
+            or self._last_known_rover_coord is None
+        ):
             _ = self.get_logger().warn("Sensor data isn't up yet. Waiting to navigate.")
             _ = self.get_logger().debug(
-                f"sensor data: imu: {self._last_known_imu_data}, gps: {self._last_known_rover_coord}"
+                f"sensor data: compass: {self._last_known_compass_direction}, gps: {self._last_known_rover_coord}"
             )
             await asyncio.sleep(0.25)
         pass
 
-    def gps_callback(self, msg: GeoPointStamped):
-        self._last_known_rover_coord = msg
+    def gps_callback(self, msg: NavSatFix):
+        # move its header over
+        gp_stamped: GeoPointStamped = GeoPointStamped()
+        gp_stamped.header = msg.header
+
+        # and stick the coord stuff in a geopoint
+        gp: GeoPoint = GeoPoint()
+        gp.latitude = msg.latitude
+        gp.longitude = msg.longitude
+        gp.altitude = msg.altitude
+
+        # mv the geopoint into that parent type
+        gp_stamped.position = gp
+
+        # finally, set that type on the navigator class
+        self._last_known_rover_coord = gp_stamped
 
     def aruco_callback(self, msg: PoseStamped):
         self._curr_marker_transform = msg
 
-    def imu_callback(self, msg: ImuMessage):
-        self._last_known_imu_data = msg
+    def imu_callback(self, msg: Imu):
+        """
+        Converts the nonsense IMU message into compass deg, then saves it.
+        """
+        compass_deg_z: float = compass_degrees_z(msg)
+        self._last_known_compass_direction = compass_deg_z
 
     pass
 

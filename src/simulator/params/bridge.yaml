@@ -1,14 +1,14 @@
 # imu (accel/compass/gyro)
-- ros_topic_name: "/sim/imu"
+- ros_topic_name: "/sensors/imu"
   gz_topic_name: "/imu"
   ros_type_name: "sensor_msgs/msg/Imu"
   gz_type_name: "gz.msgs.IMU"
   direction: GZ_TO_ROS
 
 # gps
-- ros_topic_name: "/sim/gps"
+- ros_topic_name: "/sensors/gps"
   gz_topic_name: "/navsat"
-  ros_type_name: "gps_msgs/msg/GPSFix"
+  ros_type_name: "sensor_msgs/msg/NavSatFix"
   gz_type_name: "gz.msgs.NavSat"
   direction: GZ_TO_ROS
 
