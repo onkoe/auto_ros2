@@ -8,6 +8,7 @@ _ = setup(
     name=package_name,
     version="0.0.0",
     python_requires=">=3.10",
+    tests_require=["pytest"],
     packages=find_packages(exclude=["test"]),
     data_files=[
         (
