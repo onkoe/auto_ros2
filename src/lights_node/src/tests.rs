@@ -15,6 +15,7 @@ use ros2_client::{
     log::LogLevel, rosout, AService, Context, Name, NodeName, NodeOptions, ServiceMapping,
     ServiceTypeName,
 };
+use tokio::time::timeout;
 
 use crate::{logic, LightsRequest, LightsResponse};
 
@@ -55,10 +56,13 @@ async fn request_handled_ok() {
 
     // look for messages, forever
     tracing::info!("spawning server task");
-    let controller =
-        RoverController::new(Ipv4Addr::UNSPECIFIED.into(), FAKE_MICROCONTROLLER_PORT, 0)
-            .await
-            .unwrap();
+    let controller = timeout(
+        Duration::from_secs(2),
+        RoverController::new(Ipv4Addr::UNSPECIFIED.into(), FAKE_MICROCONTROLLER_PORT, 0),
+    )
+    .await
+    .expect("rover controller connection")
+    .unwrap();
     tokio::task::spawn(logic::request_handler(server, node, controller));
 
     // join on the microcontroller task.
@@ -97,15 +101,18 @@ async fn client_node_task(ctx: Context) {
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     tracing::info!("Sending request...");
-    let lights_response = client
-        .async_send_request(LightsRequest {
+    let lights_response = timeout(
+        Duration::from_secs(2),
+        client.async_send_request(LightsRequest {
             red: 255,
             green: 0,
             blue: 255,
             flashing: false,
-        })
-        .await
-        .unwrap();
+        }),
+    )
+    .await
+    .expect("lights request should send quickly")
+    .unwrap();
     tracing::info!("resp: {lights_response:?}");
 }
 

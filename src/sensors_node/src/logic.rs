@@ -245,6 +245,7 @@ mod tests {
 
     use ros2_client::{Context, MessageTypeName, Name, NodeName, NodeOptions};
     use soro_gps::Gps;
+    use tokio::time::{timeout, Duration};
 
     #[tokio::test]
     async fn gps_task_doesnt_panic() {
@@ -263,15 +264,18 @@ mod tests {
             )
             .unwrap();
         let gps_pub = node.create_publisher(&topic, None).unwrap();
-        let gps = Gps::new(Ipv4Addr::LOCALHOST.into(), 55556, 0)
-            .await
-            .unwrap();
+        let gps = timeout(
+            Duration::from_secs(2),
+            Gps::new(Ipv4Addr::LOCALHOST.into(), 55556, 0),
+        )
+        .await
+        .expect("gps should connect within seconds")
+        .unwrap();
 
         // we ignore the error since we don't care if anything connects.
         //
         // this just ensures that the thread doesn't panic! :D
         let future = super::sensor_tasks::gps_task(gps, gps_pub);
-        let _will_time_out =
-            tokio::time::timeout(tokio::time::Duration::from_secs(2), future).await;
+        let _will_time_out = timeout(Duration::from_secs(2), future).await;
     }
 }
