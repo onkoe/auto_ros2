@@ -35,6 +35,7 @@ dev = [
     "cst-lsp>=0.1.3",
     "basedpyright>=1.27.1",
     "rust-just>=1.39.0",
+    "setuptools==58.2.0",
 ]
 
 [tool.basedpyright]
