@@ -244,3 +244,26 @@ jobs:
       # run the formatter
       - name: Format with `rustfmt` (Rust)
         run: cargo fmt --check
+
+  # Checks that grabbing the virtual environment works properly on `aarch64`,
+  # as we need that on the Rover and for any computers (like modern Macs)...
+  uv-sync-on-aarch64:
+    runs-on: ubuntu-22.04-arm
+    steps:
+      - name: Workaround for Act runner
+        if: ${{ env.ACT }}
+        run: |
+          apt-get update
+          apt-get install curl
+          curl -fsSL https://deb.nodesource.com/setup_22.x \
+          | bash && apt-get update && apt-get install -y nodejs
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install `uv`
+        uses: astral-sh/setup-uv@v5
+
+      - name: Grab workspace dependencies
+        run: uv sync --all-extras --dev
