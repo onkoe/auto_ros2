@@ -43,7 +43,7 @@ def generate_test_description() -> LaunchDescription:
             # run without showing a window
             ("run_headless", "True"),
             # ...but don't actually simulate anything
-            ("run_headless", "False"),
+            ("run_sim_immediately", "False"),
         ],
     )
 
