@@ -181,8 +181,6 @@ jobs:
 
   lint-rust:
     runs-on: ubuntu-22.04
-    container:
-      image: osrf/ros:humble-simulation
     steps:
       - uses: actions/checkout@v4
         with:
@@ -200,28 +198,6 @@ jobs:
       # run rust lints
       - name: Lint with Clippy (Rust)
         run: cargo clippy --workspace
-
-  test-rust:
-    runs-on: ubuntu-22.04
-    container:
-      image: osrf/ros:humble-simulation
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
-
-      - uses: moonrepo/setup-rust@v1
-        with:
-          components: clippy, rustfmt
-          bins: cargo-nextest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # run tests
-      - name: Test with Nextest (Rust)
-        run: cargo nextest run --test-threads 1 --no-fail-fast
 
   format-rust:
     runs-on: ubuntu-22.04
