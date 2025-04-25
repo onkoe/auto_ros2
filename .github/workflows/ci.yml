@@ -5,6 +5,8 @@ jobs:
   check-ros2-workspace:
     # same as jetson :p
     runs-on: ubuntu-22.04
+    needs:
+      [lint-python, format-python, lint-rust, format-rust, uv-sync-on-aarch64]
     container:
       image: osrf/ros:humble-simulation
     steps:
