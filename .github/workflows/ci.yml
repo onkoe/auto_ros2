@@ -25,6 +25,17 @@ jobs:
         with:
           tools: clang curl
 
+      - name: Cache ROS 2 workspace
+        uses: actions/cache@v3
+        id: cache-ros2-build
+        with:
+          path: |
+            install/
+            build/
+          key: ros2-build-${{ runner.os }}-${{ hashFiles('pyproject.toml', '**/package.xml', '**/CMakeLists.txt', 'src/**/*.py', 'src/simulator/**') }}
+          restore-keys: |
+            ros2-build-${{ runner.os }}-
+
       - run: |
           curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
           echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
