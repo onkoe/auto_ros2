@@ -147,8 +147,8 @@ def generate_launch_description() -> LaunchDescription:
             navsat_transform_node,
             local_ekf_node,
             global_ekf_node,
-            # nav2_container,
-            # nav2_helper,
+            nav2_container,
+            nav2_helper,
             ros2_control,
         ]
     )
