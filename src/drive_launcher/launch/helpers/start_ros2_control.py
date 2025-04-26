@@ -5,15 +5,12 @@ See its source here:
 https://github.com/ros-controls/ros2_control/blob/humble/controller_manager/controller_manager/spawner.py
 """
 
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     RegisterEventHandler,
 )
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import (
-    Command,
-    FindExecutable,
     PathJoinSubstitution,
 )
 from launch_ros.actions import Node
@@ -21,9 +18,6 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description() -> LaunchDescription:
-    pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
-
-    robot_desc: dict[str, Command] = _grab_robot_description()
     controllers_conf: PathJoinSubstitution = _get_controllers_conf()
 
     controller_manager: Node = Node(
@@ -77,28 +71,6 @@ def generate_launch_description() -> LaunchDescription:
             ),
         ]
     )
-
-
-def _grab_robot_description() -> dict[str, Command]:
-    """grabs the robot desc."""
-
-    # make the description
-    robot_description_content: Command = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name="xacro")]),
-            " ",
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("simulator"),
-                    "resource",
-                    "rover.urdf.xacro.xml",
-                ]
-            ),
-        ]
-    )
-
-    # return it in a dict
-    return {"robot_description": robot_description_content}
 
 
 def _get_controllers_conf() -> PathJoinSubstitution:

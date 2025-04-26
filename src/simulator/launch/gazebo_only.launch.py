@@ -10,11 +10,12 @@ from launch.actions import (
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     Command,
+    FindExecutable,
     LaunchConfiguration,
     PathJoinSubstitution,
 )
 from launch_ros.actions import Node
-from launch_ros.parameter_descriptions import ParameterValue
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -26,31 +27,18 @@ def generate_launch_description() -> LaunchDescription:
         "run_sim_immediately"
     )
 
-    # generate the rover model from its macro file
+    # grab the rover udrf "description"
+    robot_desc: dict[str, Command] = _grab_robot_description()
+
+    # generate the rover model from its macro file, then publish its transforms
+    # over topics for the duration of the program
     rover_state_publisher_node: Node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
-        parameters=[
-            {
-                "robot_description": ParameterValue(
-                    Command(
-                        [
-                            "xacro ",
-                            PathJoinSubstitution(
-                                [
-                                    pkg_simulator,
-                                    "resource",
-                                    "rover.urdf.xacro.xml",
-                                ]
-                            ),
-                        ]
-                    ),
-                    value_type=str,
-                )
-            }
-        ],
+        parameters=[robot_desc],
     )
 
+    # same as above, except we're mooching off it and also its for joints
     rover_joint_publisher_node: Node = Node(
         package="joint_state_publisher", executable="joint_state_publisher"
     )
@@ -114,9 +102,7 @@ def generate_launch_description() -> LaunchDescription:
         PythonLaunchDescriptionSource(gz_launch_path),
         launch_arguments={
             "gz_args": [
-                PathJoinSubstitution(
-                    [pkg_simulator, "resource", "world.sdf.xml"]
-                ),
+                PathJoinSubstitution([pkg_simulator, "resource", "world.sdf.xml"]),
                 " -r" if run_sim_immediately else "",
                 " -s" if not run_headless else "",
             ],
@@ -146,3 +132,25 @@ def generate_launch_description() -> LaunchDescription:
             rover_model_spawner,
         ],
     )
+
+
+def _grab_robot_description() -> dict[str, Command]:
+    """grabs the robot desc."""
+
+    # make the description
+    robot_description_content: Command = Command(
+        [
+            PathJoinSubstitution([FindExecutable(name="xacro")]),
+            " ",
+            PathJoinSubstitution(
+                [
+                    FindPackageShare("simulator"),
+                    "resource",
+                    "rover.urdf.xacro.xml",
+                ]
+            ),
+        ]
+    )
+
+    # return it in a dict
+    return {"robot_description": robot_description_content}
