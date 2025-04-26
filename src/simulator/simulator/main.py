@@ -43,15 +43,10 @@ class SoroBridge(Node):
     # interface speakers/listeners
     __lights_service: Service
     __wheels_subscriber: Subscription
-    __gps_publisher: Publisher
-    __imu_publisher: Publisher
-    __depth_camera_publisher: Publisher
-    __mono_camera_publisher: Publisher
 
-    # fake sim interface speakers/listeners...
-    #
-    # these are used to publish messages like the `sensors_node` :D
-    __sim_imu_subscriber: Subscription
+    # TODO: remove old wheels subscriber
+    __left_wheels_subscriber: Subscription
+    __right_wheels_subscriber: Subscription
 
     def __init__(self):
         # initialize the `Robot` superclass

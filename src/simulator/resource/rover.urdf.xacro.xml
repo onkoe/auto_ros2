@@ -397,7 +397,4 @@ makes a wheel joint for ros2_control.
     <xacro:make_wheel_control_joint name="right_middle" />
     <xacro:make_wheel_control_joint name="right_back" />
   </ros2_control>
-
-
-
 </robot>

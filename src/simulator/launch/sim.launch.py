@@ -52,9 +52,7 @@ def generate_launch_description():
         executable="navigator_node",
         package="navigator_node",
         name="navigator",
-        parameters=[
-            {"longitude": longitude, "latitude": latitude, "mode": mode_int}
-        ],
+        parameters=[{"longitude": longitude, "latitude": latitude, "mode": mode_int}],
     )
 
     # turn on debug logs

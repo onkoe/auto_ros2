@@ -1,9 +1,10 @@
+from launch import LaunchDescription
+from launch.substitutions import (
+    LaunchConfiguration,
+)
 from launch_ros.actions import LoadComposableNodes, SetParameter
 from launch_ros.descriptions import ComposableNode, ParameterFile
 from nav2_common.launch import RewrittenYaml
-
-from launch import LaunchDescription
-from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description() -> LaunchDescription:
