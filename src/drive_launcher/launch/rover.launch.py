@@ -1,0 +1,163 @@
+# this launch file handles launching Nav2 in the right order, with support for
+# GPS coordinate mapping.
+
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.actions import Node
+
+
+def generate_launch_description() -> LaunchDescription:
+    pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
+    pkg_simulator: str = get_package_share_directory("simulator")
+
+    # first up, and most importantly, we MUST have navsat_transform.
+    #
+    # this node actually comes from `robot_localization`, but we use it to work
+    # with GPS coordinates without wanting to scrape our eyes of their sockets...
+    navsat_transform_node: Node = Node(
+        package="robot_localization",
+        executable="navsat_transform_node",
+        name="navsat_transform_node",
+        parameters=[
+            {
+                "from_file": [
+                    PathJoinSubstitution(
+                        [
+                            pkg_drive_launcher,
+                            "params",
+                            "navsat_transform.yaml",
+                        ]
+                    )
+                ]
+            }
+        ],
+        respawn=True,
+    )
+
+    # now we can launch the local odometry ekf filter (for imu).
+    #
+    # (odom -> base_link) tf
+    local_ekf_node: Node = Node(
+        package="robot_localization",
+        executable="ekf_node",
+        name="ekf_filter_node_odom",
+        parameters=[
+            {
+                "from_file": [
+                    PathJoinSubstitution(
+                        [
+                            pkg_drive_launcher,
+                            "params",
+                            "local_odom.yaml",
+                        ]
+                    )
+                ]
+            }
+        ],
+        respawn=True,
+    )
+
+    # launch the global odometry ekf filter (for gps).
+    #
+    # (map -> odom) tf
+    global_ekf_node: Node = Node(
+        package="robot_localization",
+        executable="ekf_node",
+        name="ekf_filter_node_map",
+        parameters=[
+            {
+                "from_file": [
+                    PathJoinSubstitution(
+                        [
+                            pkg_drive_launcher,
+                            "params",
+                            "global_odom.yaml",
+                        ]
+                    )
+                ]
+            }
+        ],
+        respawn=True,
+    )
+
+    # use node composition on Nav2 to speed things up!
+    #
+    # see: https://docs.ros.org/en/humble/Tutorials/Intermediate/Composition.html#component-container-types
+    nav2_container: Node = Node(
+        package="rclcpp_components",
+        executable="component_container",
+        name="nav2_container",
+        namespace="",
+        parameters=[{"use_sim_time": False}],
+    )
+    # launch the rest of Nav2 using our helper script
+    nav2_helper: Node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        pkg_drive_launcher,
+                        "launch",
+                        "helpers",
+                        "start_nav2.py",
+                    ]
+                )
+            ]
+        ),
+        launch_arguments={
+            "use_sim_time": "false",
+            "autostart": "true",
+            "params_file": PathJoinSubstitution(
+                [
+                    pkg_simulator,
+                    "params",
+                    "nav2.yaml",
+                ]
+            ),
+            "namespace": "",
+            "container_name": "nav2_container",
+        }.items(),
+    )
+
+    ros2_control: Node = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        pkg_drive_launcher,
+                        "launch",
+                        "helpers",
+                        "start_ros2_control.py",
+                    ]
+                )
+            ]
+        ),
+        launch_arguments={
+            "use_sim_time": "false",
+            "autostart": "true",
+            "params_file": PathJoinSubstitution(
+                [
+                    pkg_simulator,
+                    "params",
+                    "ros2_control",
+                    "controllers.yaml",
+                ]
+            ),
+            "namespace": "",
+            "container_name": "nav2_container",
+        }.items(),
+    )
+
+    return LaunchDescription(
+        [
+            navsat_transform_node,
+            local_ekf_node,
+            global_ekf_node,
+            # nav2_container,
+            # nav2_helper,
+            # ros2_control,
+        ]
+    )
