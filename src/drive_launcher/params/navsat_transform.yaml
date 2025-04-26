@@ -1,0 +1,27 @@
+# this file controls the GPS odometry available to dependent nodes.
+#
+# in particular, it's required for the global ekf outputs, and is used in the
+# `global_odom` file's `ekf_filter_node_map` node.
+
+navsat_transform:
+  ros__parameters:
+    # topics
+    gps_frame: gps_link
+    gps_topic: /sensors/gps
+    imu_topic: /sensors/imu
+    odometry_topic: /odometry/gps
+
+    # timing
+    frequency: 30.0
+    delay: 3.0
+
+    # behavior
+    magnetic_declination_radians: 0.0
+    yaw_offset: 0.0
+    zero_altitude: true
+    use_odometry_yaw: true
+
+    # node rules
+    broadcast_utm_transform: true
+    publish_filtered_gps: true
+    wait_for_datum: false

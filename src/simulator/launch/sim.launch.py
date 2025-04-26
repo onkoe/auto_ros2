@@ -11,6 +11,7 @@ from navigator_node.types import NavigationMode
 
 def generate_launch_description():
     pkg_simulator: str = get_package_share_directory("simulator")
+    pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
     # launch all the gazebo stuff
     gazebo_launch_file: IncludeLaunchDescription = IncludeLaunchDescription(
@@ -39,27 +40,11 @@ def generate_launch_description():
 
     mode_int: int = NavigationMode.ARUCO.value
 
-    nav2_bringup_node: Node = Node(
-        name="nav2_bringup_node",
-        namespace="",
-        package="rclcpp_components",
-        executable="component_container",
-        output="screen",
-    )
-
     # start nav2 using our bringup script
-    nav2_bringup_dir: str = get_package_share_directory("drive_launcher")
     nav2_bringup: LaunchDescription = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [nav2_bringup_dir, "/launch", "/helpers", "/start_nav2.py"],
+            [pkg_drive_launcher, "/launch", "/rover.launch.py"],
         ),
-        launch_arguments={
-            "use_sim_time": "True",
-            "namespace": "",
-            "container_name": "nav2_bringup_node",
-            "params_file": PathJoinSubstitution([pkg_simulator, "params", "nav2.yaml"]),
-            "autostart": "True",
-        }.items(),
     )
 
     # make an instance of the navigator node!
@@ -67,7 +52,9 @@ def generate_launch_description():
         executable="navigator_node",
         package="navigator_node",
         name="navigator",
-        parameters=[{"longitude": longitude, "latitude": latitude, "mode": mode_int}],
+        parameters=[
+            {"longitude": longitude, "latitude": latitude, "mode": mode_int}
+        ],
     )
 
     # turn on debug logs
@@ -83,7 +70,6 @@ def generate_launch_description():
             gazebo_launch_file,
             navigator,
             log_setting,
-            nav2_bringup_node,
             nav2_bringup,
             rviz2,
         ],

@@ -1,0 +1,60 @@
+# this file is pretty dang important! it combines the mapped GPS data and IMU
+# data to create a heading (internally), then publishes the internal
+# representation constantly!
+#
+# this means that we get a mapping of the total odometry for usage in our wider
+# systems.
+
+ekf_filter_node_map:
+  ros__parameters:
+    # behavior
+    two_d_mode: true
+    publish_tf: true
+
+    # frame parameters
+    base_link_frame: base_link
+    world_frame: map
+
+    # translated gps input (from `navsat_transform` node)
+    odom0: odometry/gps
+    odom0_config:
+      [
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+      ]
+
+    # imu input.
+    #
+    # here, it provides heading and velo in the forward direction.
+    imu0: /sensors/imu
+    imu0_config:
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+      ]
