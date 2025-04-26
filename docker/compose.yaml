@@ -22,8 +22,28 @@ services:
       - type: volume
         source: auto_ros2_venv
         target: /home/soro/auto_ros2/.venv
+      - type: volume
+        source: ros2_b_install # install/
+        target: /home/soro/auto_ros2/install
+      - type: volume
+        source: ros2_b_build # build/
+        target: /home/soro/auto_ros2/build
+      - type: volume
+        source: ros2_b_log # log/
+        target: /home/soro/auto_ros2/log
+      - type: volume
+        source: rust_build_target # target/
+        target: /home/soro/auto_ros2/target
+      - type: volume
+        source: ament_rust_dot_cargo # .cargo
+        target: /home/soro/auto_ros2/.cargo
 
-# force the container's virtual environment to use a fake mount (not accessible
-# on the host)
+# force the container's build stuff to use a fake mount (not accessible on the
+# host)
 volumes:
   auto_ros2_venv:
+  ros2_b_install:
+  ros2_b_build:
+  ros2_b_log:
+  rust_build_target:
+  ament_rust_dot_cargo:
