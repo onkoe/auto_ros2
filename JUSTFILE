@@ -29,7 +29,7 @@ sim: build
 
     # we'll also kill the simulator if it's still alive (happens pretty often
     # from previous runs)
-    killall -9 gazebo & killall -9 gzserver & killall -9 gzclient & killall -9 ign & killall -9 ruby & killall -9 simulator
+    (killall -9 gazebo & killall -9 gzserver & killall -9 gzclient & killall -9 ign & killall -9 ruby & killall -9 simulator) || true
 
     # start the simulator by running its launch file!
     echo "The simulation is about to begin...";
@@ -51,10 +51,70 @@ test: build
 
 # Fetches all the newest dependencies. (including `rosdep`)
 get:
-    @ echo "Fetching newest dependencies..."
-    @ echo "If prompted, please type in your password..."
-    sudo apt update
+    #!/usr/bin/env bash
+    set -e
+    echo "Fetching newest dependencies..."
+
+    # grab the ros distro we're using
+    export ROS_DISTRO=$(cat {{ros2_workspace_dir}}/.ros_distro)
+    export ROS_PYTHON_VERSION=3
+
+
+    # check which os we are
+    OS=$(cat /etc/os-release | grep '^ID=' | sed 's/^ID=//' | awk '{print tolower($0)}')
+
+    # check whether we want to use `sudo` to update/install
+    OPTIONAL_SUDO=""
+    if [[ $(id -u) -ne 0 ]]; then
+        OPTIONAL_SUDO="sudo"
+        echo "If prompted, please type in your password to update the system package cache..."
+    fi
+
+    # grab the package manager we'll use
+    PKG_MANAGER_FETCH="$OPTIONAL_SUDO apt-get update -y"
+    PKG_MANAGER_INSTALL="$OPTIONAL_SUDO apt-get install -y"
+    PKG_MANAGER_INSTALL_FLAGS=""
+    if [[ "$OS" == *"fedora"* ]]; then
+        PKG_MANAGER_FETCH="dnf check-update || true"
+        PKG_MANAGER_INSTALL="$OPTIONAL_SUDO dnf install -y"
+        PKG_MANAGER_INSTALL_FLAGS="--skip-unavailable"
+    fi
+
+    echo "Fetching system packages..."
+    $PKG_MANAGER_FETCH
+    echo "System package repo cache updated!"
+
+    echo "Updating the virtual environment..."
     uv sync
-    rosdep update
-    rosdep install --from-paths src --ignore-src -r -y --rosdistro humble
-    @ echo "Dependencies fetched successfully!"
+    echo "The virtual environment is now up-to-date."
+
+    # note: we shim an ubuntu version to match the given ROS 2 distro (ver)
+    UBUNTU_SHIM_VERSION="ubuntu:jammy"
+    if [[ "$ROS_DISTRO" == "humble" ]]; then
+        UBUNTU_SHIM_VERSION="ubuntu:jammy"
+    elif [[ "$ROS_DISTRO" == "jazzy" ]]; then
+        UBUNTU_SHIM_VERSION="ubuntu:noble"
+    elif [[ "$ROS_DISTRO" == "kilted" ]]; then
+        UBUNTU_SHIM_VERSION="ubuntu:noble"
+    fi
+
+    # we're going to grab a list of packages in a kinda-hacky way, but it
+    # allows us to more easily support Fedora (and, potentially, other systems)
+    echo "Looking for packages on ROS 2 ($ROS_DISTRO)"
+    ROS2_PKG_PREFIX="ros-$ROS_DISTRO-"
+    rosdep update --rosdistro $ROS_DISTRO
+    RAW_PKGS=$(rosdep keys --from-paths {{ros2_workspace_dir}}/src | xargs)
+    PACKAGE_LIST=$(rosdep resolve --os=$UBUNTU_SHIM_VERSION $RAW_PKGS | grep "ros-" | xargs)
+    echo "Found the following packages: $PACKAGE_LIST"
+    echo
+
+    echo "Installing packages via system package manager..."
+    $PKG_MANAGER_INSTALL $PACKAGE_LIST $PKG_MANAGER_INSTALL_FLAGS
+    echo "Completed installing system dependencies!"
+
+    echo "Sourcing the environment..."
+    . {{ros2_workspace_dir}}/SOURCE_SCRIPT.bash
+    echo "Environment sourced!"
+
+    echo
+    echo "Dependencies have been installed. You may now use ROS 2."
