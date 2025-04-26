@@ -162,6 +162,10 @@ jobs:
       - name: Format with Ruff (Python)
         run: uv tool run ruff format --check
 
+      # type check everything
+      - name: Typeck with `basedpyright` (Python)
+        run: uv tool run basedpyright ./
+
   rust:
     runs-on: ubuntu-22.04
     steps:
