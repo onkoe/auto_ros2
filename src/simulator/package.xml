@@ -10,6 +10,7 @@
 
   <license>TODO</license>
 
+  <depend>joint_state_publisher</depend>
   <depend>robot_state_publisher</depend>
   <depend>ros_gz_bridge</depend>
   <depend>ros_gz_sim</depend>

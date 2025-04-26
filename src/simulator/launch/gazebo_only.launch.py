@@ -51,6 +51,10 @@ def generate_launch_description() -> LaunchDescription:
         ],
     )
 
+    rover_joint_publisher_node: Node = Node(
+        package="joint_state_publisher", executable="joint_state_publisher"
+    )
+
     # spawn the rover model
     rover_model_spawner: Node = Node(
         package="ros_gz_sim",
@@ -110,7 +114,9 @@ def generate_launch_description() -> LaunchDescription:
         PythonLaunchDescriptionSource(gz_launch_path),
         launch_arguments={
             "gz_args": [
-                PathJoinSubstitution([pkg_simulator, "resource", "world.sdf.xml"]),
+                PathJoinSubstitution(
+                    [pkg_simulator, "resource", "world.sdf.xml"]
+                ),
                 " -r" if run_sim_immediately else "",
                 " -s" if not run_headless else "",
             ],
@@ -136,6 +142,7 @@ def generate_launch_description() -> LaunchDescription:
             gz_server,
             soro_bridge,
             rover_state_publisher_node,
+            rover_joint_publisher_node,
             rover_model_spawner,
         ],
     )
