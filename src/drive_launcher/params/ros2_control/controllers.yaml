@@ -2,19 +2,37 @@ controller_manager:
   ros__parameters:
     update_rate: 100
 
-joint_state_broadcaster:
-  type: joint_state_broadcaster/JointStateBroadcaster
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
 
 left_wheels_velocity_controller:
-  type: joint_group_velocity_controller/JointGroupVelocityController
-  joints:
-    - left_front_wheel_joint
-    - left_middle_wheel_joint
-    - left_back_wheel_joint
+  ros__parameters:
+    type: velocity_controllers/JointGroupVelocityController
+    joints:
+      - left_front_wheel_joint
+      - left_middle_wheel_joint
+      - left_back_wheel_joint
+    state_publish_rate: 50
 
 right_wheels_velocity_controller:
-  type: joint_group_velocity_controller/JointGroupVelocityController
-  joints:
-    - right_front_wheel_joint
-    - right_middle_wheel_joint
-    - right_back_wheel_joint
+  ros__parameters:
+    type: velocity_controllers/JointGroupVelocityController
+    joints:
+      - right_front_wheel_joint
+      - right_middle_wheel_joint
+      - right_back_wheel_joint
+    state_publish_rate: 50
+
+diff_drive_controller:
+  ros__parameters:
+    type: diff_drive_controller/DiffDriveController
+    left_wheel_names:
+      - left_front_wheel_joint
+      - left_middle_wheel_joint
+      - left_back_wheel_joint
+    right_wheel_names:
+      - right_front_wheel_joint
+      - right_middle_wheel_joint
+      - right_back_wheel_joint
+    wheel_separation: 0.574
+    publish_rate: 50

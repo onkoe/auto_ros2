@@ -3,9 +3,13 @@
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import (
+    IncludeLaunchDescription,
+)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import (
+    PathJoinSubstitution,
+)
 from launch_ros.actions import Node
 
 
@@ -122,6 +126,7 @@ def generate_launch_description() -> LaunchDescription:
         }.items(),
     )
 
+    # provides ways to control the rover
     ros2_control: Node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [
@@ -135,20 +140,6 @@ def generate_launch_description() -> LaunchDescription:
                 )
             ]
         ),
-        launch_arguments={
-            "use_sim_time": "false",
-            "autostart": "true",
-            "params_file": PathJoinSubstitution(
-                [
-                    pkg_simulator,
-                    "params",
-                    "ros2_control",
-                    "controllers.yaml",
-                ]
-            ),
-            "namespace": "",
-            "container_name": "nav2_container",
-        }.items(),
     )
 
     return LaunchDescription(
@@ -158,6 +149,6 @@ def generate_launch_description() -> LaunchDescription:
             global_ekf_node,
             # nav2_container,
             # nav2_helper,
-            # ros2_control,
+            ros2_control,
         ]
     )
