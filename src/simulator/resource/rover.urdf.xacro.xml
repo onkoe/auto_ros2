@@ -338,4 +338,17 @@ links a wheel to a controller plugin in the simulator.
             </camera>
         </sensor>
     </gazebo>
+
+    <!-- finally, add ros2-control plugin for gazebo -->
+    <gazebo>
+      <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so"/>
+    </gazebo>
+    <!-- <gazebo>
+        <plugin
+            filename="ign_ros2_control-system"
+            name="ign_ros2_control::IgnitionROS2ControlPlugin"
+        />
+    </gazebo> -->
+
+
 </robot>
