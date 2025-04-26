@@ -74,7 +74,6 @@ generates a wheel for the Rover model.
     wheels use the defined offsets as specified above.
     -->
     <link name="${name}_wheel">
-        <origin xyz="${length_offset} ${width_offset} 0" rpy="${wheel_ground_offset} 0 0" />
         <inertial>
             <mass value="1.5"/>
             <inertia ixx="0.043333" ixy="0.0" ixz="0.0" iyy="0.043333" iyz="0" izz="0.08" />
