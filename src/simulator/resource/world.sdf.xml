@@ -48,11 +48,11 @@
             filename="libignition-gazebo-navsat-system.so"
             name="ignition::gazebo::systems::NavSat"
         />
-
         <plugin
             filename="libignition-gazebo-sensors-system.so"
             name="ignition::gazebo::systems::Sensors"
         />
+
 
 
         <light type="directional" name="sun">

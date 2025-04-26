@@ -167,9 +167,15 @@ links a wheel to a controller plugin in the simulator.
     see: https://github.com/husarion/panther_description/issues/2
     -->
     <link name="dummy"/>
-
-    <joint name="dummy_to_chassis" type="fixed">
+    <link name="base_link"/>
+    <joint name="dummy_to_base" type="fixed">
         <parent link="dummy" />
+        <child link="base_link" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="base_to_chassis" type="fixed">
+        <parent link="base_link" />
         <child link="chassis" />
         <origin xyz="0 0 0.2" rpy="0 0 0"/>
     </joint>
@@ -193,8 +199,46 @@ links a wheel to a controller plugin in the simulator.
         <origin xyz="0.3 0.0 0.1" rpy="0 0 0"/>
     </joint>
 
+    <!-- and one for the gps... -->
+    <link name="gps_link">
+        <inertial>
+            <mass value="0.1"/>
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+        </inertial>
+        <visual>
+            <geometry>
+                <box size="0.05 0.05 0.05"/>
+            </geometry>
+            <material name="red"/>
+        </visual>
+    </link>
+    <joint name="gps_joint" type="fixed">
+        <parent link="chassis"/>
+        <child link="gps_link"/>
+        <origin xyz="0.3 0.0 0.1" rpy="0 0 0"/>
+    </joint>
+
+
+    <!-- finally, one for the imu -->
+    <link name="imu_link">
+        <inertial>
+            <mass value="0.1"/>
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+        </inertial>
+        <visual>
+            <geometry>
+                <box size="0.03 0.03 0.01"/>
+            </geometry>
+            <material name="red"/>
+        </visual>
+    </link>
+    <joint name="imu_joint" type="fixed">
+        <parent link="chassis"/>
+        <child link="imu_link"/>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    </joint>
+
     <link name="chassis">
-        <origin xyz="0 0 0.2" rpy="0 0 0" />
         <gazebo>
             <pose relative_to="__model__">0 0 0.2 0 0 0</pose>
         </gazebo>
@@ -229,19 +273,23 @@ links a wheel to a controller plugin in the simulator.
     <xacro:make_wheel name="right_middle" length_offset="${middle_wheel_location}" width_offset="${-wheel_spacing_width}" />
     <xacro:make_wheel name="right_back" length_offset="${middle_wheel_location - wheel_spacing_len}" width_offset="${-wheel_spacing_width}" />
 
-    <!-- add our sensors... -->
-    <gazebo reference="chassis">
-        <!-- imu -->
+    <!--
+        add our sensors...
+    -->
+    <!-- imu -->
+    <gazebo reference="imu_link">
         <sensor name="imu_sensor" type="imu">
             <always_on>1</always_on>
             <update_rate>${imu_update_speed}</update_rate>
             <visualize>true</visualize>
             <topic>${imu_topic}</topic>
         </sensor>
+    </gazebo>
 
-        <!-- gps -->
+    <!-- gps -->
+    <!-- note: "navsat" is used as a fancy name for gps -->
+    <gazebo reference="gps_link">
         <sensor name="navsat" type="navsat">
-            <!-- note: "navsat" is used as a fancy name for gps -->
             <always_on>1</always_on>
             <update_rate>${gps_update_speed}</update_rate>
             <topic>${gps_topic}</topic>
