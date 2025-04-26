@@ -127,13 +127,15 @@ links a wheel to a controller plugin in the simulator.
     - ex. "left_front"
 -->
 <xacro:macro name="make_wheel_plugin" params="name">
-    <plugin
-        name="gz::sim::systems::JointController"
-        filename="gz-sim-joint-controller-system"
-    >
-        <joint_name>${name}_wheel_joint</joint_name>
-        <topic>/${name}_wheel/cmd_vel</topic>
-    </plugin>
+    <gazebo reference="${name}_wheel">
+        <plugin
+            name="gz::sim::systems::JointController"
+            filename="gz-sim-joint-controller-system"
+        >
+            <joint_name>${name}_wheel_joint</joint_name>
+            <topic>/${name}_wheel/cmd_vel</topic>
+        </plugin>
+    </gazebo>
 </xacro:macro>
 
     <material name="red">
@@ -151,14 +153,12 @@ links a wheel to a controller plugin in the simulator.
     </gazebo>
 
     <!-- plugins to control each wheel :D -->
-    <gazebo>
-        <xacro:make_wheel_plugin name="left_front" />
-        <xacro:make_wheel_plugin name="left_middle" />
-        <xacro:make_wheel_plugin name="left_back" />
-        <xacro:make_wheel_plugin name="right_front" />
-        <xacro:make_wheel_plugin name="right_middle" />
-        <xacro:make_wheel_plugin name="right_back" />
-    </gazebo>
+    <xacro:make_wheel_plugin name="left_front" />
+    <xacro:make_wheel_plugin name="left_middle" />
+    <xacro:make_wheel_plugin name="left_back" />
+    <xacro:make_wheel_plugin name="right_front" />
+    <xacro:make_wheel_plugin name="right_middle" />
+    <xacro:make_wheel_plugin name="right_back" />
 
     <!--
     apply weird root link fix for KDL parser
