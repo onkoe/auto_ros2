@@ -49,6 +49,10 @@ class SoroBridge(Node):
     __left_wheels_subscriber: Subscription
     __right_wheels_subscriber: Subscription
 
+    # we'll publish the messages we get back onto these
+    __left_wheels_publisher: Publisher
+    __right_wheels_publisher: Publisher
+
     def __init__(self):
         # initialize the `Robot` superclass
         super().__init__("soro_bridge")
@@ -78,6 +82,14 @@ class SoroBridge(Node):
             Float64, "/sim/right_middle_wheel/vel", QOS_PROFILE
         )
         self.__right_back_wheel_motor = self.create_publisher(
+            Float64, "/sim/right_back_wheel/vel", QOS_PROFILE
+        )
+
+        # new wheels subscribers
+        self.__left_wheels_publisher = self.create_publisher(
+            Float64, "/sim/right_back_wheel/vel", QOS_PROFILE
+        )
+        self.__right_wheels_publisher = self.create_publisher(
             Float64, "/sim/right_back_wheel/vel", QOS_PROFILE
         )
 
