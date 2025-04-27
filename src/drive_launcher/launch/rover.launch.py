@@ -87,6 +87,41 @@ def generate_launch_description() -> LaunchDescription:
         respawn=True,
     )
 
+    # start the `slam_toolbox` to get a `map` :)
+    slam_toolbox: IncludeLaunchDescription = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        pkg_drive_launcher,
+                        "launch",
+                        "helpers",
+                        "start_slam_toolbox.py",
+                    ]
+                )
+            ]
+        ),
+    )
+
+    # and the `depthimage_to_laserscan_node` provides the map with a pointcloud
+    # to work on
+    depthimage_to_laserscan: IncludeLaunchDescription = (
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                [
+                    PathJoinSubstitution(
+                        [
+                            pkg_drive_launcher,
+                            "launch",
+                            "helpers",
+                            "start_depth_cam_laser_mapping.py",
+                        ]
+                    )
+                ]
+            ),
+        )
+    )
+
     # use node composition on Nav2 to speed things up!
     #
     # see: https://docs.ros.org/en/humble/Tutorials/Intermediate/Composition.html#component-container-types
@@ -144,6 +179,8 @@ def generate_launch_description() -> LaunchDescription:
 
     return LaunchDescription(
         [
+            depthimage_to_laserscan,
+            slam_toolbox,
             navsat_transform_node,
             local_ekf_node,
             global_ekf_node,
