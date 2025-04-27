@@ -206,6 +206,13 @@ def _slam_toolbox() -> IncludeLaunchDescription:
         ),
     )
 
+    # we'll also want the `robot_state_publisher`.
+    #
+    # this node says where things are on the rover in relation to one another,
+    # which is required for consistent mapping, navigation and object
+    # avoidance.
+    robot_state_publisher: IncludeLaunchDescription = _robot_state_publisher()
+
 
 def _nav2() -> tuple[IncludeLaunchDescription, Node]:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
@@ -283,6 +290,25 @@ def _ros2_control() -> IncludeLaunchDescription:
                         "launch",
                         "helpers",
                         "ros2_control.launch.py",
+                    ]
+                )
+            ]
+        ),
+    )
+
+
+def _robot_state_publisher() -> IncludeLaunchDescription:
+    pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
+
+    return IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        pkg_drive_launcher,
+                        "launch",
+                        "helpers",
+                        "robot_state_publisher.launch.py",
                     ]
                 )
             ]

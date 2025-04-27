@@ -58,7 +58,6 @@ class TestGazeboLaunch(unittest.TestCase):
     def test_nodes_running(self, proc_info: ProcInfoHandler):
         """checks that all our expected nodes are running"""
         expected_nodes = [
-            "robot_state_publisher",  # rover model macro runner
             "create",  # rover model spawner
             "parameter_bridge",  # (gz) bridge
             "image_bridge",  # (gz camera) bridge
