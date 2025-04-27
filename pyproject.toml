@@ -6,6 +6,7 @@ dependencies = [
     "simple-pid>=2.0.1",
     "geopy>=2.4.1",
     "pyside2>=5.15.2.1; platform_machine != 'arm64' and platform_machine != 'aarch64'",
+    "typer>=0.15.2",
 ]
 
 name = "autonomous"
@@ -43,3 +44,11 @@ reportUnknownVariableType = false
 reportUnknownMemberType = false
 reportUnknownArgumentType = false
 reportMissingTypeStubs = false
+exclude = [
+    "install/",
+    "build/",
+    "src/**/install/",
+    "src/**/build/",
+    "**/__pycache__",
+    "**/.*",
+]
