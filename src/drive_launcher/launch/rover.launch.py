@@ -100,9 +100,7 @@ def generate_launch_description() -> LaunchDescription:
     )
 
 
-def _robot_localization() -> tuple[
-    IncludeLaunchDescription, IncludeLaunchDescription, IncludeLaunchDescription
-]:
+def _robot_localization() -> tuple[Node, Node, Node]:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
     # offset gps coordinates by correct amount
@@ -214,7 +212,7 @@ def _slam_toolbox() -> IncludeLaunchDescription:
     robot_state_publisher: IncludeLaunchDescription = _robot_state_publisher()
 
 
-def _nav2() -> tuple[IncludeLaunchDescription, Node]:
+def _nav2() -> tuple[Node, IncludeLaunchDescription]:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
     # use node composition on Nav2 to speed things up!
