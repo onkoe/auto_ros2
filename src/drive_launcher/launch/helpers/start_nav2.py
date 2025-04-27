@@ -1,10 +1,11 @@
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.substitutions import (
     LaunchConfiguration,
+    PathJoinSubstitution,
 )
 from launch_ros.actions import LoadComposableNodes, SetParameter
-from launch_ros.descriptions import ComposableNode, ParameterFile
-from nav2_common.launch import RewrittenYaml
+from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -13,21 +14,13 @@ def generate_launch_description() -> LaunchDescription:
 
     # TODO(bray): got not clue what these do lol
     autostart = LaunchConfiguration("autostart")
-    params_file = LaunchConfiguration("params_file")
-    namespace = LaunchConfiguration("namespace")
     container_name = LaunchConfiguration("container_name")
-    container_name_full = (namespace, "/", container_name)
     remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
-    param_substitutions = {"autostart": autostart}
 
-    configured_params = ParameterFile(
-        RewrittenYaml(
-            source_file=params_file,
-            root_key=namespace,
-            param_rewrites=param_substitutions,
-            convert_types=True,
-        ),
-        allow_substs=True,
+    pkg_simulator: str = get_package_share_directory("simulator")
+
+    configured_params = PathJoinSubstitution(
+        [pkg_simulator, "params", "nav2.yaml"]
     )
 
     lifecycle_nodes: list[str] = [
@@ -49,7 +42,7 @@ def generate_launch_description() -> LaunchDescription:
     composable_nodes = [
         SetParameter("use_sim_time", use_sim_time),
         LoadComposableNodes(
-            target_container=container_name_full,
+            target_container=container_name,
             composable_node_descriptions=[
                 ComposableNode(
                     package="nav2_controller",

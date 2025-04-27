@@ -49,17 +49,9 @@ def generate_launch_description() -> LaunchDescription:
         executable="ekf_node",
         name="ekf_filter_node_odom",
         parameters=[
-            {
-                "from_file": [
-                    PathJoinSubstitution(
-                        [
-                            pkg_drive_launcher,
-                            "params",
-                            "local_odom.yaml",
-                        ]
-                    )
-                ]
-            }
+            PathJoinSubstitution(
+                [pkg_drive_launcher, "params", "local_odom.yaml"]
+            ),
         ],
         respawn=True,
     )
@@ -72,17 +64,9 @@ def generate_launch_description() -> LaunchDescription:
         executable="ekf_node",
         name="ekf_filter_node_map",
         parameters=[
-            {
-                "from_file": [
-                    PathJoinSubstitution(
-                        [
-                            pkg_drive_launcher,
-                            "params",
-                            "global_odom.yaml",
-                        ]
-                    )
-                ]
-            }
+            PathJoinSubstitution(
+                [pkg_drive_launcher, "params", "global_odom.yaml"]
+            ),
         ],
         respawn=True,
     )
