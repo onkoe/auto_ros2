@@ -3,9 +3,10 @@ import sys
 from dataclasses import dataclass
 
 import rclpy
-from geographic_msgs.msg import GeoPoint, GeoPointStamped
+from geographic_msgs.msg import GeoPoint, GeoPointStamped, GeoPose
 from geometry_msgs.msg import PoseStamped
 from loguru import logger as llogger
+from nav2_simple_commander.robot_navigator import BasicNavigator
 from rcl_interfaces.msg import ParameterType
 from rclpy.client import Client
 from rclpy.node import (
@@ -16,7 +17,6 @@ from rclpy.publisher import Publisher
 from rclpy.qos import QoSPresetProfiles, QoSProfile
 from rclpy.subscription import Subscription
 from sensor_msgs.msg import Imu, NavSatFix
-from simple_pid import PID
 from typing_extensions import override
 
 from custom_interfaces.msg import (
@@ -33,7 +33,7 @@ from custom_interfaces.srv._lights import (
 from .convert import compass_degrees_z
 
 # from custom_interfaces.msg import ArMessage as ArucoMessage
-from .coords import calc_angle_to_target, dist_m_between_coords
+from .coords import dist_m_between_coords
 from .types import (
     DEFAULT_PID_DERIVATIVE_GAIN,
     DEFAULT_PID_INTEGRAL_GAIN,
@@ -351,123 +351,49 @@ class NavigatorNode(Node):
         This is a simple implementation that uses a PID controller to navigate to the coordinate, based
         on the rover's current position and the destination coordinate.
         """
-        llogger.info(f"Async task is up! Going to coordinate at {dest_coord}...")
+        # convert our func's given `GeoPoint` into a destination `GeoPose`
+        dest: GeoPose = GeoPose()
+        dest.position.latitude = dest_coord.latitude
+        dest.position.longitude = dest_coord.longitude
+        dest.position.altitude = dest_coord.altitude
 
-        # ensure we're receiving rover imu and coordinates
-        while self._last_known_rover_coord is None:
-            _ = self.get_logger().warn("no GPS data yet; waiting to navigate...")
-            await asyncio.sleep(0.25)
+        # create a `BasicNavigator` from `nav2_simple_commander`
+        basic_nav: BasicNavigator = BasicNavigator()
 
-        # block on getting compass direction from IMU
-        while self._last_known_compass_direction is None:
-            _ = self.get_logger().warn("no IMU data yet. waiting to navigate...")
-            await asyncio.sleep(0.25)
-
-        # Start navigating to the coordinates using a PID controller
-        # NOTE: I have a funny feeling this will send wheel speeds too fast
-        # pk = proportional, pi = integral, pd = derivative
-        # pk determines the speed of error correction, pi determines how much the rover will correct itself, and pd determines how quickly the rover will stop correcting itself
+        # start navigating.
         #
-        # NOTE: We may not want to use all of these
-        pk, pi, pd = (
-            self.nav_parameters.pk,
-            self.nav_parameters.pi,
-            self.nav_parameters.pd,
-        )
-        llogger.debug("set PID values.")
-
-        # We want the rover's angle to the destination be 0
+        # note that the `go_to_pose` function returns a bool indicating whether
+        # the destination was "accepted" by Nav2.
         #
-        # TODO(bray): this can be (and usually is) a range, say [-15.0, 15.0]
-        #             degrees of range
-        TARGET_ANGLE_VALUE: float = 0.0
-
-        pid = PID(
-            pk,
-            pi,
-            pd,
-            setpoint=TARGET_ANGLE_VALUE,
-            output_limits=(-128.0, 128.0),
-        )
-        wheel_speeds: WheelsMessage = WheelsMessage()
-        left_wheels: float
-        right_wheels: float
-
-        # continue moving while we're not near the coordinate
-        distance_from_target_m: float = dist_m_between_coords(
-            self._last_known_rover_coord.position, self.nav_parameters.coord
-        )
-        while distance_from_target_m > MIN_GPS_DISTANCE:
-            # grab the imu info
-            # grab the x, y, z compass data
-            compass_info: float = self._last_known_compass_direction
-            llogger.trace(f"Got compass info: {compass_info}")
-
-            # reset wheel speeds before adjustment
-            left_wheels = 1.0
-            right_wheels = 1.0
-
-            # check our angle to the target coordinate
-            angle_to_target: float = calc_angle_to_target(
-                dest_coord, self._last_known_rover_coord, compass_info
-            )
-
-            # grab the pid output (which is the error correction FROM NEUTRAL POSITION, SPEED 0)
-            pid_value: float | None = pid(angle_to_target)
-            if pid_value is None:
-                _ = self.get_logger().error(
-                    f"PID returned none for angle: {angle_to_target}"
+        # if it wasn't accepted, we'll wait a bit and try again.
+        while True:
+            if basic_nav.goToPose(dest):
+                # move on to managing the basic nav
+                break
+            else:
+                # wait a bit to try again
+                llogger.error(
+                    "Failed to navigate to destination: Nav2 rejected the target. Retrying in 5 seconds..."
                 )
-                continue
-            llogger.trace(f"angle target: {angle_to_target}, pid: {pid_value}.")
+                await asyncio.sleep(5.0)
+            pass
+        pass
 
-            # adjust them by the pid correction output
-            left_wheels += pid_value
-            right_wheels -= pid_value
+        # great, we've started navigating!
+        #
+        # let's sit here and manage it until it's done.
+        while True:
+            # when we've completed the navigation task, break out
+            if basic_nav.isTaskComplete():
+                break
+            pass
 
-            # offset them by 126, as 126_u8 is the neutral value
-            # (not moving) speed for the Rover's wheels.
-            offset_right_wheels = right_wheels + 126
-            offset_left_wheels = left_wheels + 126
+            # otherwise, we're still navigating. wait a moment to check again
+            await asyncio.sleep(1.0)
+        pass
 
-            # clamp values beforehand - make sure they aren't above max or
-            # below min.
-            #
-            # max speed (forward) = 255, max speed (reverse) = 0, stopped = 126
-            offset_right_wheels = max(0.0, min(255.0, offset_right_wheels))
-            offset_left_wheels = max(0.0, min(255.0, offset_left_wheels))
-
-            # cast float -> int, set on message type
-            wheel_speeds.right_wheels = int(offset_right_wheels)
-            wheel_speeds.left_wheels = int(offset_left_wheels)
-
-            # if the angle to the target is low, we're in line with it.
-            #
-            # so... we can just start moving toward it :D
-            if abs(angle_to_target) < 10.0:  # degrees
-                wheel_speeds.right_wheels = 126 + 80
-                wheel_speeds.left_wheels = 126 + 80
-
-            # Publish the wheel speeds
-            self._wheels_publisher.publish(wheel_speeds)
-            llogger.trace(
-                f"Sending wheel speeds: left: {wheel_speeds.left_wheels}, right: {wheel_speeds.right_wheels}"
-            )
-
-            # Small delay to prevent flooding messages
-            await asyncio.sleep(0.1)
-
-            # finally, we'll set our distance again for the while loop condition.
-            #
-            # (in other words, stop when we're close)
-            distance_from_target_m = dist_m_between_coords(
-                self._last_known_rover_coord.position, self.nav_parameters.coord
-            )
-            llogger.trace(f"distance from target: {int(distance_from_target_m)} meters")
-
-        # when we're done running, stop the wheels explicitly
-        self.stop_wheels()
-        llogger.warning("escaped")
+        # alright, we've finished coordinate navigation! let's tell the user...
+        llogger.info("Navigated to target successfully!")
 
     # TODO(log): implement
     async def handle_aruco_navigation(self):
