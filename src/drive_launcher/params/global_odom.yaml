@@ -13,7 +13,8 @@ ekf_filter_node_map:
 
     # frame parameters
     base_link_frame: base_link
-    world_frame: map
+    map_frame: map
+    odom_frame: odom
 
     # translated gps input (from `navsat_transform` node)
     odom0: odometry/gps
