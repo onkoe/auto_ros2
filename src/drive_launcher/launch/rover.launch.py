@@ -49,9 +49,7 @@ def generate_launch_description() -> LaunchDescription:
         executable="ekf_node",
         name="ekf_filter_node_odom",
         parameters=[
-            PathJoinSubstitution(
-                [pkg_drive_launcher, "params", "local_odom.yaml"]
-            ),
+            PathJoinSubstitution([pkg_drive_launcher, "params", "local_odom.yaml"]),
         ],
         respawn=True,
     )
@@ -64,9 +62,7 @@ def generate_launch_description() -> LaunchDescription:
         executable="ekf_node",
         name="ekf_filter_node_map",
         parameters=[
-            PathJoinSubstitution(
-                [pkg_drive_launcher, "params", "global_odom.yaml"]
-            ),
+            PathJoinSubstitution([pkg_drive_launcher, "params", "global_odom.yaml"]),
         ],
         respawn=True,
     )
@@ -89,21 +85,19 @@ def generate_launch_description() -> LaunchDescription:
 
     # and the `depthimage_to_laserscan_node` provides the map with a pointcloud
     # to work on
-    depthimage_to_laserscan: IncludeLaunchDescription = (
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                [
-                    PathJoinSubstitution(
-                        [
-                            pkg_drive_launcher,
-                            "launch",
-                            "helpers",
-                            "start_depth_cam_laser_mapping.py",
-                        ]
-                    )
-                ]
-            ),
-        )
+    depthimage_to_laserscan: IncludeLaunchDescription = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        pkg_drive_launcher,
+                        "launch",
+                        "helpers",
+                        "start_depth_cam_laser_mapping.py",
+                    ]
+                )
+            ]
+        ),
     )
 
     # use node composition on Nav2 to speed things up!

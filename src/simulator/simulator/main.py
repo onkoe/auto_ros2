@@ -13,6 +13,7 @@ from rclpy.qos import (
 )
 from rclpy.service import Service
 from rclpy.subscription import Subscription
+from rclpy.utilities import try_shutdown
 from std_msgs.msg import Float64
 from typing_extensions import override
 
@@ -138,7 +139,7 @@ def main(args: list[str] | None = None):
     # exit gracefully when Ctrl^C'd
     def exit_handler(_handler: int, _):
         llogger.info("Asked to shutdown! Doing so gracefully...")
-        rclpy.try_shutdown()
+        _ = try_shutdown()
         sys.exit(0)
 
     _ = signal.signal(signal.SIGINT, exit_handler)
@@ -168,7 +169,7 @@ def main(args: list[str] | None = None):
         # this is optional - otherwise, the garbage collector does it automatically
         # when it runs.
         bridge_node.destroy_node()
-        rclpy.try_shutdown()
+        _ = try_shutdown()
 
 
 # runs the main function - Python doesn't do this automatically.

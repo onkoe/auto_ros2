@@ -1,6 +1,7 @@
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
-
-from navigator_node.coords import calc_angle_to_target
+from navigator_node.coords import (
+    calc_angle_to_target,
+)
 
 
 def make_geopoint(lat: float, lon: float, alt: float) -> GeoPoint:

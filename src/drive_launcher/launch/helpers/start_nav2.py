@@ -19,9 +19,7 @@ def generate_launch_description() -> LaunchDescription:
 
     pkg_simulator: str = get_package_share_directory("simulator")
 
-    configured_params = PathJoinSubstitution(
-        [pkg_simulator, "params", "nav2.yaml"]
-    )
+    configured_params = PathJoinSubstitution([pkg_simulator, "params", "nav2.yaml"])
 
     lifecycle_nodes: list[str] = [
         "controller_server",

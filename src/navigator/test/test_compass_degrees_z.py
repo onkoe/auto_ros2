@@ -6,7 +6,9 @@ from math import cos, sin
 from math import pi as PI
 
 from geometry_msgs.msg import Quaternion
-from navigator_node.convert import compass_degrees_z
+from navigator_node.convert import (
+    compass_degrees_z,
+)
 from pytest import approx
 from sensor_msgs.msg import Imu
 

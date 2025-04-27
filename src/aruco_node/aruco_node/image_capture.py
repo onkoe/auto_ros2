@@ -4,7 +4,8 @@ import cv2 as cv
 import rclpy
 from cv_bridge import CvBridge
 from rcl_interfaces.msg import ParameterDescriptor
-from rclpy.node import Node, Publisher
+from rclpy.node import Node
+from rclpy.publisher import Publisher
 
 # Used to convert OpenCV Mat type to ROS Image type
 # NOTE: This may not be the most effective, we could turn the image into an JPEG string or even define a custom ROS data type.

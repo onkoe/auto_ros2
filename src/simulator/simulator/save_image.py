@@ -7,6 +7,7 @@ import rclpy
 from cv_bridge import CvBridge
 from rclpy.node import Node
 from rclpy.subscription import Subscription
+from rclpy.utilities import try_shutdown
 from sensor_msgs.msg import Image
 from typing_extensions import override
 
@@ -32,15 +33,15 @@ class ImageSaver(Node):
         )
         print(f"waiting to read from topic `{TOPIC}`...")
 
-    def image_callback(self, msg):
+    def image_callback(self, msg: Image):
         if not self.saved:
             try:
                 cv_image = self.bridge.imgmsg_to_cv2(msg, COLOR_CODE)
-                cv2.imwrite("camera_image.png", cv_image)
+                _ = cv2.imwrite("camera_image.png", cv_image)
                 print("Image saved as camera_image.png")
                 self.saved = True
 
-                rclpy.try_shutdown()
+                _ = try_shutdown()
                 sys.exit(0)
             except Exception as e:
                 print(f"failed to convert (w/ cv_bridge). err: {e}")
@@ -51,11 +52,11 @@ class ImageSaver(Node):
 
 
 def exit_handler(_handler: int, _):
-    rclpy.try_shutdown()
+    _ = try_shutdown()
     sys.exit(0)
 
 
-def main(args=None):
+def main(args: list[str] | None = None):
     rclpy.init(args=args)
     image_saver = ImageSaver()
 
@@ -68,7 +69,7 @@ def main(args=None):
         pass
     finally:
         image_saver.destroy_node()
-        rclpy.try_shutdown()
+        _ = try_shutdown()
         sys.exit(0)
 
 

@@ -7,7 +7,6 @@ https://arnebaeyens.com/blog/2024/ros2-integration-testing/
 
 import unittest
 
-import launch_testing.actions
 import launch_testing.markers
 import pytest
 from ament_index_python.packages import get_package_share_directory
@@ -68,7 +67,7 @@ class TestGazeboLaunch(unittest.TestCase):
         ]
 
         for node in expected_nodes:
-            proc_info.assertWaitForStartup(process=node, timeout=5.0)
+            proc_info.assertWaitForStartup(process=node, timeout=5.0)  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_no_process_errors(self, proc_output: IoHandler):
         """ensures nothing err'd out"""

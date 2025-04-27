@@ -22,7 +22,7 @@ def create_perfect_camera(image_width: int, image_height: int) -> list[MatLike]:
     # like by curving the image near the edges of the image
     dist_coeffs: MatLike = np.zeros((5, 1))
 
-    return camera_matrix, dist_coeffs
+    return camera_matrix, dist_coeffs  # pyright: ignore[ reportReturnType]
 
 
 def main(
@@ -85,12 +85,12 @@ def main(
         distCoeffs=dist_coeffs,
     )
     image_points = np.int32(image_points).reshape(4, 2)
-    top_left = image_points[3]
-    bottom_right = image_points[1]
+    top_left = image_points[3]  # pyright: ignore[reportAny]
+    bottom_right = image_points[1]  # pyright: ignore[reportAny]
 
     # Resize the aruco (shrink or stretch) image based on the calcualed image points
     marker_image: MatLike = cv.imread("extra_scripts/aruco_markers/aruco_marker_1.png")
-    side_length = bottom_right[0] - top_left[0]
+    side_length = bottom_right[0] - top_left[0]  # pyright: ignore[reportAny]
     marker_image = cv.resize(
         marker_image,
         (side_length, side_length),
@@ -99,7 +99,7 @@ def main(
     # Add the aruco marker to the image
     image[top_left[1] : bottom_right[1], top_left[0] : bottom_right[0]] = marker_image
 
-    cv.imwrite(
+    _ = cv.imwrite(
         f"aruco_marker_dist_{str(marker_distance).replace('.', '_')}m.jpg",
         image,
     )

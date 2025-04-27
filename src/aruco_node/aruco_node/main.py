@@ -14,7 +14,8 @@ from cv_bridge import CvBridge
 from geometry_msgs.msg import PoseStamped
 from loguru import logger as llogger
 from rcl_interfaces.msg import ParameterDescriptor
-from rclpy.node import Node, Publisher
+from rclpy.node import Node
+from rclpy.publisher import Publisher
 from scipy.spatial.transform import (
     Rotation as R,  # SciPy for quaternion conversion
 )
@@ -268,8 +269,9 @@ class ArucoNode(Node):
 
         # Convert axis-angle format to rotation matrix format
         cv_rmatrix, __ = cv.Rodrigues(cv_rvec)
-        cam_rmatrix: MatLike = np.matmul(
-            cv_rmatrix, np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+        cam_rmatrix: MatLike = np.matmul(  # pyright: ignore[reportAny]
+            cv_rmatrix,
+            np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]]),
         )
         cam_quaternion = R.from_matrix(cam_rmatrix).as_quat()
 

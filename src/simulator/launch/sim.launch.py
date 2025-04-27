@@ -6,7 +6,9 @@ from launch.substitutions import (
     PathJoinSubstitution,
 )
 from launch_ros.actions import Node, SetParameter
-from navigator_node.types import NavigationMode
+from navigator_node.types import (
+    NavigationMode,
+)
 
 
 def generate_launch_description():

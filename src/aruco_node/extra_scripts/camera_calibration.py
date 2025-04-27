@@ -143,7 +143,7 @@ def main():
         )
 
         # Draw the detected corners and markers
-        if charuco_corners is not None:
+        if charuco_corners:
             preview_frame = aruco.drawDetectedCornersCharuco(
                 preview_frame, charuco_corners, charuco_ids
             )
@@ -168,7 +168,7 @@ def main():
         # - more than 3 charuco markers were found
         if (
             key == ord("c")
-            and charuco_corners is not None
+            and charuco_corners
             and len(marker_corners) > 0
             and len(charuco_corners) > 3
         ):

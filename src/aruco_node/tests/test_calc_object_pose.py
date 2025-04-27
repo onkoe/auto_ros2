@@ -7,7 +7,9 @@ import pytest
 from cv2.typing import MatLike
 from pytest import approx
 
-from aruco_node.utils import calc_object_pose
+from aruco_node.utils import (
+    calc_object_pose,
+)
 
 
 @pytest.fixture
@@ -23,10 +25,6 @@ def sim_aruco_dist_and_images() -> list[tuple[float, MatLike]]:
 
         # Read the image
         image = cv.imread(f"{directory_path}/{image_filename}")
-        if image is None:
-            raise Exception(
-                f"Could not read/find image needed for test: {image_filename}"
-            )
         dist_and_images.append((dist, image))
 
     # Return the distance that the aruco marker is from the image and the image
@@ -94,8 +92,8 @@ def test_aruco_dist_from_sim_image(
         # Detect the markers (and their corners) in the image
         (
             detected_marker_corners,
-            detected_marker_ids,
-            rejected_marker_corners,
+            _,
+            _,
         ) = aruco_detector.detectMarkers(image)
 
         # Calculate the distance from the camera to the marker

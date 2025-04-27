@@ -8,7 +8,10 @@ from geometry_msgs.msg import PoseStamped
 from loguru import logger as llogger
 from rcl_interfaces.msg import ParameterType
 from rclpy.client import Client
-from rclpy.node import Node, ParameterDescriptor
+from rclpy.node import (
+    Node,
+    ParameterDescriptor,
+)
 from rclpy.publisher import Publisher
 from rclpy.qos import QoSPresetProfiles, QoSProfile
 from rclpy.subscription import Subscription
@@ -292,7 +295,8 @@ class NavigatorNode(Node):
         llogger.info(f"Step 1: go to coordinate! target: {target_coord}")
 
         dist_to_target_coord_m: float = dist_m_between_coords(
-            self._last_known_rover_coord.position, target_coord
+            self._last_known_rover_coord.position,  # pyright: ignore[reportOptionalMemberAccess]
+            target_coord,
         )
 
         # if we're not at the coordinate, go there!
@@ -513,10 +517,7 @@ class NavigatorNode(Node):
         pass
 
         # wait for the GPS and IMU to do something before we begin navigating
-        while (
-            self._last_known_compass_direction is None
-            or self._last_known_rover_coord is None
-        ):
+        while self._last_known_compass_direction is None:
             _ = self.get_logger().warn("Sensor data isn't up yet. Waiting to navigate.")
             _ = self.get_logger().debug(
                 f"sensor data: compass: {self._last_known_compass_direction}, gps: {self._last_known_rover_coord}"

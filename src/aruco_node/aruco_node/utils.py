@@ -18,7 +18,7 @@ def calc_object_pose(
     )
 
     if not success:
-        return False, np.zeros(4), np.zeros(3)
+        return False, np.zeros(4), np.zeros(3)  # pyright: ignore[reportReturnType]
 
     # Convert OpencCV's rotation vector to a rotation matrix
     rotation_matrix_cv, _ = cv.Rodrigues(rotation_vector)
@@ -44,4 +44,4 @@ def calc_object_pose(
     # Apply coordinate transformation to translation vector
     translation_robot = (cv_to_robot @ translation_vector).flatten()
 
-    return success, orientation_quaternion, translation_robot
+    return success, orientation_quaternion, translation_robot  # pyright: ignore[reportReturnType]
