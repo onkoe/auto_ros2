@@ -100,6 +100,13 @@ def generate_launch_description() -> LaunchDescription:
         ),
     )
 
+    # we'll also want the `robot_state_publisher`.
+    #
+    # this node says where things are on the rover in relation to one another,
+    # which is required for consistent mapping, navigation and object
+    # avoidance.
+    robot_state_publisher: IncludeLaunchDescription = _robot_state_publisher()
+
     # use node composition on Nav2 to speed things up!
     #
     # see: https://docs.ros.org/en/humble/Tutorials/Intermediate/Composition.html#component-container-types
@@ -157,6 +164,7 @@ def generate_launch_description() -> LaunchDescription:
 
     return LaunchDescription(
         [
+            robot_state_publisher,
             depthimage_to_laserscan,
             slam_toolbox,
             navsat_transform_node,
@@ -166,4 +174,23 @@ def generate_launch_description() -> LaunchDescription:
             nav2_helper,
             ros2_control,
         ]
+    )
+
+
+def _robot_state_publisher() -> IncludeLaunchDescription:
+    pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
+
+    return IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        pkg_drive_launcher,
+                        "launch",
+                        "helpers",
+                        "robot_state_publisher.launch.py",
+                    ]
+                )
+            ]
+        ),
     )
