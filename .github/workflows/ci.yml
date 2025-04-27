@@ -5,7 +5,7 @@ jobs:
   check-ros2-workspace:
     # same as jetson :p
     runs-on: ubuntu-22.04
-    needs: [python, rust, uv-sync-on-aarch64]
+    # needs: [python, rust, uv-sync-on-aarch64]
     container:
       image: osrf/ros:humble-simulation
     steps:
@@ -117,7 +117,12 @@ jobs:
 
       # type check everything
       - name: Typeck with `basedpyright` (Python)
-        run: uv tool run basedpyright src/
+        shell: bash
+        run: |
+          . .venv/bin/activate
+          . /opt/ros/humble/setup.bash
+          . install/local_setup.bash
+          uv tool run basedpyright src/
 
       - name: Run ROS 2 tests
         shell: bash
