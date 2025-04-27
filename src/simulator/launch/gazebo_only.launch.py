@@ -15,6 +15,7 @@ from launch.substitutions import (
     PathJoinSubstitution,
 )
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -28,7 +29,7 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     # grab the rover udrf "description"
-    robot_desc: dict[str, Command] = _grab_robot_description()
+    robot_desc: dict[str, Command | ParameterValue] = _grab_robot_description()
 
     # generate the rover model from its macro file, then publish its transforms
     # over topics for the duration of the program
@@ -110,7 +111,9 @@ def generate_launch_description() -> LaunchDescription:
         PythonLaunchDescriptionSource(gz_launch_path),
         launch_arguments={
             "gz_args": [
-                PathJoinSubstitution([pkg_simulator, "resource", "world.sdf.xml"]),
+                PathJoinSubstitution(
+                    [pkg_simulator, "resource", "world.sdf.xml"]
+                ),
                 " -r" if run_sim_immediately else "",
                 " -s" if not run_headless else "",
             ],
@@ -142,7 +145,7 @@ def generate_launch_description() -> LaunchDescription:
     )
 
 
-def _grab_robot_description() -> dict[str, Command]:
+def _grab_robot_description() -> dict[str, Command | ParameterValue]:
     """grabs the robot desc."""
 
     # make the description
@@ -161,4 +164,8 @@ def _grab_robot_description() -> dict[str, Command]:
     )
 
     # return it in a dict
-    return {"robot_description": robot_description_content}
+    return {
+        "robot_description": ParameterValue(
+            robot_description_content, value_type=str
+        )
+    }

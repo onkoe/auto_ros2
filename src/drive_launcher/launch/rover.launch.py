@@ -98,7 +98,7 @@ def generate_launch_description() -> LaunchDescription:
         parameters=[{"use_sim_time": False}],
     )
     # launch the rest of Nav2 using our helper script
-    nav2_helper: Node = IncludeLaunchDescription(
+    nav2_helper: IncludeLaunchDescription = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [
                 PathJoinSubstitution(
@@ -127,7 +127,7 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     # provides ways to control the rover
-    ros2_control: Node = IncludeLaunchDescription(
+    ros2_control: IncludeLaunchDescription = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [
                 PathJoinSubstitution(

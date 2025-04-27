@@ -41,7 +41,7 @@ def generate_launch_description():
     mode_int: int = NavigationMode.ARUCO.value
 
     # start nav2 using our bringup script
-    nav2_bringup: LaunchDescription = IncludeLaunchDescription(
+    nav2_bringup: IncludeLaunchDescription = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [pkg_drive_launcher, "/launch", "/rover.launch.py"],
         ),
