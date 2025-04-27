@@ -76,6 +76,14 @@ def generate_launch_description() -> LaunchDescription:
             "-p",
             f"config_file:={bridge_params}",
         ],
+        parameters=[
+            {
+                "qos_overrides./sensors/depth_image/camera_info.publisher.durability": "volatile",
+                "qos_overrides./sensors/depth_image/camera_info.publisher.reliability": "best_effort",
+                "qos_overrides./sensors/mono_image/camera_info.publisher.durability": "volatile",
+                "qos_overrides./sensors/mono_image/camera_info.publisher.reliability": "best_effort",
+            }
+        ],
         output="screen",
     )
 
@@ -84,7 +92,7 @@ def generate_launch_description() -> LaunchDescription:
         package="ros_gz_image",
         executable="image_bridge",
         arguments=["/sensors/mono_image", "/sensors/depth_image"],
-        parameters=[{"qos": "sensor_data"}],
+        parameters=[("qos", "sensor_data")],
         output="screen",  # print any logs to terminal
     )
 
