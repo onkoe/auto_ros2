@@ -17,9 +17,11 @@ def generate_launch_description() -> LaunchDescription:
     container_name = LaunchConfiguration("container_name")
     remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
 
-    pkg_simulator: str = get_package_share_directory("simulator")
+    pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
-    configured_params = PathJoinSubstitution([pkg_simulator, "params", "nav2.yaml"])
+    configured_params = PathJoinSubstitution(
+        [pkg_drive_launcher, "params", "nav2.yaml"]
+    )
 
     lifecycle_nodes: list[str] = [
         "controller_server",

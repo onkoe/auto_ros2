@@ -209,7 +209,6 @@ def _slam_toolbox() -> IncludeLaunchDescription:
 
 def _nav2() -> tuple[IncludeLaunchDescription, Node]:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
-    pkg_simulator: str = get_package_share_directory("simulator")
 
     # use node composition on Nav2 to speed things up!
     #
@@ -241,7 +240,7 @@ def _nav2() -> tuple[IncludeLaunchDescription, Node]:
             "autostart": "true",
             "params_file": PathJoinSubstitution(
                 [
-                    pkg_simulator,
+                    pkg_drive_launcher,
                     "params",
                     "nav2.yaml",
                 ]
