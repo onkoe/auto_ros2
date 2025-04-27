@@ -15,6 +15,18 @@ build:
     $OPTIONAL_SUDO $DOCKER rm soro &> /dev/null || true
     $OPTIONAL_SUDO $DOCKER build . -t ros2-soro
 
+# stops the container (if it's running...)
+stop:
+    #!/usr/bin/env bash
+    #
+    # check if we need sudo
+    source ./scripts/find_sudo.bash
+    source ./scripts/find_docker.bash
+
+    # stop the container
+    $OPTIONAL_SUDO $DOCKER compose down
+    $OPTIONAL_SUDO $DOCKER rm soro >> /dev/null || true
+
 run:
     #!/usr/bin/env bash
     #
