@@ -76,7 +76,7 @@ def generate_launch_description() -> LaunchDescription:
                         pkg_drive_launcher,
                         "launch",
                         "helpers",
-                        "start_slam_toolbox.py",
+                        "slam_toolbox.launch.py",
                     ]
                 )
             ]
@@ -93,7 +93,7 @@ def generate_launch_description() -> LaunchDescription:
                         pkg_drive_launcher,
                         "launch",
                         "helpers",
-                        "start_depth_cam_laser_mapping.py",
+                        "depthimage_to_laserscan.launch.py",
                     ]
                 )
             ]
@@ -126,7 +126,7 @@ def generate_launch_description() -> LaunchDescription:
                         pkg_drive_launcher,
                         "launch",
                         "helpers",
-                        "start_nav2.py",
+                        "nav2.launch.py",
                     ]
                 )
             ]
@@ -155,7 +155,7 @@ def generate_launch_description() -> LaunchDescription:
                         pkg_drive_launcher,
                         "launch",
                         "helpers",
-                        "start_ros2_control.py",
+                        "ros2_control.launch.py",
                     ]
                 )
             ]
