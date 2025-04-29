@@ -15,6 +15,24 @@ def generate_launch_description():
     pkg_simulator: str = get_package_share_directory("simulator")
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
+    use_sim_time: str = "True"
+
+    # start the rover launch script
+    rover_launch_file: IncludeLaunchDescription = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        pkg_drive_launcher,
+                        "launch",
+                        "rover.launch.py",
+                    ]
+                )
+            ],
+        ),
+        launch_arguments=[("use_sim_time", use_sim_time)],
+    )
+
     # launch all the gazebo stuff
     gazebo_launch_file: IncludeLaunchDescription = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -27,7 +45,8 @@ def generate_launch_description():
                     ]
                 )
             ],
-        )
+        ),
+        launch_arguments=[("use_sim_time", use_sim_time)],
     )
 
     # launch rviz2
@@ -42,19 +61,15 @@ def generate_launch_description():
 
     mode_int: int = NavigationMode.ARUCO.value
 
-    # start nav2 using our bringup script
-    nav2_bringup: IncludeLaunchDescription = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [pkg_drive_launcher, "/launch", "/rover.launch.py"],
-        ),
-    )
-
     # make an instance of the navigator node!
     navigator: Node = Node(
         executable="navigator_node",
         package="navigator_node",
         name="navigator",
-        parameters=[{"longitude": longitude, "latitude": latitude, "mode": mode_int}],
+        parameters=[
+            {"longitude": longitude, "latitude": latitude, "mode": mode_int},
+            {"use_sim_time": use_sim_time},
+        ],
     )
 
     # turn on debug logs
@@ -70,7 +85,7 @@ def generate_launch_description():
             gazebo_launch_file,
             navigator,
             log_setting,
-            nav2_bringup,
-            rviz2,
+            # rviz2,
+            rover_launch_file,
         ],
     )

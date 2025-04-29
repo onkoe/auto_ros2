@@ -1,7 +1,9 @@
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import (
     Command,
     FindExecutable,
+    LaunchConfiguration,
     PathJoinSubstitution,
 )
 from launch_ros.actions import Node
@@ -13,6 +15,8 @@ def generate_launch_description() -> LaunchDescription:
     """
     starts the `robot_state_publisher::robot_state_publisher` node.
     """
+    use_sim_time = LaunchConfiguration("use_sim_time")
+
     # grab the rover's udrf
     robot_desc: dict[str, ParameterValue] = _grab_robot_description()
 
@@ -25,10 +29,20 @@ def generate_launch_description() -> LaunchDescription:
     rover_state_publisher_node: Node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
-        parameters=[robot_desc],
+        parameters=[
+            robot_desc,
+            {"use_sim_time": use_sim_time},
+        ],
     )
 
-    return LaunchDescription([rover_state_publisher_node])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                "use_sim_time",
+            ),
+            rover_state_publisher_node,
+        ]
+    )
 
 
 def _grab_robot_description() -> dict[str, ParameterValue]:

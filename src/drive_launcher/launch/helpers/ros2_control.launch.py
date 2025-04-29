@@ -7,10 +7,12 @@ https://github.com/ros-controls/ros2_control/blob/humble/controller_manager/cont
 
 from launch import LaunchDescription
 from launch.actions import (
+    DeclareLaunchArgument,
     RegisterEventHandler,
 )
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import (
+    LaunchConfiguration,
     PathJoinSubstitution,
 )
 from launch_ros.actions import Node
@@ -18,6 +20,7 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description() -> LaunchDescription:
+    use_sim_time = LaunchConfiguration("use_sim_time")
     controllers_conf: PathJoinSubstitution = _get_controllers_conf()
 
     controller_manager: Node = Node(
@@ -37,28 +40,42 @@ def generate_launch_description() -> LaunchDescription:
         arguments=[
             "joint_state_broadcaster",
         ],
+        parameters=[
+            {"use_sim_time": use_sim_time},
+        ],
     )
     spawn_left: Node = Node(
         package="controller_manager",
+        name="left_controller_manager",
         executable="spawner",
         arguments=[
             "left_wheels_velocity_controller",
             "--param-file",
             controllers_conf,
         ],
+        parameters=[
+            {"use_sim_time": use_sim_time},
+        ],
     )
     spawn_right: Node = Node(
         package="controller_manager",
+        name="right_controller_manager",
         executable="spawner",
         arguments=[
             "right_wheels_velocity_controller",
             "--param-file",
             controllers_conf,
         ],
+        parameters=[
+            {"use_sim_time": use_sim_time},
+        ],
     )
 
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                "use_sim_time",
+            ),
             controller_manager,
             spawn_joint_state_broadcaster,
             #

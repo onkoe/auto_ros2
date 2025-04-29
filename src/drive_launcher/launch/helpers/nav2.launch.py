@@ -1,5 +1,6 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import (
     LaunchConfiguration,
     PathJoinSubstitution,
@@ -18,9 +19,12 @@ def generate_launch_description() -> LaunchDescription:
     remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
 
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
-
-    configured_params = PathJoinSubstitution(
-        [pkg_drive_launcher, "params", "nav2.yaml"]
+    params_file: PathJoinSubstitution = PathJoinSubstitution(
+        [
+            pkg_drive_launcher,
+            "params",
+            "nav2.yaml",
+        ]
     )
 
     lifecycle_nodes: list[str] = [
@@ -48,56 +52,56 @@ def generate_launch_description() -> LaunchDescription:
                     package="nav2_controller",
                     plugin="nav2_controller::ControllerServer",
                     name="controller_server",
-                    parameters=[configured_params],
+                    parameters=[params_file],
                     remappings=remappings + [("cmd_vel", "cmd_vel_nav")],
                 ),
                 ComposableNode(
                     package="nav2_smoother",
                     plugin="nav2_smoother::SmootherServer",
                     name="smoother_server",
-                    parameters=[configured_params],
+                    parameters=[params_file],
                     remappings=remappings,
                 ),
                 ComposableNode(
                     package="nav2_planner",
                     plugin="nav2_planner::PlannerServer",
                     name="planner_server",
-                    parameters=[configured_params],
+                    parameters=[params_file],
                     remappings=remappings,
                 ),
                 ComposableNode(
                     package="nav2_behaviors",
                     plugin="behavior_server::BehaviorServer",
                     name="behavior_server",
-                    parameters=[configured_params],
+                    parameters=[params_file],
                     remappings=remappings + [("cmd_vel", "cmd_vel_nav")],
                 ),
                 ComposableNode(
                     package="nav2_bt_navigator",
                     plugin="nav2_bt_navigator::BtNavigator",
                     name="bt_navigator",
-                    parameters=[configured_params],
+                    parameters=[params_file],
                     remappings=remappings,
                 ),
                 ComposableNode(
                     package="nav2_waypoint_follower",
                     plugin="nav2_waypoint_follower::WaypointFollower",
                     name="waypoint_follower",
-                    parameters=[configured_params],
+                    parameters=[params_file],
                     remappings=remappings,
                 ),
                 ComposableNode(
                     package="nav2_velocity_smoother",
                     plugin="nav2_velocity_smoother::VelocitySmoother",
                     name="velocity_smoother",
-                    parameters=[configured_params],
+                    parameters=[params_file],
                     remappings=remappings + [("cmd_vel", "cmd_vel_nav")],
                 ),
                 ComposableNode(
                     package="nav2_collision_monitor",
                     plugin="nav2_collision_monitor::CollisionMonitor",
                     name="collision_monitor",
-                    parameters=[configured_params],
+                    parameters=[params_file],
                     remappings=remappings,
                 ),
                 ComposableNode(
@@ -115,4 +119,14 @@ def generate_launch_description() -> LaunchDescription:
         ),
     ]
 
-    return LaunchDescription(composable_nodes)
+    ld: LaunchDescription = LaunchDescription()
+    for n in composable_nodes:
+        ld.add_action(n)
+
+    ld.add_action(
+        DeclareLaunchArgument(
+            "use_sim_time",
+            default_value="false",
+        ),
+    )
+    return ld

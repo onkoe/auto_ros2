@@ -19,6 +19,8 @@ from launch_ros.actions import Node
 def generate_launch_description() -> LaunchDescription:
     pkg_simulator: str = get_package_share_directory("simulator")
 
+    use_sim_time = LaunchConfiguration("use_sim_time")
+
     # allow parent launch files to ask us to run headless
     run_headless: LaunchConfiguration = LaunchConfiguration("run_headless")
     run_sim_immediately: LaunchConfiguration = LaunchConfiguration(
@@ -27,7 +29,11 @@ def generate_launch_description() -> LaunchDescription:
 
     # same as above, except we're mooching off it and also its for joints
     rover_joint_publisher_node: Node = Node(
-        package="joint_state_publisher", executable="joint_state_publisher"
+        package="joint_state_publisher",
+        executable="joint_state_publisher",
+        parameters=[
+            {"use_sim_time": use_sim_time},
+        ],
     )
 
     # spawn the rover model
@@ -47,6 +53,9 @@ def generate_launch_description() -> LaunchDescription:
             "0.2",
         ],
         output="screen",
+        parameters=[
+            {"use_sim_time": use_sim_time},
+        ],
     )
 
     # bridge for ros 2 <---> gazebo topics, minus cameras
@@ -64,12 +73,7 @@ def generate_launch_description() -> LaunchDescription:
             f"config_file:={bridge_params}",
         ],
         parameters=[
-            {
-                "qos_overrides./sensors/depth_image/camera_info.publisher.durability": "volatile",
-                "qos_overrides./sensors/depth_image/camera_info.publisher.reliability": "best_effort",
-                "qos_overrides./sensors/mono_image/camera_info.publisher.durability": "volatile",
-                "qos_overrides./sensors/mono_image/camera_info.publisher.reliability": "best_effort",
-            }
+            {"use_sim_time": use_sim_time},
         ],
         output="screen",
     )
@@ -79,14 +83,24 @@ def generate_launch_description() -> LaunchDescription:
         package="ros_gz_image",
         executable="image_bridge",
         arguments=["/sensors/mono_image", "/sensors/depth_image"],
-        parameters=[("qos", "sensor_data")],
+        parameters=[
+            {
+                "use_sim_time": use_sim_time,
+            },
+        ],
         output="screen",  # print any logs to terminal
     )
 
     # a custom bridge to use our message types.
     #
     # yea... it's goin through three layers lol
-    soro_bridge: Node = Node(package="simulator", executable="simulator")
+    soro_bridge: Node = Node(
+        package="simulator",
+        executable="simulator",
+        parameters=[
+            {"use_sim_time": use_sim_time},
+        ],
+    )
 
     # spawn the gazebo server
     pkg_ros_gz_sim = get_package_share_directory("ros_gz_sim")
@@ -102,11 +116,15 @@ def generate_launch_description() -> LaunchDescription:
                 PythonExpression([run_headless, " and ' -s' or ''"]),
             ],
             "on_exit_shutdown": "True",
+            "gz_version": "8",
         }.items(),
     )
 
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                "use_sim_time",
+            ),
             SetEnvironmentVariable(name="LIBGL_ALWAYS_SOFTWARE", value="1"),
             DeclareLaunchArgument(
                 name="run_headless",

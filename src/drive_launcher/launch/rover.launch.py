@@ -4,16 +4,21 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
+    DeclareLaunchArgument,
     IncludeLaunchDescription,
 )
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
+    LaunchConfiguration,
     PathJoinSubstitution,
 )
 from launch_ros.actions import Node
 
 
 def generate_launch_description() -> LaunchDescription:
+    # whether or not we'll launch using sim time.
+    use_sim_time = LaunchConfiguration("use_sim_time")
+
     # this collection of nodes is from the `robot_localization` package. these
     # provide essential functionality for the Rover.
     #
@@ -34,7 +39,7 @@ def generate_launch_description() -> LaunchDescription:
     # representation of the map. it's used by the planners (and, as a result,
     # directly by our Navigator).
     (navsat_transform_node, ekf_filter_node_odom, ekf_filter_node_map) = (
-        _robot_localization()
+        _robot_localization(use_sim_time)
     )
 
     # the `depthimage_to_laserscan::depthimage_to_laserscan_node` gives us
@@ -45,25 +50,29 @@ def generate_launch_description() -> LaunchDescription:
     #
     # our Rover doesn't have one of those..! so, for object avoidance, we use
     # this node to add boundaries to our map.
-    depthimage_to_laserscan: IncludeLaunchDescription = _depthimage_to_laserscan()
+    depthimage_to_laserscan: IncludeLaunchDescription = _depthimage_to_laserscan(
+        use_sim_time
+    )
 
     # the `slam_toolbox::async_slam_toolbox_node` fills the `/tf:map` and
     # `tf:odom` frames with our translated laserscan data.
-    slam_toolbox: IncludeLaunchDescription = _slam_toolbox()
+    slam_toolbox: IncludeLaunchDescription = _slam_toolbox(use_sim_time)
 
     # we'll also want the `robot_state_publisher::robot_state_publisher` node.
     #
     # it says where things are on the Rover in relation to one another, which
     # is required for consistent mapping, good navigation, and object
     # avoidance.
-    robot_state_publisher: IncludeLaunchDescription = _robot_state_publisher()
+    robot_state_publisher: IncludeLaunchDescription = _robot_state_publisher(
+        use_sim_time
+    )
 
     # Nav2 provides navigation utilties to the SoRo Navigator and beyond.
     #
     # it's primarily helpful for its provided algorithms that are really
     # difficult (and verbose) to implement by hand. you control it through the
     # various actions its plugins provide during navigation.
-    (nav2_container, nav2_launch) = _nav2()
+    (nav2_container, nav2_launch) = _nav2(use_sim_time)
 
     # `ros2_control` is a collection of nodes that we use to control the Rover.
     #
@@ -81,14 +90,17 @@ def generate_launch_description() -> LaunchDescription:
     #
     # that'd be an extremely painful task with our microcontroller setup, as
     # there are no cross-platform networking APIs in the C++ stdlib. note that
-    # `boost` could be an option in the future if future Autonomous members
+    # `boost` could be an option in the future if future Autonomous members9
     # would like to move toward a `ros2_control`-based approach.
-    ros2_control: IncludeLaunchDescription = _ros2_control()
+    ros2_control: IncludeLaunchDescription = _ros2_control(use_sim_time)
 
     return LaunchDescription(
         [
-            navsat_transform_node,
+            DeclareLaunchArgument(
+                "use_sim_time",
+            ),
             robot_state_publisher,
+            navsat_transform_node,
             ekf_filter_node_odom,
             ekf_filter_node_map,
             depthimage_to_laserscan,
@@ -100,7 +112,9 @@ def generate_launch_description() -> LaunchDescription:
     )
 
 
-def _robot_localization() -> tuple[Node, Node, Node]:
+def _robot_localization(
+    use_sim_time: LaunchConfiguration,
+) -> tuple[Node, Node, Node]:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
     # offset gps coordinates by correct amount
@@ -119,7 +133,8 @@ def _robot_localization() -> tuple[Node, Node, Node]:
                             "navsat_transform.yaml",
                         ]
                     )
-                ]
+                ],
+                "use_sim_time": use_sim_time,
             }
         ],
         respawn=True,
@@ -141,6 +156,7 @@ def _robot_localization() -> tuple[Node, Node, Node]:
                     "local_odom.yaml",
                 ]
             ),
+            {"use_sim_time": use_sim_time},
         ],
         respawn=True,
     )
@@ -161,6 +177,7 @@ def _robot_localization() -> tuple[Node, Node, Node]:
                     "global_odom.yaml",
                 ]
             ),
+            {"use_sim_time": use_sim_time},
         ],
         respawn=True,
     )
@@ -168,7 +185,9 @@ def _robot_localization() -> tuple[Node, Node, Node]:
     return (navsat_transform_node, ekf_filter_node_odom, ekf_filter_node_map)
 
 
-def _robot_state_publisher() -> IncludeLaunchDescription:
+def _robot_state_publisher(
+    use_sim_time: LaunchConfiguration,
+) -> IncludeLaunchDescription:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
     return IncludeLaunchDescription(
@@ -184,10 +203,13 @@ def _robot_state_publisher() -> IncludeLaunchDescription:
                 )
             ]
         ),
+        launch_arguments=[("use_sim_time", (use_sim_time))],
     )
 
 
-def _slam_toolbox() -> IncludeLaunchDescription:
+def _slam_toolbox(
+    use_sim_time: LaunchConfiguration,
+) -> IncludeLaunchDescription:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
     return IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -200,19 +222,15 @@ def _slam_toolbox() -> IncludeLaunchDescription:
                         "slam_toolbox.launch.py",
                     ]
                 )
-            ]
+            ],
         ),
+        launch_arguments=[("use_sim_time", (use_sim_time))],
     )
 
-    # we'll also want the `robot_state_publisher`.
-    #
-    # this node says where things are on the rover in relation to one another,
-    # which is required for consistent mapping, navigation and object
-    # avoidance.
-    robot_state_publisher: IncludeLaunchDescription = _robot_state_publisher()
 
-
-def _nav2() -> tuple[Node, IncludeLaunchDescription]:
+def _nav2(
+    use_sim_time: LaunchConfiguration,
+) -> tuple[Node, IncludeLaunchDescription]:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
     # use node composition on Nav2 to speed things up!
@@ -223,7 +241,7 @@ def _nav2() -> tuple[Node, IncludeLaunchDescription]:
         executable="component_container",
         name="nav2_container",
         namespace="",
-        parameters=[{"use_sim_time": False}],
+        parameters=[{"use_sim_time": use_sim_time}],
     )
 
     # launch the rest of Nav2 using our helper script
@@ -241,15 +259,8 @@ def _nav2() -> tuple[Node, IncludeLaunchDescription]:
             ]
         ),
         launch_arguments={
-            "use_sim_time": "false",
+            "use_sim_time": use_sim_time,
             "autostart": "true",
-            "params_file": PathJoinSubstitution(
-                [
-                    pkg_drive_launcher,
-                    "params",
-                    "nav2.yaml",
-                ]
-            ),
             "namespace": "",
             "container_name": "nav2_container",
         }.items(),
@@ -258,7 +269,9 @@ def _nav2() -> tuple[Node, IncludeLaunchDescription]:
     return (nav2_container, nav2_launch)
 
 
-def _depthimage_to_laserscan() -> IncludeLaunchDescription:
+def _depthimage_to_laserscan(
+    use_sim_time: LaunchConfiguration,
+) -> IncludeLaunchDescription:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
     return IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -273,10 +286,13 @@ def _depthimage_to_laserscan() -> IncludeLaunchDescription:
                 )
             ]
         ),
+        launch_arguments=[("use_sim_time", use_sim_time)],
     )
 
 
-def _ros2_control() -> IncludeLaunchDescription:
+def _ros2_control(
+    use_sim_time: LaunchConfiguration,
+) -> IncludeLaunchDescription:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
     return IncludeLaunchDescription(
@@ -292,23 +308,5 @@ def _ros2_control() -> IncludeLaunchDescription:
                 )
             ]
         ),
-    )
-
-
-def _robot_state_publisher() -> IncludeLaunchDescription:
-    pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
-
-    return IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                PathJoinSubstitution(
-                    [
-                        pkg_drive_launcher,
-                        "launch",
-                        "helpers",
-                        "robot_state_publisher.launch.py",
-                    ]
-                )
-            ]
-        ),
+        launch_arguments=[("use_sim_time", use_sim_time)],
     )
