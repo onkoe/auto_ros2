@@ -35,8 +35,8 @@ our work in here... :D
 <xacro:property name="color_camera_frame_height" value="720" />
 <xacro:property name="color_camera_fov" value="1.05" />
 <xacro:property name="depth_camera_topic" value="/sensors/depth_image" />
-<xacro:property name="depth_canera_info_topic" value="/sensors/depth_image/camera_info" />
-<xacro:property name="depth_camera_refresh_speed" value="100" />
+<xacro:property name="depth_camera_info_topic" value="/sensors/depth_image/camera_info" />
+<xacro:property name="depth_camera_refresh_speed" value="10" />
 <xacro:property name="depth_camera_frame_width" value="662" />
 <xacro:property name="depth_camera_frame_height" value="376" />
 <xacro:property name="depth_camera_fov" value="1.10" />
@@ -337,12 +337,13 @@ makes a wheel joint for ros2_control.
     <gazebo reference="camera_link">
         <sensor name="mono_image" type="camera">
             <pose>0.3 0.0 0.1 0 0 0</pose>
+            <always_on>true</always_on>
             <visualize>true</visualize>
             <update_rate>${color_camera_refresh_speed}</update_rate>
             <topic>${color_camera_topic}</topic>
             <camera>
                 <horizontal_fov>${color_camera_fov}</horizontal_fov>
-                <info_topic>${color_camera_info_topic}</info_topic>
+                <camera_info_topic>${color_camera_info_topic}</camera_info_topic>
                 <image>
                     <width>${color_camera_frame_width}</width>
                     <height>${color_camera_frame_height}</height>
@@ -361,11 +362,14 @@ makes a wheel joint for ros2_control.
             <visualize>true</visualize>
             <update_rate>${depth_camera_refresh_speed}</update_rate>
             <topic>${depth_camera_topic}</topic>
-            <always_on>1</always_on>
+            <always_on>true</always_on>
 
             <camera>
                 <horizontal_fov>${depth_camera_fov}</horizontal_fov>
-                <info_topic>${depth_canera_info_topic}</info_topic>
+
+                <!-- FIXME(bray): gazebo is broken here lol, this doesn't work-->
+                <camera_info_topic>${depth_camera_info_topic}</camera_info_topic>
+
                 <image>
                     <width>${depth_camera_frame_width}</width>
                     <height>${depth_camera_frame_height}</height>
@@ -378,27 +382,4 @@ makes a wheel joint for ros2_control.
             </camera>
         </sensor>
     </gazebo>
-
-    <!-- finally, add ros2-control plugin for gazebo -->
-    <gazebo>
-      <plugin
-          name="gz_ros2_control::GazeboSimROS2ControlPlugin"
-          filename="libgz_ros2_control-system.so">
-        <parameters>$(find drive_launcher)/params/ros2_control/controllers.yaml</parameters>
-      </plugin>
-    </gazebo>
-
-    <ros2_control name="remi_ros2_control" type="system">
-      <hardware>
-        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-      </hardware>
-
-    <!-- and its joints lol -->
-    <xacro:make_wheel_control_joint name="left_front" />
-    <xacro:make_wheel_control_joint name="left_middle" />
-    <xacro:make_wheel_control_joint name="left_back" />
-    <xacro:make_wheel_control_joint name="right_front" />
-    <xacro:make_wheel_control_joint name="right_middle" />
-    <xacro:make_wheel_control_joint name="right_back" />
-  </ros2_control>
 </robot>

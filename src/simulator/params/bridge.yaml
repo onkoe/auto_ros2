@@ -63,7 +63,14 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 - ros_topic_name: "/sensors/depth_image/camera_info"
-  gz_topic_name: "/sensors/depth_image/camera_info"
+  gz_topic_name: "/sensors/camera_info" # FIXME(bray): why in the actual hell is this broken
   ros_type_name: "sensor_msgs/msg/CameraInfo"
   gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# VERY IMPORTANT: BRIDGE THE GAZEBO CLOCK FOR `use_sim_time` TO WORK!!!
+- ros_topic_name: "clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "ignition.msgs.Clock"
   direction: GZ_TO_ROS
