@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    qos_overrides./sensors/depth_image/camera_info.publisher.reliability: reliable
+    qos_overrides./sensors/depth_image/camera_info.publisher.history: keep_last
+    qos_overrides./sensors/depth_image/camera_info.publisher.depth: 1
+    qos_overrides./sensors/depth_image/camera_info.publisher.durability: volatile

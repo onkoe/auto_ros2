@@ -73,6 +73,7 @@ def generate_launch_description() -> LaunchDescription:
             f"config_file:={bridge_params}",
         ],
         parameters=[
+            os.path.join(pkg_simulator, "params", "camera.yaml"),
             {"use_sim_time": use_sim_time},
         ],
         output="screen",
