@@ -21,6 +21,7 @@
   <depend>rqt_graph</depend>
   <depend>rqt_tf_tree</depend>
   <depend>rviz2</depend>
+  <depend>tf2_tools</depend>
   <depend>xacro</depend>
 
   <test_depend>launch</test_depend>
