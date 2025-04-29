@@ -1,0 +1,22 @@
+<!-- finally, add ros2-control plugin for gazebo -->
+<gazebo>
+    <plugin
+        name="gz_ros2_control::GazeboSimROS2ControlPlugin"
+        filename="libgz_ros2_control-system.so">
+    <parameters>$(find drive_launcher)/params/ros2_control/controllers.yaml</parameters>
+    </plugin>
+</gazebo>
+
+<ros2_control name="remi_ros2_control" type="system">
+    <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <!-- and its joints lol -->
+    <xacro:make_wheel_control_joint name="left_front" />
+    <xacro:make_wheel_control_joint name="left_middle" />
+    <xacro:make_wheel_control_joint name="left_back" />
+    <xacro:make_wheel_control_joint name="right_front" />
+    <xacro:make_wheel_control_joint name="right_middle" />
+    <xacro:make_wheel_control_joint name="right_back" />
+</ros2_control>
