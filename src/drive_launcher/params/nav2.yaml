@@ -205,70 +205,60 @@ controller_server:
       #   twirling_cost_weight: 10.0
 
 local_costmap:
-  local_costmap:
-    ros__parameters:
-      # frame/topic stuff
-      global_frame: /odom
-      robot_base_frame: /base_link
+  ros__parameters:
+    # frame/topic stuff
+    global_frame: /odom
+    robot_base_frame: /base_link
 
-      # publishing parameters
-      update_frequency: 5.0
-      publish_frequency: 2.0
+    # publishing parameters
+    update_frequency: 5.0
+    publish_frequency: 2.0
 
-      # behavior
-      rolling_window: true
-      width: 3
-      height: 3
-      resolution: 0.05
-      robot_radius: 0.22
-      always_send_full_costmap: True
+    # behavior
+    rolling_window: true
+    width: 3
+    height: 3
+    resolution: 0.05
+    robot_radius: 0.22
+    always_send_full_costmap: True
 
-      # and finally, we get to the important stuff
-      observation_sources: ["scan"]
-      scan:
-        topic: "/scan"
-        data_type: "LaserScan"
-        marking: true
-        clearing: true
-        obstacle_min_range: 0.3
-        obstacle_max_range: 10.0
-        raytrace_max_range: 10.0
+    # and finally, we get to the important stuff
+    observation_sources: ["scan"]
+    scan:
+      topic: "/scan"
+      data_type: "LaserScan"
+      marking: true
+      clearing: true
+      obstacle_min_range: 0.3
+      obstacle_max_range: 10.0
+      raytrace_max_range: 10.0
 
 global_costmap:
-  global_costmap:
-    ros__parameters:
-      # publishing parameters
-      update_frequency: 1.0
-      publish_frequency: 1.0
-
-      # behavior
-      #
-      # important property: the outdoors is "pretty big," so use a rolling
-      # window to ensure we don't run outta space on our costmap:
-      #
-      # see: https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html#setup-navigation-system
-      rolling_window: True
-      width: 50
-      height: 50
-
-      # important: faked laser scan
-      observation_sources: ["scan"]
-      scan:
-        topic: "/scan"
-        data_type: "LaserScan"
-        marking: true
-        clearing: true
-        obstacle_min_range: 0.3
-        obstacle_max_range: 10.0
-        raytrace_max_range: 10.0
-
-# The yaml_filename does not need to be specified since it going to be set by defaults in launch.
-# If you'd rather set it in the yaml, remove the default "map" value in the tb3_simulation_launch.py
-# file & provide full path to map below. If CLI map configuration or launch default is provided, that will be used.
-map_server:
   ros__parameters:
-    yaml_filename: ""
-    service_introspection_mode: "disabled"
+    # publishing parameters
+    update_frequency: 1.0
+    publish_frequency: 1.0
+
+    # behavior
+    #
+    # important property: the outdoors is "pretty big," so use a rolling
+    # window to ensure we don't run outta space on our costmap:
+    #
+    # see: https://docs.nav2.org/tutorials/docs/navigation2_with_gps.html#setup-navigation-system
+    rolling_window: True
+    width: 50
+    height: 50
+
+    # important: faked laser scan
+    observation_sources: ["scan"]
+    scan:
+      topic: "/scan"
+      data_type: "LaserScan"
+      marking: true
+      clearing: true
+      obstacle_min_range: 0.3
+      obstacle_max_range: 10.0
+      raytrace_max_range: 10.0
 
 planner_server:
   ros__parameters:
