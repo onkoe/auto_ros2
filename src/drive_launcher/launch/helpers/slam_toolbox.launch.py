@@ -1,30 +1,54 @@
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description() -> LaunchDescription:
     """
     starts the `slam_toolbox` mapping node (to get the `/map` topic)
     """
-    depth_image_to_laser_scan_node: Node = Node(
-        # note: idk why this is different from how it's named in the src:
-        # https://github.com/SteveMacenski/slam_toolbox/blob/ros2/src/slam_toolbox_async_node.cpp
-        #
-        # oh well...
-        executable="async_slam_toolbox_node",
-        package="slam_toolbox",
-        parameters=[
-            {
-                "odom_frame": "odom",
-                "map_frame": "map",
-                "base_frame": "base_link",
-                "scan_topic": "/scan",
-            }
-        ],
-        remappings=[
-            ("scan", "/scan"),
-        ],
-        output="screen",
+    pkg_slam_toolbox: FindPackageShare = FindPackageShare("slam_toolbox")
+
+    use_sim_time: LaunchConfiguration = LaunchConfiguration(
+        "use_sim_time", default="false"
     )
 
-    return LaunchDescription([depth_image_to_laser_scan_node])
+    slam_toolbox = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        pkg_slam_toolbox,
+                        "launch",
+                        "online_async_launch.py",
+                    ]
+                )
+            ]
+        ),
+        launch_arguments=[
+            ("use_sim_time", use_sim_time),
+            ("slam_params_file", _get_conf()),
+            ("use_lifecycle_manager", "true"),
+        ],
+    )
+
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                "use_sim_time",
+            ),
+            slam_toolbox,
+        ]
+    )
+
+
+def _get_conf() -> PathJoinSubstitution:
+    return PathJoinSubstitution(
+        [
+            FindPackageShare("drive_launcher"),
+            "params",
+            "slam_toolbox.yaml",
+        ]
+    )

@@ -1,0 +1,9 @@
+/**:
+  ros__parameters:
+    qos_overrides:
+      /sensors/depth_image/camera_info:
+        subscription:
+          depth: 10
+          durability: volatile
+          history: keep_last
+          reliability: best_effort
