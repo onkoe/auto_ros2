@@ -29,28 +29,28 @@
         </include>
 
         <plugin
-            filename="libignition-gazebo-physics-system.so"
-            name="ignition::gazebo::systems::Physics"
+            filename="libgz-sim-physics-system"
+            name="gz::sim::systems::Physics"
         />
         <plugin
-            filename="libignition-gazebo-user-commands-system.so"
-            name="ignition::gazebo::systems::UserCommands"
+            filename="libgz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands"
         />
         <plugin
-            filename="libignition-gazebo-scene-broadcaster-system.so"
-            name="ignition::gazebo::systems::SceneBroadcaster"
+            filename="libgz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster"
         />
         <plugin
-            filename="libignition-gazebo-imu-system.so"
-            name="ignition::gazebo::systems::Imu"
+            filename="libgz-sim-imu-system"
+            name="gz::sim::systems::Imu"
         />
         <plugin
-            filename="libignition-gazebo-navsat-system.so"
-            name="ignition::gazebo::systems::NavSat"
+            filename="libgz-sim-navsat-system"
+            name="gz::sim::systems::NavSat"
         />
         <plugin
-            filename="libignition-gazebo-sensors-system.so"
-            name="ignition::gazebo::systems::Sensors"
+            filename="libgz-sim-sensors-system"
+            name="gz::sim::systems::Sensors"
         />
 
 

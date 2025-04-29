@@ -117,11 +117,19 @@ RUN apt-get update \
     && add-apt-repository -y universe \
     && rm -rf /var/lib/apt/lists/*
 
-# set up simulator repos and install gazebo fortress
+# set up the simulator repos.
+#
+# we add the OSRF repo to use the unofficial package pairing of ROS 2 Humble
+# and Gazebo Harmonic (Humble usually uses Fortress). this is to work around a
+# bug in Fortress:
+#
+# https://robotics.stackexchange.com/questions/29354/ros-ign-bridge-not-publishing-camerainfo/115487#115487
+#
+# for more info, see: https://gazebosim.org/docs/harmonic/ros_installation/
 RUN curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg \
-    && "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null \
     && apt-get update \
-    && apt-get install -y ignition-fortress \
+    && apt-get install -y gz-harmonic \
     && rm -rf /var/lib/apt/lists/*
 
 # install the simulator

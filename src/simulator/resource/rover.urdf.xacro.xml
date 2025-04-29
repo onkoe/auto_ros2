@@ -130,8 +130,8 @@ generates a wheel for the Rover model.
 
     <!-- finally, wheels use ros2_control, so add their plugin for gz -->
     <plugin
-        filename="libignition-gazebo-pose-publisher-system.so"
-        name="ignition::gazebo::systems::PosePublisher"
+        filename="libgz-sim-pose-publisher-system.so"
+        name="gazebo::systems::PosePublisher"
     />
 </xacro:macro>
 
@@ -149,7 +149,7 @@ links a wheel to a controller plugin in the simulator.
     <gazebo reference="${name}_wheel">
         <plugin
             name="gz::sim::systems::JointController"
-            filename="gz-sim-joint-controller-system"
+            filename="libgz-sim8-joint-controller-system.so"
         >
             <joint_name>${name}_wheel_joint</joint_name>
             <topic>/${name}_wheel/cmd_vel</topic>

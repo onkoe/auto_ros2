@@ -14,6 +14,8 @@
   <depend>joint_state_publisher</depend>
   <depend>robot_state_publisher</depend>
   <depend>ros_gz_bridge</depend>
+  <depend>ros_gz</depend>
+  <depend>ros_gz_image</depend>
   <depend>ros_gz_sim</depend>
   <depend>rqt_controller_manager</depend>
   <depend>rqt_graph</depend>
