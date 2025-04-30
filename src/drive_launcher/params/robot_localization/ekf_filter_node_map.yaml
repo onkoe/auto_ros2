@@ -5,19 +5,26 @@
 # this means that we get a mapping of the total odometry for usage in our wider
 # systems.
 
-ekf_filter_node_map:
+/**:
   ros__parameters:
     # behavior
     two_d_mode: true
     publish_tf: true
+    enable: true
 
     # frame parameters
-    base_link_frame: base_link
     map_frame: map
     odom_frame: odom
+    base_link_frame: base_link
+    world_frame: map
+
+    # debug logging
+    print_diagnostics: true
+    debug: false
+    debug_out_file: rl_ekf_filter_node_map.log
 
     # translated gps input (from `navsat_transform` node)
-    odom0: odometry/gps
+    odom0: /odometry/gps
     odom0_config:
       [
         true,

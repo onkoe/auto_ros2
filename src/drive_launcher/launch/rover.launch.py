@@ -38,9 +38,7 @@ def generate_launch_description() -> LaunchDescription:
     # `navsat_transform_node` and `ekf_filter_node_odom` to make a "global"
     # representation of the map. it's used by the planners (and, as a result,
     # directly by our Navigator).
-    (navsat_transform_node, ekf_filter_node_odom, ekf_filter_node_map) = (
-        _robot_localization(use_sim_time)
-    )
+    robot_localization: IncludeLaunchDescription = _robot_localization(use_sim_time)
 
     # the `depthimage_to_laserscan::depthimage_to_laserscan_node` gives us
     # another source of `/tf:map` data.
@@ -100,9 +98,7 @@ def generate_launch_description() -> LaunchDescription:
                 "use_sim_time",
             ),
             robot_state_publisher,
-            navsat_transform_node,
-            ekf_filter_node_odom,
-            ekf_filter_node_map,
+            robot_localization,
             depthimage_to_laserscan,
             slam_toolbox,
             nav2_container,
@@ -114,75 +110,24 @@ def generate_launch_description() -> LaunchDescription:
 
 def _robot_localization(
     use_sim_time: LaunchConfiguration,
-) -> tuple[Node, Node, Node]:
+) -> IncludeLaunchDescription:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
 
-    # offset gps coordinates by correct amount
-    navsat_transform_node: Node = Node(
-        package="robot_localization",
-        executable="navsat_transform_node",
-        name="navsat_transform_node",
-        parameters=[
-            {
-                "from_file": [
-                    PathJoinSubstitution(
-                        [
-                            pkg_drive_launcher,
-                            "params",
-                            "robot_localization",
-                            "navsat_transform.yaml",
-                        ]
-                    )
-                ],
-                "use_sim_time": use_sim_time,
-            }
-        ],
-        respawn=True,
+    return IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                PathJoinSubstitution(
+                    [
+                        pkg_drive_launcher,
+                        "launch",
+                        "helpers",
+                        "robot_localization.launch.py",
+                    ]
+                )
+            ]
+        ),
+        launch_arguments=[("use_sim_time", (use_sim_time))],
     )
-
-    # local odometry ekf filter (for imu)...
-    #
-    # (odom -> base_link) tf
-    ekf_filter_node_odom: Node = Node(
-        package="robot_localization",
-        executable="ekf_node",
-        name="ekf_filter_node_odom",
-        parameters=[
-            PathJoinSubstitution(
-                [
-                    pkg_drive_launcher,
-                    "params",
-                    "robot_localization",
-                    "local_odom.yaml",
-                ]
-            ),
-            {"use_sim_time": use_sim_time},
-        ],
-        respawn=True,
-    )
-
-    # global odometry ekf filter (for gps)...
-    #
-    # (map -> odom) tf
-    ekf_filter_node_map: Node = Node(
-        package="robot_localization",
-        executable="ekf_node",
-        name="ekf_filter_node_map",
-        parameters=[
-            PathJoinSubstitution(
-                [
-                    pkg_drive_launcher,
-                    "params",
-                    "robot_localization",
-                    "global_odom.yaml",
-                ]
-            ),
-            {"use_sim_time": use_sim_time},
-        ],
-        respawn=True,
-    )
-
-    return (navsat_transform_node, ekf_filter_node_odom, ekf_filter_node_map)
 
 
 def _robot_state_publisher(
