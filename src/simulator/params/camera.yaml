@@ -4,3 +4,17 @@
     qos_overrides./sensors/depth_image/camera_info.publisher.history: keep_last
     qos_overrides./sensors/depth_image/camera_info.publisher.depth: 1
     qos_overrides./sensors/depth_image/camera_info.publisher.durability: volatile
+
+    # yeah we gotta do it for more than we expected lol..
+    #
+    # gps publisher
+    qos_overrides./sensors/gps.publisher.reliability: best_effort
+    qos_overrides./sensors/gps.publisher.history: keep_last
+    qos_overrides./sensors/gps.publisher.depth: 1
+    qos_overrides./sensors/gps.publisher.durability: volatile
+
+    # imu publisher
+    qos_overrides./sensors/imu.publisher.reliability: best_effort
+    qos_overrides./sensors/imu.publisher.history: keep_last
+    qos_overrides./sensors/imu.publisher.depth: 10
+    qos_overrides./sensors/imu.publisher.durability: volatile
