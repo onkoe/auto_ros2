@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" ?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="remi">
 
 <!--
@@ -77,14 +77,14 @@ generates a wheel for the Rover model.
     -->
     <link name="${name}_wheel">
         <inertial>
-            <mass value="1.5"/>
+            <mass value="1.5" />
             <inertia ixx="0.043333" ixy="0.0" ixz="0.0" iyy="0.043333" iyz="0" izz="0.08" />
         </inertial>
         <visual name="${name}_wheel_visual">
             <geometry>
                 <cylinder radius="${wheel_radius}" length="${wheel_thickness}" />
             </geometry>
-            <material name="red"/>
+            <material name="red" />
         </visual>
         <collision name="${name}_wheel_collision">
             <geometry>
@@ -113,7 +113,7 @@ generates a wheel for the Rover model.
         <parent link="chassis" />
         <child link="${name}_wheel" />
         <limit lower="-1000" upper="1000" effort="1000" velocity="1000" />
-        <axis xyz="0 0 1"/>
+        <axis xyz="0 0 1" />
         <dynamics damping="0.5" />
     </joint>
 
@@ -127,12 +127,6 @@ generates a wheel for the Rover model.
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
     </transmission>
-
-    <!-- finally, wheels use ros2_control, so add their plugin for gz -->
-    <plugin
-        filename="libgz-sim-pose-publisher-system.so"
-        name="gazebo::systems::PosePublisher"
-    />
 </xacro:macro>
 
 <!--
@@ -177,11 +171,11 @@ makes a wheel joint for ros2_control.
 
 
     <material name="red">
-    <color rgba="1.0 0.0 0.0 1.0"/>
+    <color rgba="1.0 0.0 0.0 1.0" />
     </material>
 
     <material name="blue">
-    <color rgba="0.0 0.0 1.0 1.0"/>
+    <color rgba="0.0 0.0 1.0 1.0" />
     </material>
 
     <!-- the actual model is defined below... -->
@@ -198,81 +192,70 @@ makes a wheel joint for ros2_control.
     <xacro:make_wheel_plugin name="right_middle" />
     <xacro:make_wheel_plugin name="right_back" />
 
-    <!--
-    apply weird root link fix for KDL parser
-
-    see: https://github.com/husarion/panther_description/issues/2
-    -->
-    <link name="dummy"/>
-    <link name="base_link"/>
-    <joint name="dummy_to_base" type="fixed">
-        <parent link="dummy" />
-        <child link="base_link" />
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-    </joint>
+    <link name="base_link" />
 
     <joint name="base_to_chassis" type="fixed">
         <parent link="base_link" />
         <child link="chassis" />
-        <origin xyz="0 0 0.2" rpy="0 0 0"/>
+        <origin xyz="0 0 0.2" rpy="0 0 0" />
     </joint>
 
     <!-- add a link + joint for the camera -->
     <link name="camera_link">
         <inertial>
             <mass value="0.1"/>
-            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
         </inertial>
         <visual>
             <geometry>
-                <box size="0.05 0.05 0.05"/>
+                <box size="0.05 0.05 0.05" />
             </geometry>
-            <material name="red"/>
+            <material name="red" />
         </visual>
     </link>
     <joint name="camera_joint" type="fixed">
-        <parent link="chassis"/>
-        <child link="camera_link"/>
-        <origin xyz="0.3 0.0 0.1" rpy="0 0 0"/>
+        <parent link="chassis" />
+        <child link="camera_link" />
+        <origin xyz="0.3 0.0 0.1" rpy="0 0 0" />
     </joint>
 
     <!-- and one for the gps... -->
     <link name="gps_link">
         <inertial>
-            <mass value="0.1"/>
-            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+            <mass value="0.1" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
         </inertial>
         <visual>
             <geometry>
-                <box size="0.05 0.05 0.05"/>
+                <box size="0.05 0.05 0.05" />
             </geometry>
-            <material name="red"/>
+            <material name="red" />
         </visual>
     </link>
     <joint name="gps_joint" type="fixed">
-        <parent link="chassis"/>
-        <child link="gps_link"/>
-        <origin xyz="0.3 0.0 0.1" rpy="0 0 0"/>
+        <parent link="chassis" />
+        <child link="gps_link" />
+        <origin xyz="0.3 0.0 0.1" rpy="0 0 0" />
     </joint>
 
 
     <!-- finally, one for the imu -->
     <link name="imu_link">
         <inertial>
-            <mass value="0.1"/>
-            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+            <mass value="0.1" />
+            <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" />
         </inertial>
         <visual>
             <geometry>
-                <box size="0.03 0.03 0.01"/>
+                <box size="0.03 0.03 0.01" />
             </geometry>
-            <material name="red"/>
+            <material name="red" />
         </visual>
     </link>
     <joint name="imu_joint" type="fixed">
-        <parent link="chassis"/>
-        <child link="imu_link"/>
-        <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+        <parent link="chassis" />
+        <child link="imu_link" />
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
     </joint>
 
     <link name="chassis">
@@ -291,7 +274,7 @@ makes a wheel joint for ros2_control.
             <geometry>
                 <box size="${chassis_length} ${chassis_width} ${chassis_height}" />
             </geometry>
-            <material name="blue"/>
+            <material name="blue" />
         </visual>
 
         <!-- give ebox collision -->
@@ -320,6 +303,7 @@ makes a wheel joint for ros2_control.
             <update_rate>${imu_update_speed}</update_rate>
             <visualize>true</visualize>
             <topic>${imu_topic}</topic>
+            <gz_frame_id>imu_link</gz_frame_id>
         </sensor>
     </gazebo>
 
@@ -330,6 +314,7 @@ makes a wheel joint for ros2_control.
             <always_on>1</always_on>
             <update_rate>${gps_update_speed}</update_rate>
             <topic>${gps_topic}</topic>
+            <gz_frame_id>gps_link</gz_frame_id>
         </sensor>
     </gazebo>
 
@@ -343,7 +328,8 @@ makes a wheel joint for ros2_control.
             <topic>${color_camera_topic}</topic>
             <camera>
                 <horizontal_fov>${color_camera_fov}</horizontal_fov>
-                <camera_info_topic>${color_camera_info_topic}</camera_info_topic>
+                <camera_info_topic
+                >${color_camera_info_topic}</camera_info_topic>
                 <image>
                     <width>${color_camera_frame_width}</width>
                     <height>${color_camera_frame_height}</height>
@@ -353,6 +339,7 @@ makes a wheel joint for ros2_control.
                     <far>150.0</far>
                 </clip>
             </camera>
+            <gz_frame_id>camera_link</gz_frame_id>
         </sensor>
     </gazebo>
 
@@ -368,7 +355,8 @@ makes a wheel joint for ros2_control.
                 <horizontal_fov>${depth_camera_fov}</horizontal_fov>
 
                 <!-- FIXME(bray): gazebo is broken here lol, this doesn't work-->
-                <camera_info_topic>${depth_camera_info_topic}</camera_info_topic>
+                <camera_info_topic
+                >${depth_camera_info_topic}</camera_info_topic>
 
                 <image>
                     <width>${depth_camera_frame_width}</width>
@@ -380,6 +368,8 @@ makes a wheel joint for ros2_control.
                     <far>150.0</far>
                 </clip>
             </camera>
+            <!-- TODO(bray): ensure u can just... have two on one link -->
+            <gz_frame_id>camera_link</gz_frame_id>
         </sensor>
     </gazebo>
 </robot>
