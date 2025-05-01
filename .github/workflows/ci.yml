@@ -25,13 +25,19 @@ jobs:
           tools: clang curl
 
       - name: Cache ROS 2 workspace
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-ros2-build
         with:
           path: |
             install/
             build/
-          key: ros2-build-${{ runner.os }}-${{ hashFiles('pyproject.toml', '**/package.xml', '**/CMakeLists.txt', 'src/**/*.py', 'src/simulator/**') }}
+          key: ros2-build-${{ runner.os }}-${{ hashFiles(
+            'pyproject.toml',
+            '**/package.xml',
+            '**/CMakeLists.txt',
+            'src/**/*.py',
+            '**/src/simulator/**/*.xml'
+            ) }}
           restore-keys: |
             ros2-build-${{ runner.os }}-
 
