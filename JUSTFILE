@@ -69,14 +69,14 @@ get:
         echo "If prompted, please type in your password to update the system package cache..."
     fi
 
-    # add special `rosdep` repo (to support gazebo harmonic on humble)
-    $OPTIONAL_SUDO curl -L \
-        "https://raw.githubusercontent.com/osrf/osrf-rosdep/master/gz/replace_fortress_with_harmonic/00-replace-gz-fortress-with-harmonic.list" \
-        -o "/etc/ros/rosdep/sources.list.d/00-gazebo.list"
+    # # add special `rosdep` repo (to support gazebo harmonic on humble)
+    # $OPTIONAL_SUDO curl -L \
+    #     "https://raw.githubusercontent.com/osrf/osrf-rosdep/master/gz/replace_fortress_with_harmonic/00-replace-gz-fortress-with-harmonic.list" \
+    #     -o "/etc/ros/rosdep/sources.list.d/00-gazebo.list"
 
     # grab the package manager we'll use
     PKG_MANAGER_FETCH="$OPTIONAL_SUDO apt-get update -y"
-    PKG_MANAGER_INSTALL="$OPTIONAL_SUDO apt-get install -y"
+    PKG_MANAGER_INSTALL="$OPTIONAL_SUDO apt-get install -y --no-install-recommends"
     PKG_MANAGER_INSTALL_FLAGS=""
     if [[ "$OS" == *"fedora"* ]]; then
         PKG_MANAGER_FETCH="dnf check-update || true"

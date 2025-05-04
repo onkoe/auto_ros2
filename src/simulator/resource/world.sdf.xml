@@ -45,8 +45,8 @@
             name="gz::sim::systems::Imu"
         />
         <plugin
-            filename="libgz-sim-navsat-system"
-            name="gz::sim::systems::NavSat"
+            filename="libignition-gazebo-navsat-system.so"
+            name="ignition::gazebo::systems::NavSat"
         />
         <plugin
             filename="libgz-sim-sensors-system"
