@@ -44,9 +44,7 @@ class NavigationBringupNode(Node):
         _ = self.get_logger().info("Performing navigation stack bringup...")
 
         # make a publisher to write to the wheels
-        self._wheels_publisher = self.create_publisher(
-            Twist, "/cmd_vel", QOS_PROFILE
-        )
+        self._wheels_publisher = self.create_publisher(Twist, "/cmd_vel", QOS_PROFILE)
         _ = self.get_logger().debug("Created wheel publisher.")
 
         # on a timer, actually perform those publishes

@@ -2,6 +2,7 @@ from setuptools import find_packages, setup
 
 package_name = "navigator"
 navigator_node_name = "navigator_node"
+navigation_bringup_node_name = "navigation_bringup_node"
 
 
 _ = setup(
@@ -19,6 +20,7 @@ _ = setup(
         # note: please put a new entry in this array for each node in the pkg
         ("share/" + package_name, ["package.xml"]),
         ("share/" + navigator_node_name, ["package.xml"]),
+        ("share/" + navigation_bringup_node_name, ["package.xml"]),
     ],
     zip_safe=True,
     maintainer="brendan",
@@ -28,6 +30,7 @@ _ = setup(
     entry_points={
         "console_scripts": [
             "navigator_node = navigator_node.main:main",
+            "navigation_bringup_node = navigation_bringup_node.main:main",
         ],
     },
 )
