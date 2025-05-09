@@ -35,4 +35,9 @@ diff_drive_controller:
       - right_middle_wheel_joint
       - right_back_wheel_joint
     wheel_separation: 0.574
-    publish_rate: 50
+    wheel_radius: 0.08
+    publish_rate: 50.0
+    use_stamped_vel: false
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster

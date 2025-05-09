@@ -25,6 +25,16 @@
     use_odometry_yaw: false
 
     # node rules
-    broadcast_cartesian_transform: false
+    #
+    # ... this puts the utm frame in the chain. we need it to translate
+    # ... coordinates into map-local values
+    broadcast_cartesian_transform: true
+    broadcast_cartesian_transform_as_parent_frame: false
     publish_filtered_gps: true
     wait_for_datum: false
+
+    # frame config
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    earth_frame: earth
