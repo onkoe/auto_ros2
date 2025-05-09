@@ -5,7 +5,7 @@ jobs:
   check-ros2-workspace:
     # same as jetson :p
     runs-on: ubuntu-22.04
-    # needs: [python, rust, uv-sync-on-aarch64]
+    needs: [python, rust, uv-sync-on-aarch64]
     container:
       image: osrf/ros:humble-simulation
     steps:
@@ -33,10 +33,10 @@ jobs:
             build/
           key: ros2-build-${{ runner.os }}-${{ hashFiles(
             'pyproject.toml',
-            '**/package.xml',
-            '**/CMakeLists.txt',
+            'src/**/package.xml',
+            'src/**/CMakeLists.txt',
             'src/**/*.py',
-            '**/src/simulator/**/*.xml'
+            'src/simulator/**/*.xml'
             ) }}
           restore-keys: |
             ros2-build-${{ runner.os }}-
@@ -137,6 +137,17 @@ jobs:
           . /opt/ros/humble/setup.bash
           . install/local_setup.bash
           just test
+
+      # this fixes dumb file permission errors during caching post-step.
+      #
+      # without it, root owns the stuff we're caching lol
+      - name: Change file permissions for stuff made by rootful container...
+        if: always()
+        run: |
+          # change ownership so the real runner's user (`runner`) can access it
+          # normally...
+          chown -R 1001:121 "$GITHUB_WORKSPACE" || true
+          chmod -R go+rX "$GITHUB_WORKSPACE" || true
 
   python:
     runs-on: ubuntu-22.04
