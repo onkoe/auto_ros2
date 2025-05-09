@@ -3,8 +3,8 @@ import sys
 from dataclasses import dataclass
 
 import rclpy
-from geographic_msgs.msg import GeoPoint, GeoPointStamped, GeoPose
-from geometry_msgs.msg import PoseStamped
+from geographic_msgs.msg import GeoPoint, GeoPointStamped
+from geometry_msgs.msg import Point, PoseStamped
 from loguru import logger as llogger
 from nav2_simple_commander.robot_navigator import BasicNavigator
 from rcl_interfaces.msg import ParameterType
@@ -22,7 +22,8 @@ from typing_extensions import override
 from custom_interfaces.msg import (
     WheelsMessage,
 )
-from custom_interfaces.srv import Lights
+from custom_interfaces.srv import GnssToMap, Lights
+from custom_interfaces.srv._gnss_to_map import GnssToMap_Response
 from custom_interfaces.srv._lights import (
     Lights_Request as LightsRequest,
 )
@@ -31,8 +32,6 @@ from custom_interfaces.srv._lights import (
 )
 
 from .convert import compass_degrees_z
-
-# from custom_interfaces.msg import ArMessage as ArucoMessage
 from .coords import dist_m_between_coords
 from .pose import geopoint_to_pose
 from .types import (
@@ -90,6 +89,8 @@ class NavigatorNode(Node):
     """Coordinate pair where the target was last known to be located."""
     _last_known_compass_direction: float | None = None
     """The direction in which the compass was last known to be pointing."""
+    _gps_to_map_client: Client
+    """A client to speak with the `utm_conversion_node`."""
 
     _curr_marker_transform: PoseStamped | None = None
     _times_marker_seen: int = 0
@@ -246,18 +247,8 @@ class NavigatorNode(Node):
             qos_profile=QOS_PROFILE,
         )
 
-        # Add the given GPS coordinate to the coordinate queue
-        #
-        # TODO(bray): we still want to perform a search, but we should try
-        #             doing so in a functional way...
-        """
-        self._coordinate_path_queue = []
-        self._coordinate_path_queue.append(self.nav_parameters.coord)
-        # Calculate and append search coordinates for GPS coord
-        self._coordinate_path_queue.extend(
-            generate_similar_coordinates(self.nav_parameters.coord, 10, 5)
-        )  # takes source coordinate, radius in meters, and a number of points to generate
-        """
+        # make a client to get target gnss coord in relation to map
+        self._gps_to_map_client = self.create_client(GnssToMap, "convert_gps_to_map")
 
     # all ROS 2 nodes must be hashable!
     @override
@@ -348,18 +339,73 @@ class NavigatorNode(Node):
     ):
         """
         Given a GPS coordinate, navigate to it.
-        This acts kind of like a ROS 2 action, where we can track it, cancel it, etc.
-        This is a simple implementation that uses a PID controller to navigate to the coordinate, based
-        on the rover's current position and the destination coordinate.
+
+        This async coroutine will monitor the status of the navigation and
+        handle any nonsense that might pop up. Returns when completed.
         """
-        # convert our func's given `GeoPoint` into a destination `GeoPose`
-        dest: GeoPose = GeoPose()
-        dest.position.latitude = dest_coord.latitude
-        dest.position.longitude = dest_coord.longitude
-        dest.position.altitude = dest_coord.altitude
+        # call into our `utm_conversion_node` and ask for a converted coordinate
+        llogger.debug("creating utm request...")
+        request = GnssToMap.Request()
+        request.gnss_coord_to_convert = GeoPoint()
+        request.gnss_coord_to_convert.latitude = dest_coord.latitude
+        request.gnss_coord_to_convert.longitude = dest_coord.longitude
+        llogger.debug("utm request created.")
+
+        llogger.info("Waiting for UTM service to be ready...")
+        _ = self._gps_to_map_client.wait_for_service()
+        llogger.info("It's ready!")
+
+        # get map coordinates from conversion service.
+        #
+        # we'll loop until we have a good one...
+        point: Point
+        while True:
+            # call into the service and wait for it to complete
+            resp_future = self._gps_to_map_client.call_async(request)
+            while not resp_future.done():
+                await asyncio.sleep(0.01)
+
+            # ensure we got a response at all
+            resp: GnssToMap_Response | None = resp_future.result()
+            if resp is None:
+                llogger.error("Failed to call service: got `None`. Retrying...")
+                await asyncio.sleep(0.25)
+                continue
+
+            # check if we got it successfully
+            llogger.debug("checking for response success...")
+            if not resp.success:
+                llogger.error("Service reported unhelp resp - will check again.")
+                await asyncio.sleep(0.25)
+                continue
+            else:
+                # break the loop if we got it!
+                point = resp.point
+                llogger.debug(f"got a good point! using this: {point}")
+                break
+
+        # translate our GeoPoint into local units. this is required for Nav2's
+        # `planner_server` to accept our goal.
+        #
+        # (if it's the wrong type, it'll silently ignore u. fair warning lmao)
+        llogger.debug("converting coordinate...")
+        dest: PoseStamped = geopoint_to_pose(
+            point,
+            self.get_clock().now().to_msg(),
+        )
+        llogger.debug(f"coordinate converted! got: {str(dest)}")
 
         # create a `BasicNavigator` from `nav2_simple_commander`
-        basic_nav: BasicNavigator = BasicNavigator()
+        llogger.debug("creating basic navigator...")
+        basic_nav: BasicNavigator = BasicNavigator(
+            node_name="navigator_node_basic_navigator"
+        )
+        llogger.debug("basic navigator created!")
+
+        # wait for Nav2 to be up...
+        llogger.info("Waiting for Nav2 to be ready...")
+        basic_nav._waitForNodeToActivate(node_name="bt_navigator")  # pyright: ignore[reportPrivateUsage]
+        llogger.info("Nav2 appears to be ready! Continuing...")
 
         # start navigating.
         #
