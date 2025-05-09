@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import rclpy
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
-from geometry_msgs.msg import Point, PoseStamped
+from geometry_msgs.msg import Point, Pose, PoseStamped
 from loguru import logger as llogger
 from nav2_simple_commander.robot_navigator import BasicNavigator
 from rcl_interfaces.msg import ParameterType
@@ -19,9 +19,6 @@ from rclpy.subscription import Subscription
 from sensor_msgs.msg import NavSatFix
 from typing_extensions import override
 
-from custom_interfaces.msg import (
-    WheelsMessage,
-)
 from custom_interfaces.srv import GnssToMap, Lights
 from custom_interfaces.srv._gnss_to_map import GnssToMap_Response
 from custom_interfaces.srv._lights import (
@@ -57,8 +54,13 @@ MIN_ARUCO_DISTANCE: float = 2.0  # meters
 
 @dataclass(kw_only=True)
 class NavigatorNode(Node):
-    _wheels_publisher: Publisher
-    """Publish wheels speeds to move the Rover."""
+    _cmd_vel_publisher: Publisher
+    """
+    Publish pose transformations to move the Rover.
+
+    Since Nav2 handles this automatically, we only use it to stop the wheels
+    manually (more as a safety thing - a sanity check).
+    """
     _gps_subscription: Subscription
     _aruco_subscription: Subscription
     _lights_client: Client
@@ -177,10 +179,10 @@ class NavigatorNode(Node):
         _ = self.send_lights_request(lights_info)
 
         # create wheels publisher
-        self._wheels_publisher = self.create_publisher(
-            msg_type=WheelsMessage,
-            topic="/control/wheels",
-            qos_profile=QOS_PROFILE,
+        self._cmd_vel_publisher = self.create_publisher(
+            msg_type=Pose,
+            topic="/cmd_vel",
+            qos_profile=RELIABLE_QOS_PROFILE,
         )
 
         # if in aruco mode, create a subscriber for aruco tracking
@@ -277,14 +279,16 @@ class NavigatorNode(Node):
 
     def stop_wheels(self):
         """
-        Publish wheel speeds to stop the rover.
+        Publish wheel speeds to stop the Rover.
+
+        Note that Nav2 does this automatically - this is just a sanity check
+        and safety measure.
         """
-        wheel_speeds: WheelsMessage = WheelsMessage()
-        # wheel speed of none is represented by 126 for some reason
-        wheel_speeds.left_wheels = 126
-        wheel_speeds.right_wheels = 126
-        self._wheels_publisher.publish(wheel_speeds)
-        # log message that wheels have stopped
+        # an empty pose message will stop the wheels
+        zero_speed_pose: Pose = Pose()
+
+        # publish it!
+        self._cmd_vel_publisher.publish(zero_speed_pose)
         _ = self.get_logger().info("Wheels stopped!")
 
     async def _go_to_coordinate(
