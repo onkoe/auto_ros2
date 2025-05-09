@@ -34,6 +34,12 @@ def generate_launch_description() -> LaunchDescription:
             ),
             {"use_sim_time": use_sim_time},
         ],
+        #
+        # this node prints what it found in [INFO] every second. which is
+        # annoying...
+        #
+        # this turns it off!
+        arguments=["--ros-args", "--log-level", "warn"],
         respawn=True,
         #
         # note: these are pretty important. this node will silently do nothing
