@@ -17,11 +17,13 @@
   <depend>ros_gz</depend>
   <depend>ros_gz_image</depend>
   <depend>ros_gz_sim</depend>
+  <depend>rqt_console</depend>
   <depend>rqt_controller_manager</depend>
   <depend>rqt_graph</depend>
   <depend>rqt_tf_tree</depend>
   <depend>rviz2</depend>
   <depend>tf2_tools</depend>
+  <depend>topic_tools</depend>
   <depend>xacro</depend>
 
   <test_depend>launch</test_depend>

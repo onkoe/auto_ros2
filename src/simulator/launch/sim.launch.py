@@ -49,9 +49,14 @@ def generate_launch_description():
         launch_arguments=[("use_sim_time", use_sim_time)],
     )
 
+    # note: EXTREMELY IMPORTANT THAT THESE MATCH THE SIMULATOR'S STARTING
+    # COORDINATE!!!
+    START_LAT: float = 38.407258
+    START_LON: float = -110.795204
+
     # add some coordinate to go to...
-    latitude = 0.0002
-    longitude = 0.0002
+    latitude = START_LAT + 0.0002
+    longitude = START_LON + 0.0002
 
     mode_int: int = NavigationMode.ARUCO.value
 
