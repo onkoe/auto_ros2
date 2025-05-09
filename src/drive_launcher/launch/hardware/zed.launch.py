@@ -1,3 +1,4 @@
-# TODO: zed node mentioned in pr
+# TODO: launch file for the Zed depth camera
 #
-# also, check if that provides `camera_info`
+# for more info, see issue #76:
+# https://github.com/Sooner-Rover-Team/auto_ros2/issues/76
