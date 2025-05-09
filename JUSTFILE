@@ -27,6 +27,18 @@ sim: build
     # let's source any new packages it made
     . ./SOURCE_SCRIPT.bash
 
+    # set gazebo plugin search path
+    #
+    # note: name is IGN_GAZEBO_SYSTEM_PLUGIN_PATH for our old-ass Gazebo
+    # Fortress (6), but for newer versions, you'll want to use
+    # `GAZEBO_PLUGIN_PATH` instead.
+    #
+    # anyway. let's gonna grab the ros installation path and add it onto
+    # there...
+    ROS_INSTALLATION_PATH="$(cat {{ros2_workspace_dir}}/.ros_path)$(cat {{ros2_workspace_dir}}/.ros_distro)/lib"
+    export IGN_GAZEBO_SYSTEM_PLUGIN_PATH=$ROS_INSTALLATION_PATH
+    echo "Adding these paths to Gazebo's plugin path: $IGN_GAZEBO_SYSTEM_PLUGIN_PATH"
+
     # we'll also kill the simulator if it's still alive (happens pretty often
     # from previous runs)
     (killall -9 gazebo & killall -9 gzserver & killall -9 gzclient & killall -9 ign & killall -9 ruby & killall -9 simulator) || true
