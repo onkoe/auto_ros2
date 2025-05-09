@@ -1,10 +1,11 @@
 <?xml version="1.0" ?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>navigator_node</name>
-  <version>0.0.0</version>
-  <description>TODO</description>
+  <name>navigator</name>
+  <version>1.0.0</version>
+  <description>Nodes related to providing navigation features for comp.</description>
 
+  <maintainer email="tyler73750@gmail.com">Tyler Roman</maintainer>
   <maintainer email="logan.m.murphy-11@ou.edu">Logan Murphy</maintainer>
   <maintainer email="contact@barretts.club">Barrett Ray</maintainer>
   <maintainer email="bford@axmilius.com">Brendan Ford</maintainer>
@@ -15,10 +16,13 @@
   <depend>controller_manager</depend>
   <depend>cyclonedds</depend>
   <depend>depthimage_to_laserscan</depend>
+  <depend>geodesy</depend>
   <depend>geographic_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>joint_state_broadcaster</depend>
   <depend>nav2_behavior_tree</depend>
   <depend>nav2_bringup</depend>
+  <depend>nav2_common</depend>
   <depend>nav2_msgs</depend>
   <depend>nav2_simple_commander</depend>
   <depend>rclpy</depend>

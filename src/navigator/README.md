@@ -1,4 +1,4 @@
-# `navigator_node`
+# `navigator`
 
 TODO...
 

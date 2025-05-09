@@ -6,17 +6,18 @@ navigator_node_name = "navigator_node"
 
 _ = setup(
     name=package_name,
-    version="0.0.0",
+    version="1.0.0",
     python_requires=">=3.10",
     tests_require=["pytest"],
     packages=find_packages(exclude=["test"]),
     data_files=[
         (
             "share/ament_index/resource_index/packages",
-            ["resource/" + navigator_node_name],
+            ["resource/" + package_name],
         ),
         #
         # note: please put a new entry in this array for each node in the pkg
+        ("share/" + package_name, ["package.xml"]),
         ("share/" + navigator_node_name, ["package.xml"]),
     ],
     zip_safe=True,

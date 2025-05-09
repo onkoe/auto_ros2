@@ -1,14 +1,11 @@
 [project]
-name = "navigator_node"
-version = "0.1.0"
+name = "navigator"
+version = "1.0.0"
 description = "Handles all Autonomous controls and navigation."
 readme = "README.md"
 requires-python = ">=3.10"
 dynamic = ["maintainers", "license", "scripts"]
-dependencies = [
-    "geopy>=2.4.1",
-    "numpy>=1.26.4",
-]
+dependencies = ["geopy>=2.4.1", "numpy>=1.26.4"]
 
 [build-system]
 requires = ["setuptools >= 61.0"]

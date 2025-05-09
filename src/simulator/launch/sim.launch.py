@@ -58,8 +58,8 @@ def generate_launch_description():
     # make an instance of the navigator node!
     navigator: Node = Node(
         executable="navigator_node",
-        package="navigator_node",
-        name="navigator",
+        package="navigator",
+        name="navigator_node",
         parameters=[
             {"longitude": longitude, "latitude": latitude, "mode": mode_int},
             {"use_sim_time": use_sim_time},
