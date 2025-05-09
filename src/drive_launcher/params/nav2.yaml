@@ -204,11 +204,11 @@ controller_server:
       #   twirling_cost_power: 1
       #   twirling_cost_weight: 10.0
 
-local_costmap:
+/local_costmap/local_costmap:
   ros__parameters:
     # frame/topic stuff
-    global_frame: /odom
-    robot_base_frame: /base_link
+    global_frame: odom
+    robot_base_frame: base_link
 
     # publishing parameters
     update_frequency: 5.0
@@ -216,14 +216,14 @@ local_costmap:
 
     # behavior
     rolling_window: true
-    width: 3
-    height: 3
+    width: 12
+    height: 12
     resolution: 0.05
     robot_radius: 0.22
     always_send_full_costmap: True
 
     # and finally, we get to the important stuff
-    observation_sources: ["scan"]
+    observation_sources: "scan"
     scan:
       topic: "/scan"
       data_type: "LaserScan"
@@ -233,7 +233,17 @@ local_costmap:
       obstacle_max_range: 10.0
       raytrace_max_range: 10.0
 
-global_costmap:
+    # say what plugins to use explicitly.
+    #
+    # otherwise, we get the `static_layer`, which SUCKS because it messes
+    # with our `/tf:map` frame...
+    plugins: ["obstacle_layer", "inflation_layer"]
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
+
+/global_costmap/global_costmap:
   ros__parameters:
     # publishing parameters
     update_frequency: 1.0
@@ -250,7 +260,7 @@ global_costmap:
     height: 50
 
     # important: faked laser scan
-    observation_sources: ["scan"]
+    observation_sources: "scan"
     scan:
       topic: "/scan"
       data_type: "LaserScan"
@@ -259,6 +269,13 @@ global_costmap:
       obstacle_min_range: 0.3
       obstacle_max_range: 10.0
       raytrace_max_range: 10.0
+
+    # say what plugins to use explicitly. (see `local_costmap` for more info)
+    plugins: ["obstacle_layer", "inflation_layer"]
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
 
 planner_server:
   ros__parameters:
