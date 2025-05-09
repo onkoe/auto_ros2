@@ -35,9 +35,6 @@ from .convert import compass_degrees_z
 from .coords import dist_m_between_coords
 from .pose import geopoint_to_pose
 from .types import (
-    DEFAULT_PID_DERIVATIVE_GAIN,
-    DEFAULT_PID_INTEGRAL_GAIN,
-    DEFAULT_PID_PROPORTIONAL_GAIN,
     NavigationMode,
     NavigationParameters,
 )
@@ -129,20 +126,6 @@ class NavigatorNode(Node):
         mode_desc.type = ParameterType.PARAMETER_INTEGER
         _ = self.declare_parameter(name="mode", descriptor=mode_desc)
 
-        # pid controller controls
-        pid_desc: ParameterDescriptor = ParameterDescriptor()
-        pid_desc.type = ParameterType.PARAMETER_DOUBLE
-        _ = self.declare_parameter(
-            name="pk", value=DEFAULT_PID_PROPORTIONAL_GAIN, descriptor=pid_desc
-        )
-        _ = self.declare_parameter(
-            name="pi", value=DEFAULT_PID_INTEGRAL_GAIN, descriptor=pid_desc
-        )
-        _ = self.declare_parameter(
-            name="pd", value=DEFAULT_PID_DERIVATIVE_GAIN, descriptor=pid_desc
-        )
-        _ = self.get_logger().debug("declared all parameters.")
-
         # try to grab the instructions we're given over parameters.
         #
         # if none is given, this is `None`, and will cause the program to go
@@ -175,23 +158,10 @@ class NavigatorNode(Node):
             )
             sys.exit(1)
 
-        pk: float | None = self.get_parameter("pk").value
-        pi: float | None = self.get_parameter("pi").value
-        pd: float | None = self.get_parameter("pd").value
-        if pd is None or pi is None or pk is None:
-            _ = self.get_logger().error(
-                "PID parameters were unset, but this should result in a default. \
-                This is unexpected behavior. The navigator will now exit."
-            )
-            sys.exit(1)
-
         # construct the parameters
         self.nav_parameters = NavigationParameters(
             coord=coord,
-            mode=NavigationMode(mode_int),  # FIXME: do a safety check first
-            pk=pk,
-            pi=pi,
-            pd=pd,
+            mode=NavigationMode(mode_int),
         )
         _ = self.get_logger().debug("constructed all parameters.")
 

@@ -82,7 +82,6 @@ dependencies = [
     { name = "pyproj" },
     { name = "pyside2", marker = "platform_machine != 'aarch64' and platform_machine != 'arm64'" },
     { name = "scipy" },
-    { name = "simple-pid" },
     { name = "typer" },
 ]
 
@@ -110,7 +109,6 @@ requires-dist = [
     { name = "pyproj", specifier = ">=3.7.1" },
     { name = "pyside2", marker = "platform_machine != 'aarch64' and platform_machine != 'arm64'", specifier = ">=5.15.2.1" },
     { name = "scipy", specifier = ">=1.15.2" },
-    { name = "simple-pid", specifier = ">=2.0.1" },
     { name = "typer", specifier = ">=0.15.2" },
 ]
 
@@ -1358,15 +1356,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a6/0e/c1953bb08f45e0f1703e7dc153e9c94ba3042c282ebcd94cada385a9cdb3/shiboken2-5.15.2.1-5.15.2-cp35.cp36.cp37.cp38.cp39.cp310-abi3-manylinux1_x86_64.whl", hash = "sha256:63debfcc531b6a2b4985aa9b71433d2ad3bac542acffc729cc0ecaa3854390c0", size = 975428, upload_time = "2022-01-14T07:03:12.77Z" },
     { url = "https://files.pythonhosted.org/packages/51/f7/3c34aca909dc844690d4900d9e51b2241faa8c777fd622bead5baeb454d1/shiboken2-5.15.2.1-5.15.2-cp35.cp36.cp37.cp38.cp39.cp310-none-win32.whl", hash = "sha256:eb0da44b6fa60c6bd317b8f219e500595e94e0322b33ec5b4e9f406bedaee555", size = 2164851, upload_time = "2022-01-14T07:03:15.565Z" },
     { url = "https://files.pythonhosted.org/packages/26/bd/a1b31f49eb35888eae318c27327732b1036f0d921e5c8ec2e7a4276e7445/shiboken2-5.15.2.1-5.15.2-cp35.cp36.cp37.cp38.cp39.cp310-none-win_amd64.whl", hash = "sha256:a0d0fdeb12b72c8af349b9642ccc67afd783dca449309f45e78cda50272fd6b7", size = 2321148, upload_time = "2022-01-14T07:03:18.334Z" },
-]
-
-[[package]]
-name = "simple-pid"
-version = "2.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/78/0a/c670a4f4dea4b21c0b074b193c54698e5e047479e688c8d5495d264c9921/simple_pid-2.0.1.tar.gz", hash = "sha256:5771761c54541c900e597d6c2e4ea93fd2cc98f4e48cb9eca265fba2e65be99e", size = 15577, upload_time = "2024-07-21T13:27:32.037Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/0e/4d4fe01b21558a31a12e029a57cf677666c89c1b00cb82c1b53d0025cd63/simple_pid-2.0.1-py3-none-any.whl", hash = "sha256:1d53ed76b03d949ceea46b538fb22999d27899e2e655aa19b99c40f6edcedca6", size = 7194, upload_time = "2024-07-21T13:27:30.688Z" },
 ]
 
 [[package]]
