@@ -52,9 +52,25 @@ def generate_launch_description() -> LaunchDescription:
         use_sim_time
     )
 
-    # the `slam_toolbox::async_slam_toolbox_node` fills the `/tf:map` and
-    # `tf:odom` frames with our translated laserscan data.
-    slam_toolbox: IncludeLaunchDescription = _slam_toolbox(use_sim_time)
+    # ok, so this part launches a few different things...
+    #
+    # first, we start some nodes from `slam_toolbox`, all of which provide
+    # SLAM tracking to the Rover. importantly, **this node provides the
+    # mandatory `map -> odom -> base_link` frame chain for Nav to start doing
+    # anything useful.
+    #
+    # after that, we start a Node (the `navigator::navigation_bringup_node`) to
+    # wait on the `slam_toolbox` to make those links properly.
+    #
+    # finally, we launch Nav2! it provides navigation utilties to the SoRo
+    # Navigator and beyond.
+    #
+    # it's primarily helpful for its provided algorithms that are really
+    # difficult (and verbose) to implement by hand. you control it through the
+    # various actions its plugins provide during navigation.
+    #
+    # in any case, here's that launch config...
+    navigation_stack: IncludeLaunchDescription = _navigation_bringup(use_sim_time)
 
     # we'll also want the `robot_state_publisher::robot_state_publisher` node.
     #
@@ -64,13 +80,6 @@ def generate_launch_description() -> LaunchDescription:
     robot_state_publisher: IncludeLaunchDescription = _robot_state_publisher(
         use_sim_time
     )
-
-    # Nav2 provides navigation utilties to the SoRo Navigator and beyond.
-    #
-    # it's primarily helpful for its provided algorithms that are really
-    # difficult (and verbose) to implement by hand. you control it through the
-    # various actions its plugins provide during navigation.
-    (nav2_container, nav2_launch) = _nav2(use_sim_time)
 
     # `ros2_control` is a collection of nodes that we use to control the Rover.
     #
@@ -100,9 +109,7 @@ def generate_launch_description() -> LaunchDescription:
             robot_state_publisher,
             robot_localization,
             depthimage_to_laserscan,
-            slam_toolbox,
-            nav2_container,
-            nav2_launch,
+            navigation_stack,
             ros2_control,
         ]
     )
@@ -152,7 +159,7 @@ def _robot_state_publisher(
     )
 
 
-def _slam_toolbox(
+def _navigation_bringup(
     use_sim_time: LaunchConfiguration,
 ) -> IncludeLaunchDescription:
     pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
@@ -164,54 +171,13 @@ def _slam_toolbox(
                         pkg_drive_launcher,
                         "launch",
                         "helpers",
-                        "slam_toolbox.launch.py",
+                        "navigation_stack.launch.py",
                     ]
                 )
             ],
         ),
         launch_arguments=[("use_sim_time", (use_sim_time))],
     )
-
-
-def _nav2(
-    use_sim_time: LaunchConfiguration,
-) -> tuple[Node, IncludeLaunchDescription]:
-    pkg_drive_launcher: str = get_package_share_directory("drive_launcher")
-
-    # use node composition on Nav2 to speed things up!
-    #
-    # see: https://docs.ros.org/en/humble/Tutorials/Intermediate/Composition.html#component-container-types
-    nav2_container: Node = Node(
-        package="rclcpp_components",
-        executable="component_container",
-        name="nav2_container",
-        namespace="",
-        parameters=[{"use_sim_time": use_sim_time}],
-    )
-
-    # launch the rest of Nav2 using our helper script
-    nav2_launch: IncludeLaunchDescription = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                PathJoinSubstitution(
-                    [
-                        pkg_drive_launcher,
-                        "launch",
-                        "helpers",
-                        "nav2.launch.py",
-                    ]
-                )
-            ]
-        ),
-        launch_arguments={
-            "use_sim_time": use_sim_time,
-            "autostart": "true",
-            "namespace": "",
-            "container_name": "nav2_container",
-        }.items(),
-    )
-
-    return (nav2_container, nav2_launch)
 
 
 def _depthimage_to_laserscan(
