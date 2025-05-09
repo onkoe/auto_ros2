@@ -34,6 +34,7 @@ from .convert import compass_degrees_z
 
 # from custom_interfaces.msg import ArMessage as ArucoMessage
 from .coords import dist_m_between_coords
+from .pose import geopoint_to_pose
 from .types import (
     DEFAULT_PID_DERIVATIVE_GAIN,
     DEFAULT_PID_INTEGRAL_GAIN,
