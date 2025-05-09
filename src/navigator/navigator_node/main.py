@@ -70,12 +70,6 @@ class NavigatorNode(Node):
     We don't use this directly - it's only to make error messages better.
     """
 
-    # these let us check if we've reached stuff
-    calculating_aruco_coord: bool = False
-    """When this is true, we've reached the coordinate near the goal."""
-    goal_reached: bool = False
-    """When true, we've reached the object itself."""
-
     # info about where the rover/target is
     _last_known_rover_coord: GeoPointStamped | None = None
     """The coordinate last recv'd from the GPS."""
@@ -142,9 +136,7 @@ class NavigatorNode(Node):
         coord: GeoPoint = GeoPoint()
         coord.latitude = latitude
         coord.longitude = longitude
-        coord.altitude = (
-            0.0  # TODO(bray): literally just take this from the rust library lol
-        )
+        coord.altitude = 0.0
 
         mode_int: int | None = self.get_parameter("mode").value
         if mode_int is None:
