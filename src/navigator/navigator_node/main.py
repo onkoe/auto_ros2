@@ -16,7 +16,7 @@ from rclpy.node import (
 from rclpy.publisher import Publisher
 from rclpy.qos import QoSPresetProfiles, QoSProfile
 from rclpy.subscription import Subscription
-from sensor_msgs.msg import Imu, NavSatFix
+from sensor_msgs.msg import NavSatFix
 from typing_extensions import override
 
 from custom_interfaces.msg import (
@@ -31,7 +31,6 @@ from custom_interfaces.srv._lights import (
     Lights_Response as LightsResponse,
 )
 
-from .convert import compass_degrees_z
 from .coords import dist_m_between_coords
 from .pose import geopoint_to_pose
 from .types import (
@@ -60,8 +59,6 @@ class NavigatorNode(Node):
     """Publish wheels speeds to move the Rover."""
     _gps_subscription: Subscription
     _aruco_subscription: Subscription
-    _imu_subscription: Subscription
-    """Grabs information from the IMU, which includes compass, acceleration, and orientation."""
     _lights_client: Client
     """Service client for the Lights node."""
 
@@ -84,8 +81,6 @@ class NavigatorNode(Node):
     """The coordinate last recv'd from the GPS."""
     _last_known_marker_coord: GeoPointStamped | None = None
     """Coordinate pair where the target was last known to be located."""
-    _last_known_compass_direction: float | None = None
-    """The direction in which the compass was last known to be pointing."""
     _gps_to_map_client: Client
     """A client to speak with the `utm_conversion_node`."""
 
@@ -196,6 +191,7 @@ class NavigatorNode(Node):
 
         # if in aruco mode, create a subscriber for aruco tracking
         if self.nav_parameters.mode == NavigationMode.ARUCO:
+            llogger.info("We're in ArUco mode. Creating sub to ArUco topic...")
             self._aruco_subscription = self.create_subscription(
                 msg_type=PoseStamped,
                 topic="/marker_pose",
@@ -208,12 +204,6 @@ class NavigatorNode(Node):
             msg_type=NavSatFix,
             topic="/sensors/gps",
             callback=self.gps_callback,
-            qos_profile=QOS_PROFILE,
-        )
-        self._imu_subscription = self.create_subscription(
-            msg_type=Imu,
-            topic="/sensors/imu",
-            callback=self.imu_callback,
             qos_profile=QOS_PROFILE,
         )
 
@@ -459,15 +449,6 @@ class NavigatorNode(Node):
             await asyncio.sleep(0.5)
         pass
 
-        # wait for the GPS and IMU to do something before we begin navigating
-        while self._last_known_compass_direction is None:
-            _ = self.get_logger().warn("Sensor data isn't up yet. Waiting to navigate.")
-            _ = self.get_logger().debug(
-                f"sensor data: compass: {self._last_known_compass_direction}, gps: {self._last_known_rover_coord}"
-            )
-            await asyncio.sleep(0.25)
-        pass
-
     def gps_callback(self, msg: NavSatFix):
         # move its header over
         gp_stamped: GeoPointStamped = GeoPointStamped()
@@ -488,17 +469,6 @@ class NavigatorNode(Node):
     def aruco_callback(self, msg: PoseStamped):
         self._curr_marker_transform = msg
 
-    def imu_callback(self, msg: Imu):
-        """
-        Converts the nonsense IMU message into compass deg, then saves it.
-        """
-        compass_deg_z: float = compass_degrees_z(msg)
-        self._last_known_compass_direction = compass_deg_z
-
-    pass
-
-
-pass
 
 """
 HEY!
