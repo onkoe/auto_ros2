@@ -11,7 +11,9 @@ our work in here... :D
 
 -->
 <!-- wheel properties -->
-<xacro:property name="wheel_radius" value="0.08" />  <!-- TODO(bray): confirm real wheel radius -->
+<!-- TODO(bray): confirm real wheel radius -->
+<!-- note: ensure you change this in the `ros2_control.yaml` config, too! -->
+<xacro:property name="wheel_radius" value="0.08" />
 <xacro:property name="wheel_thickness" value="0.05" />
 <xacro:property name="middle_wheel_location" value="0.0" />
 <xacro:property name="wheel_spacing_len" value="0.194" />
@@ -130,28 +132,6 @@ generates a wheel for the Rover model.
 </xacro:macro>
 
 <!--
-# `make_wheel_plugin`
-
-links a wheel to a controller plugin in the simulator.
-
-## Params
-
-- `name`: the name of the referenced wheel.
-    - ex. "left_front"
--->
-<xacro:macro name="make_wheel_plugin" params="name">
-    <gazebo reference="${name}_wheel">
-        <plugin
-            name="gz::sim::systems::JointController"
-            filename="libgz-sim8-joint-controller-system.so"
-        >
-            <joint_name>${name}_wheel_joint</joint_name>
-            <topic>/${name}_wheel/cmd_vel</topic>
-        </plugin>
-    </gazebo>
-</xacro:macro>
-
-<!--
 # `make_wheel_control_joint`
 
 makes a wheel joint for ros2_control.
@@ -169,6 +149,7 @@ makes a wheel joint for ros2_control.
     </joint>
 </xacro:macro>
 
+    <!-- alright, let's start building the model... -->
 
     <material name="red">
     <color rgba="1.0 0.0 0.0 1.0" />
@@ -183,14 +164,6 @@ makes a wheel joint for ros2_control.
     <gazebo>
         <pose relative_to='world'>0 0 0 0 0 0</pose>
     </gazebo>
-
-    <!-- plugins to control each wheel :D -->
-    <xacro:make_wheel_plugin name="left_front" />
-    <xacro:make_wheel_plugin name="left_middle" />
-    <xacro:make_wheel_plugin name="left_back" />
-    <xacro:make_wheel_plugin name="right_front" />
-    <xacro:make_wheel_plugin name="right_middle" />
-    <xacro:make_wheel_plugin name="right_back" />
 
     <link name="base_link" />
 
@@ -373,28 +346,21 @@ makes a wheel joint for ros2_control.
         </sensor>
     </gazebo>
 
+    <ros2_control name="GazeboSimSystem" type="system">
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+      <xacro:make_wheel_control_joint name="left_front" />
+      <xacro:make_wheel_control_joint name="left_middle" />
+      <xacro:make_wheel_control_joint name="left_back" />
+      <xacro:make_wheel_control_joint name="right_front" />
+      <xacro:make_wheel_control_joint name="right_middle" />
+      <xacro:make_wheel_control_joint name="right_back" />
+    </ros2_control>
+
     <gazebo>
-        <plugin
-            name="gz_ros2_control::GazeboSimROS2ControlPlugin"
-            filename="libgz_ros2_control-system.so"
-        >
-            <robot_param>robot_description</robot_param>
-            <robot_param_node>robot_state_publisher</robot_param_node>
-            <parameters>$(find drive_launcher)/params/ros2_control/controllers.yaml</parameters>
-        </plugin>
-
-        <ros2_control name="GazeboSimSystem" type="system">
-            <hardware>
-                <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-            </hardware>
-
-            <!-- and its joints lol -->
-            <xacro:make_wheel_control_joint name="left_front" />
-            <xacro:make_wheel_control_joint name="left_middle" />
-            <xacro:make_wheel_control_joint name="left_back" />
-            <xacro:make_wheel_control_joint name="right_front" />
-            <xacro:make_wheel_control_joint name="right_middle" />
-            <xacro:make_wheel_control_joint name="right_back" />
-        </ros2_control>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find drive_launcher)/params/ros2_control/controllers.yaml</parameters>
+      </plugin>
     </gazebo>
 </robot>
