@@ -1,0 +1,6 @@
+geographic_msgs/GeoPoint gnss_coord_to_convert
+
+---
+
+bool success
+geometry_msgs/Point point
