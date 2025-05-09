@@ -19,6 +19,19 @@ def generate_launch_description() -> LaunchDescription:
     # whether or not we'll launch using sim time.
     use_sim_time = LaunchConfiguration("use_sim_time")
 
+    # start the utm conversion node.
+    #
+    # it allows us to provide GNSS coordinates to navigate to. wtihout it, we
+    # have no frame of reference onto the map.
+    utm_conversion_node: Node = Node(
+        executable="utm_conversion_node",
+        package="navigator",
+        name="utm_conversion_node",
+        parameters=[
+            {"use_sim_time": use_sim_time},
+        ],
+    )
+
     # this collection of nodes is from the `robot_localization` package. these
     # provide essential functionality for the Rover.
     #
@@ -106,6 +119,7 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 "use_sim_time",
             ),
+            utm_conversion_node,
             robot_state_publisher,
             robot_localization,
             depthimage_to_laserscan,
