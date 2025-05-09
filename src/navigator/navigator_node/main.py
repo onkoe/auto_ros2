@@ -38,14 +38,16 @@ from .types import (
     NavigationParameters,
 )
 
-## how long we'll keep the data (DDS)
-QOS_PROFILE: QoSProfile = QoSPresetProfiles.SENSOR_DATA.value
+SENSORS_QOS_PROFILE: QoSProfile = QoSPresetProfiles.SENSOR_DATA.value
 """
-The amount of time until we ignore a message from a sensor.
+A quality of service (QoS) profile optimized for sensors.
 
-Using this allows us to ignore old messages, only using new ones.
+Used across Autonomous systems.
+"""
 
-Measured in nanoseconds.
+RELIABLE_QOS_PROFILE: QoSProfile = QoSPresetProfiles.SERVICES_DEFAULT.value
+"""
+A "reliable" QoS service for things like sending messages to the wheels.
 """
 
 ## minimum distance we need to be within from the coordinate
@@ -188,7 +190,7 @@ class NavigatorNode(Node):
                 msg_type=PoseStamped,
                 topic="/marker_pose",
                 callback=self.aruco_callback,
-                qos_profile=QOS_PROFILE,
+                qos_profile=SENSORS_QOS_PROFILE,
             )
 
         # connect to our sensors using subscriptions
@@ -196,7 +198,7 @@ class NavigatorNode(Node):
             msg_type=NavSatFix,
             topic="/sensors/gps",
             callback=self.gps_callback,
-            qos_profile=QOS_PROFILE,
+            qos_profile=SENSORS_QOS_PROFILE,
         )
 
         # make a client to get target gnss coord in relation to map
