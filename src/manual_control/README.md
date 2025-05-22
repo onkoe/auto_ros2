@@ -6,7 +6,7 @@ It's only for testing - please don't use this for anything important.
 
 ## Setup
 
-Nothing special needed here. Just follow the typical setup steps in our [README](../../README.md).
+Nothing special needed here. Just follow the typical setup steps in our [README](../../README.md). Ensure ROS 2 is installed on your computer, or that it's using the Docker container. **This is intended to be ran on your computer - not the Rover!**
 
 ## Nodes
 
@@ -18,7 +18,7 @@ At the moment, we've just got one node...
 
 ## Usage
 
-If you've already launched Autonomous control, you can also start the `manual_control_gui_node` with `ros2 run manual_control manual_control_gui_node`.
+If you've already launched Autonomous control, you can also start the `manual_control_gui_node` with `ros2 run manual_control manual_control_gui_node`. **This is only for usage in the simulator** because this node is made to be used on a computer that _isn't_ the Jetson.
 
 Otherwise, you can start all the non-Autonomous stuff alongside manual control with `ros2 launch manual_control manual_control.launch.py`. Please ensure Autonomous isn't already running - otherwise, you'll get multiple nodes running for the same purpose!
 
