@@ -61,7 +61,7 @@ async fn main() {
     // alright, let's connect to the Ebox to send the wheels...
     //
     // we'll need the ip and port for the responsible microcontroller
-    let (ip, port): (Ipv4Addr, u16) = (Ipv4Addr::new(192, 168, 1, 102), 1002);
+    let (ip, port): (Ipv4Addr, u16) = (Ipv4Addr::new(192, 168, 1, 102), 5002);
 
     // with those, we can now send stuff to the Ebox microcontroller.
     //
