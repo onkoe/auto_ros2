@@ -63,10 +63,18 @@ async fn main() {
     // we'll need the ip and port for the responsible microcontroller
     let (ip, port): (Ipv4Addr, u16) = (Ipv4Addr::new(192, 168, 1, 102), 1002);
 
-    // with those, we can now connect to the Ebox microcontroller
+    // with those, we can now send stuff to the Ebox microcontroller.
+    //
+    // note: this isn't a TCP connection, so we're kinda just hoping that we're
+    // talking to someone on the other end.
+    //
+    // it's easier for Electrical, though, so this behavior is expected and
+    // (generally) wanted ;D
+    pr_info!(logger, "Creating `RoverController`...");
     let controller = RoverController::new(IpAddr::V4(ip), port, 0)
         .await
         .expect("Failed to create RoverController");
+    pr_info!(logger, "`RoverController` created!");
 
     // let's also make a channel so we can talk between two tasks.
     //
@@ -80,12 +88,14 @@ async fn main() {
 
     // spawn the subscription task onto another thread and convert messages
     // when we get them!
+    pr_info!(logger, "Spawning wheel subscriber task...");
     let t = tokio::task::spawn(wheels_subscriber_task(
         subscriber,
         tx,
         Arc::clone(&logger),
         Arc::clone(&shared_stop_bool),
     ));
+    pr_info!(logger, "Wheel subscriber task spawned successfully.");
 
     // we'll just await the sender task on the main thread - it should run
     // forever, after all.
@@ -126,7 +136,7 @@ async fn wheels_subscriber_task(
     logger: Arc<Logger>,
     shared_stop_bool: Arc<RwLock<bool>>,
 ) {
-    pr_info!(logger, "The `wheels_task` is now online!");
+    pr_info!(logger, "The `/cmd_vel` subscriber is now active.");
 
     // constantly listen for wheel twist messages on `/cmd_vel`...
     loop {
@@ -158,13 +168,6 @@ async fn wheels_subscriber_task(
                 continue;
             }
         };
-
-        // TODO: REMOVE BEFORE PR
-        tracing::info!(
-            "got a message! lin: {:?}, ang: {:?}",
-            message.linear,
-            message.angular
-        );
 
         // alright, if we reached here, we now have a message! let's grab the
         // useful bits.
@@ -224,6 +227,8 @@ async fn wheels_sender_task(
     logger: Arc<Logger>,
     shared_stop_bool: Arc<RwLock<bool>>,
 ) {
+    pr_info!(logger, "Ebox connection task is now active.");
+
     // this while loop will continue running until we the `UnboundedSender`
     // goes offline.
     //
@@ -234,9 +239,6 @@ async fn wheels_sender_task(
         if *shared_stop_bool.read().await {
             return;
         }
-
-        // TODO: REMOVE BEFORE PR
-        tracing::info!("got a message! {msg:#?}");
 
         // let's try sending it to the rover controller.
         //
