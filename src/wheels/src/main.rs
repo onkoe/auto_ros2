@@ -193,15 +193,7 @@ async fn wheels_subscriber_task(
 
         // now, we can send that to the Ebox
         // make message into something we can send to the microcontroller.
-        let wheels = Wheels {
-            wheel0: left_speed,
-            wheel1: left_speed,
-            wheel2: left_speed,
-            wheel3: right_speed,
-            wheel4: right_speed,
-            wheel5: right_speed,
-            checksum: 0, // FIXME: this should be in the `feedback` crate!
-        };
+        let wheels = Wheels::new(left_speed, right_speed);
 
         // send that to the other task.
         //
