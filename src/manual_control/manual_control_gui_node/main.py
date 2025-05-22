@@ -40,6 +40,10 @@ class ManualControlGuiNode(Node):
     _joystick: JoystickType | None = None
     _axes: list[float] = field(default_factory=lambda: [])
 
+    # controller state
+    _speed: float = 0.0
+    _turn: float = 0.0
+
     def __init__(self):
         super().__init__("manual_control_gui_node")
 
@@ -116,22 +120,41 @@ class ManualControlGuiNode(Node):
             if event.type == pygame.JOYAXISMOTION:
                 self._axes[event.axis] = event.value  # pyright: ignore[reportAny]
                 if event.axis in (_LT_AXIS, _RT_AXIS, _TURN_AXIS):  # pyright: ignore[reportAny]
-                    self._publish_cmd_vel()
+                    self._refresh_inputs()
 
-    def _publish_cmd_vel(self):
+        # no matter what, send inputs on topic again
+        msg = Twist()
+        msg.linear.x = max(-1.0, min(1.0, self._speed))
+        msg.angular.z = max(-1.0, min(1.0, self._turn))
+        self._cmd_vel_pub.publish(msg)
+
+    def _refresh_inputs(self):
         if not self._axes:
             return
         try:
-            speed: float = self._axes[_RT_AXIS] - self._axes[_LT_AXIS]
-            turn: float = self._axes[_TURN_AXIS]
+            # triggers have range [-1.0, 1.0] by default. here, we make that
+            # into [0.0, 1.0].
+            #
+            # that allows us to calculate the difference without signs below,
+            # which also avoids speeds outside [-1.0, 1.0]
+            lto: float = self._axes[_LT_AXIS]
+            rto: float = self._axes[_RT_AXIS]
+
+            # account for inactive triggers being `0.0`, despite that being
+            # directly in the middle of the range (mindnumblingly stupid design
+            # btw)
+            lt: float = (lto / 2.0) + 0.5 if lto != 0.0 else 0.0
+            rt: float = (rto / 2.0) + 0.5 if rto != 0.0 else 0.0
+
+            print(f"right trigger: {rt}")
+            print(f"left trigger: {lt}")
+
+            self._speed = rt - lt
+            self._turn = self._axes[_TURN_AXIS]
+            print(f"calc'd speed: {self._speed}")
         except IndexError:
             llogger.error("index error! can't grab controller axis...")
             return
-
-        msg = Twist()
-        msg.linear.x = max(-1.0, min(1.0, speed))
-        msg.angular.z = max(-1.0, min(1.0, turn))
-        self._cmd_vel_pub.publish(msg)
 
     @override
     def __hash__(self) -> int:
