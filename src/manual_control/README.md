@@ -21,3 +21,6 @@ At the moment, we've just got one node...
 If you've already launched Autonomous control, you can also start the `manual_control_gui_node` with `ros2 run manual_control manual_control_gui_node`.
 
 Otherwise, you can start all the non-Autonomous stuff alongside manual control with `ros2 launch manual_control manual_control.launch.py`. Please ensure Autonomous isn't already running - otherwise, you'll get multiple nodes running for the same purpose!
+
+- **Left joystick**: turn left and right
+- **LT** and **RT**: go backward and forward, respectively
