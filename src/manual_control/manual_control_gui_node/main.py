@@ -63,7 +63,7 @@ class ManualControlGuiNode(Node):
         self._rescan_controllers()
 
         # update pygame 60 times per second
-        self._pygame_update_timer = self.create_timer(1.0 / 60.0, self._update_pygame)
+        self._pygame_update_timer = self.create_timer(1.0 / 15.0, self._update_pygame)
         self._pygame_render_timer = self.create_timer(1.0 / 60.0, self._draw_pygame)
 
         # draw the first frame!
