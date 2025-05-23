@@ -119,20 +119,19 @@ class ManualControlGuiNode(Node):
                 llogger.info("goodbye!")
                 sys.exit(0)
 
-            # controller movement
-            if event.type == pygame.JOYAXISMOTION:
-                self._axes[event.axis] = event.value  # pyright: ignore[reportAny]
-                if event.axis in (_LT_AXIS, _RT_AXIS, _TURN_AXIS):  # pyright: ignore[reportAny]
-                    self._refresh_inputs()
+        # no matter what, send inputs on topic again.
+        #
+        # first, we'll grab the newest info from the controller
+        self._refresh_inputs()
 
-        # no matter what, send inputs on topic again
+        # then, make + send the message
         msg = Twist()
         msg.linear.x = max(-_MAX_SPEED, min(_MAX_SPEED, self._speed))
         msg.angular.z = max(-_MAX_SPEED, min(_MAX_SPEED, self._turn))
         self._cmd_vel_pub.publish(msg)
 
     def _refresh_inputs(self):
-        if not self._axes:
+        if self._joystick is None:
             return
         try:
             # triggers have range [-1.0, 1.0] by default. here, we make that
@@ -140,8 +139,8 @@ class ManualControlGuiNode(Node):
             #
             # that allows us to calculate the difference without signs below,
             # which also avoids speeds outside [-1.0, 1.0]
-            lto: float = self._axes[_LT_AXIS]
-            rto: float = self._axes[_RT_AXIS]
+            lto: float = self._joystick.get_axis(_LT_AXIS)
+            rto: float = self._joystick.get_axis(_RT_AXIS)
 
             # account for inactive triggers being `0.0`, despite that being
             # directly in the middle of the range (mindnumblingly stupid design
@@ -153,7 +152,7 @@ class ManualControlGuiNode(Node):
             print(f"left trigger: {lt}")
 
             self._speed = rt - lt
-            self._turn = self._axes[_TURN_AXIS]
+            self._turn = -self._joystick.get_axis(_TURN_AXIS)
             print(f"calc'd speed: {self._speed}")
         except IndexError:
             llogger.error("index error! can't grab controller axis...")
