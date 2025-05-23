@@ -26,6 +26,9 @@ _LT_AXIS: int = 2
 _RT_AXIS: int = 5
 _TURN_AXIS = 0
 
+# maximum speed we'll send lol
+_MAX_SPEED: float = 0.40
+
 
 @dataclass(kw_only=True)
 class ManualControlGuiNode(Node):
@@ -124,8 +127,8 @@ class ManualControlGuiNode(Node):
 
         # no matter what, send inputs on topic again
         msg = Twist()
-        msg.linear.x = max(-1.0, min(1.0, self._speed))
-        msg.angular.z = max(-1.0, min(1.0, self._turn))
+        msg.linear.x = max(-_MAX_SPEED, min(_MAX_SPEED, self._speed))
+        msg.angular.z = max(-_MAX_SPEED, min(_MAX_SPEED, self._turn))
         self._cmd_vel_pub.publish(msg)
 
     def _refresh_inputs(self):
