@@ -15,7 +15,7 @@ use safe_drive::{
 };
 use soro_gps::Gps;
 
-use crate::SensorSetup;
+use crate::{zed_imu::zed_imu_publisher_task, SensorSetup};
 
 // ros2-client to safe_drive NOTICE
 // My attempt at recreating the DEFAULT_SUBSCRIPTION_QOS from ros2-client. Might be good to change...
@@ -55,7 +55,7 @@ pub async fn spawn_sensor_publisher_tasks(
     // spawn gps task
     {
         let gps_pubisher: Publisher<NavSatFix> = sensors_node
-            .create_publisher("gps", Some(qos()))
+            .create_publisher("/sensors/gps", Some(qos()))
             .expect("create gps topic");
 
         // connect to gps
@@ -77,7 +77,7 @@ pub async fn spawn_sensor_publisher_tasks(
             .create_publisher("imu", Some(qos()))
             .expect("create imu topic");
 
-        tokio::task::spawn(sensor_tasks::imu_task(imu_publisher));
+        tokio::task::spawn(zed_imu_publisher_task(Arc::clone(&logger), imu_publisher));
         pr_debug!(logger, "Made IMU task");
     }
 }
@@ -117,15 +117,6 @@ mod sensor_tasks {
                 }
             };
 
-            // // make a ros 2 msg from that info
-            // let gps_message = GpsMessage {
-            //     lat: gps_data.coord.lat,
-            //     lon: gps_data.coord.lon,
-            //     height: gps_data.height.0,
-            //     error_mm: 0.0,
-            //     time_of_week: gps_data.tow.0,
-            // };
-
             // DOUBLE CHECK
             let mut nav_sat_fix = NavSatFix::new().expect("init NavSatFix message");
             nav_sat_fix.latitude = gps_data.coord.lat;
@@ -157,7 +148,7 @@ mod sensor_tasks {
         }
     }
 
-    pub async fn imu_task(imu_pub: Publisher<Imu>) {
+    pub async fn _imu_task(imu_pub: Publisher<Imu>) {
         let sock: UdpSocket =
             UdpSocket::bind((Ipv4Addr::UNSPECIFIED, SensorSetup::default().imu_port))
                 .await
@@ -187,27 +178,7 @@ mod sensor_tasks {
                 continue;
             };
 
-            // // make a ros 2 message from that parsed info
-            // let msg = ImuMessage {
-            //     accel: Vector3 {
-            //         x: imu_raw.accel_x,
-            //         y: imu_raw.accel_y,
-            //         z: imu_raw.accel_z,
-            //     },
-            //     gyro: Vector3 {
-            //         x: imu_raw.gyro_x,
-            //         y: imu_raw.gyro_y,
-            //         z: imu_raw.gyro_z,
-            //     },
-            //     compass: Vector3 {
-            //         x: imu_raw.compass_x,
-            //         y: imu_raw.compass_y,
-            //         z: imu_raw.compass_z,
-            //     },
-            //     temp_c: imu_raw.temp_c,
-            // };
-
-            // DOUBLE CHECK
+            // TODO: DOUBLE CHECK
             let mut imu_msg = Imu::new().expect("init Imu message");
             imu_msg.linear_acceleration = Vector3 {
                 x: imu_raw.accel_x,
@@ -215,15 +186,7 @@ mod sensor_tasks {
                 z: imu_raw.accel_z,
             };
 
-            // Convert imu_raw.gyro_* Vector3 to Quaternion?
-            // img_msg.orientation = Quaternion {
-            //     x: todo!(),
-            //     y: todo!(),
-            //     z: todo!(),
-            //     w: todo!(),
-            // };
-
-            // Complete assignment of fields
+            // TODO: Complete assignment of fields
 
             // publish it
             _ = imu_pub
