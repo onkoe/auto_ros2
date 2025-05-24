@@ -10,7 +10,6 @@ use camino::Utf8PathBuf;
 use safe_drive::{context::Context, logger::Logger, pr_info};
 
 mod logic;
-mod msg;
 
 const SENSORS_NODE_NAME: &str = "sensors_node";
 
