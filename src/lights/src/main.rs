@@ -14,6 +14,7 @@ use std::{
     sync::Arc,
     time::Duration,
 };
+use tokio::{sync::RwLock, time::sleep};
 
 use custom_interfaces::srv::{Lights, Lights_Request, Lights_Response};
 
@@ -23,7 +24,7 @@ use safe_drive::{
     context::Context,
     logger::Logger,
     node::{Node, NodeOptions},
-    pr_error, pr_fatal, pr_info, qos,
+    pr_debug, pr_error, pr_fatal, pr_info, qos,
     service::{
         server::{Server, ServerSend},
         Header,
@@ -71,15 +72,29 @@ async fn main() {
     // Handle requests in the background
     tokio::select! {
         _ = tokio::signal::ctrl_c() => (),
-        _ = service_server_task(server, controller, Arc::clone(&logger)) => (),
+        _ = service_server_task(Arc::clone(&logger), server, Arc::new(controller)) => (),
     };
 }
 
 async fn service_server_task(
-    mut server: Server<Lights>,
-    controller: RoverController,
     logger: Arc<Logger>,
+    mut server: Server<Lights>,
+    controller: Arc<RoverController>,
 ) {
+    // make a variable that lets us say when to flash the lights!
+    let is_flashing = Arc::new(RwLock::new(false));
+
+    // we'll spawn a background task that flashes the lights until we ask it
+    // to stop!
+    let logger_clone: Arc<Logger> = Arc::clone(&logger);
+    let controller_clone: Arc<RoverController> = Arc::clone(&controller);
+    let is_flashing_clone: Arc<RwLock<bool>> = Arc::clone(&is_flashing);
+    _ = tokio::task::spawn(start_flash(
+        logger_clone,
+        controller_clone,
+        is_flashing_clone,
+    ));
+
     // wait for requests
     loop {
         let maybe_request: Result<(ServerSend<_>, Lights_Request, Header), _> = server.recv().await;
@@ -98,6 +113,19 @@ async fn service_server_task(
                 return;
             }
         };
+
+        // if `flashing` is `true` in the request, we'll tell the other task to
+        // start flashing.
+        //
+        // if it's `false`, we'll ask it to stop
+        if request.flashing {
+            *is_flashing.write().await = true;
+            pr_debug!(logger, "Turned flashing lights on!");
+        } else if !*is_flashing.read().await {
+            // ^^ only turn off if not already off
+            *is_flashing.write().await = false;
+            pr_debug!(logger, "Turned flashing lights off.");
+        }
 
         // make a new RGB value with the request's color
         let led = Led {
@@ -144,6 +172,56 @@ async fn service_server_task(
                 }
             }
         };
+    }
+}
+
+// constants for flashing Autonomous LED
+const GREEN: Led = Led {
+    red: 0,
+    green: 255,
+    blue: 0,
+};
+const OFF: Led = Led {
+    red: 0,
+    green: 0,
+    blue: 0,
+};
+
+/// Function that flashes lights green every 200 milliseconds
+pub async fn start_flash(
+    logger: Arc<Logger>,
+    controller: Arc<RoverController>,
+    is_flashing: Arc<RwLock<bool>>,
+) {
+    loop {
+        // if we're not flashing the lights right now, we'll sleep to save
+        // processing power
+        if !*is_flashing.read().await {
+            // nothing yet - let's keep sleeping
+            //
+            // arbitrary number, feel free to change!
+            sleep(Duration::from_millis(100)).await;
+            continue;
+        }
+
+        // we're being asked to flash the lights! let's keep doing it until
+        // the other thread says to stop...
+        //
+        while *is_flashing.read().await {
+            // turn on for 200ms
+            _ = controller
+                .send_led(&GREEN)
+                .await
+                .inspect_err(|e| pr_error!(logger, "Failed to send lights! err: {e}"));
+            sleep(Duration::from_millis(200)).await;
+
+            // turn off for 200ms
+            _ = controller
+                .send_led(&OFF)
+                .await
+                .inspect_err(|e| pr_error!(logger, "Failed to send lights! err: {e}"));
+            sleep(Duration::from_millis(200)).await;
+        }
     }
 }
 
