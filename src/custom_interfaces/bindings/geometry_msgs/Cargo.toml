@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 safe_drive = { version = "0.4.3", default-features = false, features = ["humble"] }
-std_msgs = { path = "/home/barrett/auto_ros2/src/custom_interfaces/bindings/std_msgs" }
+std_msgs = { path = "../std_msgs" }

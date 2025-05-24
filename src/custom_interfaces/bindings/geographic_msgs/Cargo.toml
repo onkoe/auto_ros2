@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 safe_drive = { version = "0.4.3", default-features = false, features = ["humble"] }
-geometry_msgs = { path = "/home/barrett/auto_ros2/src/custom_interfaces/bindings/geometry_msgs" }
-std_msgs = { path = "/home/barrett/auto_ros2/src/custom_interfaces/bindings/std_msgs" }
-unique_identifier_msgs = { path = "/home/barrett/auto_ros2/src/custom_interfaces/bindings/unique_identifier_msgs" }
+geometry_msgs = { path = "../geometry_msgs" }
+std_msgs = { path = "../std_msgs" }
+unique_identifier_msgs = { path = "../unique_identifier_msgs" }
