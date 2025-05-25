@@ -17,7 +17,7 @@ use safe_drive::{
 };
 use zerocopy::{FromBytes, KnownLayout};
 
-pub async fn zed_imu_publisher_task(
+pub async fn _zed_imu_publisher_task(
     logger: Arc<Logger>,
     publisher: Publisher<sensor_msgs::msg::Imu>,
 ) {
@@ -56,7 +56,7 @@ pub async fn zed_imu_publisher_task(
         };
 
         // grab imu timestamp as ns
-        let timestamp_ns = (imu_data.timestamp as f64 * TS_SCALE_NS) as u64;
+        let timestamp_ns = (imu_data.timestamp as f64 * _TS_SCALE_NS) as u64;
 
         // convert that imu data into a ROS 2 `sensors_msgs::msg::Imu`
         let imu_message = sensor_msgs::msg::Imu {
@@ -75,15 +75,15 @@ pub async fn zed_imu_publisher_task(
             },
             orientation_covariance: [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             angular_velocity: Vector3 {
-                x: (imu_data.g_x as f64 * GYRO_SCALE as f64) * (PI / 180.0),
-                y: (imu_data.g_y as f64 * GYRO_SCALE as f64) * (PI / 180.0),
-                z: (imu_data.g_z as f64 * GYRO_SCALE as f64) * (PI / 180.0),
+                x: (imu_data.g_x as f64 * _GYRO_SCALE as f64) * (PI / 180.0),
+                y: (imu_data.g_y as f64 * _GYRO_SCALE as f64) * (PI / 180.0),
+                z: (imu_data.g_z as f64 * _GYRO_SCALE as f64) * (PI / 180.0),
             },
             angular_velocity_covariance: [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             linear_acceleration: Vector3 {
-                x: imu_data.g_x as f64 * ACC_SCALE as f64,
-                y: imu_data.g_y as f64 * ACC_SCALE as f64,
-                z: imu_data.g_z as f64 * ACC_SCALE as f64,
+                x: imu_data.g_x as f64 * _ACC_SCALE as f64,
+                y: imu_data.g_y as f64 * _ACC_SCALE as f64,
+                z: imu_data.g_z as f64 * _ACC_SCALE as f64,
             },
             linear_acceleration_covariance: [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         };
@@ -137,7 +137,7 @@ pub struct RawData {
 }
 
 // constants taken from ZED OSS
-const ACC_SCALE: f32 = 9.8189 * (8.0 / 32768.0);
-const GYRO_SCALE: f32 = 1000.0 / 32768.0;
+const _ACC_SCALE: f32 = 9.8189 * (8.0 / 32768.0);
+const _GYRO_SCALE: f32 = 1000.0 / 32768.0;
 const _MAG_SCALE: f32 = 1.0 / 16.0;
-const TS_SCALE_NS: f64 = 39_062.5;
+const _TS_SCALE_NS: f64 = 39_062.5;
