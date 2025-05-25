@@ -195,3 +195,106 @@ error: Recipe `sim` failed on line 13 with exit code 1
 ```
 
 You'll need to source again after [building a new ROS 2 package](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Creating-Your-First-ROS2-Package.html).
+
+## When using `safe_drive`, the linker kinda just... blew up
+
+If your output looks like this:
+
+```console
+(autonomous) remi@ubuntu ~/auto_ros2 (main)> colcon build --symlink-install --cargo-args --offline
+Starting >>> custom_interfaces
+Starting >>> aruco_node
+Starting >>> drive_launcher
+Starting >>> log_node
+Starting >>> manual_control
+Starting >>> navigator
+Finished <<< drive_launcher [3.17s]
+Starting >>> simulator
+Finished <<< custom_interfaces [3.38s]
+Starting >>> custom_interfaces_shim
+Finished <<< custom_interfaces_shim [0.71s]
+Starting >>> zed
+Finished <<< zed [0.74s]
+Starting >>> drive_tui
+Finished <<< simulator [1.97s]
+Starting >>> lights
+Finished <<< drive_tui [0.64s]
+Starting >>> sensors
+Finished <<< manual_control [5.54s]
+Starting >>> wheels
+Finished <<< log_node [5.61s]
+Finished <<< aruco_node [5.69s]
+Finished <<< navigator [5.67s]
+Finished <<< wheels [0.58s]
+Finished <<< sensors [0.72s]
+--- stderr: lights
+error: linking with `cc` failed: exit status: 1
+  |
+  = note: LC_ALL="C" PATH="/home/remi/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/lib/rustlib/aarch64-unknown-linux-gnu/bin:/opt/ros/humble/bin:/home/remi/auto_ros2/.venv/bin:/home/remi/.local/bin:/home/remi//(...SNIP...) "/home/remi/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/lib/rustlib/aarch64-unknown-linux-gnu/lib/libcore-81963bdfbd961b87.rlib" "/home/remi/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/lib/rustlib/aarch64-unknown-linux-gnu/lib/libcompiler_builtins-533cfa3936283188.rlib" "-Wl,-Bdynamic" "-lcustom_interfaces__rosidl_typesupport_c" "-lcustom_interfaces__rosidl_generator_c" "-lgeographic_msgs__rosidl_typesupport_c" "-lgeographic_msgs__rosidl_generator_c" "-lunique_identifier_msgs__rosidl_typesupport_c" "-lunique_identifier_msgs__rosidl_generator_c" "-lgeometry_msgs__rosidl_typesupport_c" "-lgeometry_msgs__rosidl_generator_c" "-lstd_msgs__rosidl_typesupport_c" "-lstd_msgs__rosidl_generator_c" "-lbuiltin_interfaces__rosidl_typesupport_c" "-lbuiltin_interfaces__rosidl_generator_c" "-lrcl" "-lrcl_action" "-lrcutils" "-lrmw" "-lrosidl_runtime_c" "-lactionlib_msgs__rosidl_typesupport_c" "-lactionlib_msgs__rosidl_generator_c" "-lbuiltin_interfaces__rosidl_typesupport_c" "-lbuiltin_interfaces__rosidl_generator_c" "-ldiagnostic_msgs__rosidl_typesupport_c" "-ldiagnostic_msgs__rosidl_generator_c" "-lgeometry_msgs__rosidl_typesupport_c" "-lgeometry_msgs__rosidl_generator_c" "-lnav_msgs__rosidl_typesupport_c" "-lnav_msgs__rosidl_generator_c" "-lsensor_msgs__rosidl_typesupport_c" "-lsensor_msgs__rosidl_generator_c" "-lshape_msgs__rosidl_typesupport_c" "-lshape_msgs__rosidl_generator_c" "-lstd_msgs__rosidl_typesupport_c" "-lstd_msgs__rosidl_generator_c" "-lstd_srvs__rosidl_typesupport_c" "-lstd_srvs__rosidl_generator_c" "-lstereo_msgs__rosidl_typesupport_c" "-lstereo_msgs__rosidl_generator_c" "-ltrajectory_msgs__rosidl_typesupport_c" "-ltrajectory_msgs__rosidl_generator_c" "-lunique_identifier_msgs__rosidl_typesupport_c" "-lunique_identifier_msgs__rosidl_generator_c" "-lvisualization_msgs__rosidl_typesupport_c" "-lvisualization_msgs__rosidl_generator_c" "-lrcl_interfaces__rosidl_typesupport_c" "-lrcl_interfaces__rosidl_generator_c" "-laction_msgs__rosidl_typesupport_c" "-laction_msgs__rosidl_generator_c" "-lgcc_s" "-lutil" "-lrt" "-lpthread" "-lm" "-ldl" "-lc" "-Wl,--eh-frame-hdr" "-Wl,-z,noexecstack" "-L" "/home/remi/auto_ros2/install/custom_interfaces_shim/lib" "-L" "/opt/ros/humble/lib" "-L" "/home/remi/auto_ros2/install/custom_interfaces_shim/lib" "-L" "/opt/ros/humble/lib" "-L" "/home/remi/auto_ros2/install/custom_interfaces_shim/lib" "-L" "/opt/ros/humble/lib" "-L" "/home/remi/auto_ros2/install/custom_interfaces_shim/lib" "-L" "/opt/ros/humble/lib" "-L" "/home/remi/auto_ros2/install/custom_interfaces_shim/lib" "-L" "/opt/ros/humble/lib" "-L" "/home/remi/auto_ros2/install/custom_interfaces_shim/lib" "-L" "/opt/ros/humble/lib" "-L" "/home/remi/auto_ros2/install/custom_interfaces_shim/lib" "-L" "/opt/ros/humble/lib" "-L" "/home/remi/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/lib/rustlib/aarch64-unknown-linux-gnu/lib" "-o" "/home/remi/auto_ros2/build/lights/debug/deps/lights_node-189569ce1dcca893" "-Wl,--gc-sections" "-pie" "-Wl,-z,relro,-z,now" "-nodefaultlibs"
+  = note: /usr/bin/ld: cannot find -lcustom_interfaces__rosidl_typesupport_c: No such file or directory
+          /usr/bin/ld: cannot find -lcustom_interfaces__rosidl_generator_c: No such file or directory
+          collect2: error: ld returned 1 exit status
+
+
+error: could not compile `lights` (bin "lights_node") due to 1 previous error
+---
+Failed   <<< lights [1.65s, exited with code 1]
+
+Summary: 12 packages finished [8.28s]
+  1 package failed: lights
+  5 packages had stderr output: custom_interfaces drive_launcher lights simulator zed
+```
+
+then `custom_interfaces` (or your equivalent) is not being placed on the `AMENT_PREFIX_PATH` environment variable. It needs to be there, as our Rust bindings generation code does the following:
+
+```rust
+fn main() {
+    println!("cargo:rustc-link-lib=custom_interfaces__rosidl_typesupport_c");
+    println!("cargo:rustc-link-lib=custom_interfaces__rosidl_generator_c");
+
+    // IMPORTANT!! that env variable prevents the builds from failing!
+    if let Some(e) = std::env::var_os("AMENT_PREFIX_PATH") {
+        let env = e.to_str().unwrap();
+        for path in env.split(':') {
+            println!("cargo:rustc-link-search={path}/lib");
+        }
+    }
+}
+```
+
+...which tells `cargo` to ask the linker to consider all the paths in `AMENT_PREFIX_PATH`. However, it'll only work if those libraries are in the `AMENT_PREFIX_PATH`.
+
+So, to tell if that's your problem, you can type:
+
+```console
+(autonomous) barrett@p14s ~/auto_ros2 > echo $AMENT_PREFIX_PATH
+/opt/ros/humble /home/barrett/auto_ros2/install/zed /home/barrett/auto_ros2/install/wheels /home/barrett/auto_ros2/install/simulator /home/barrett/auto_ros2/install/sensors /home/barrett/auto_ros2/install/navigator /home/barrett/auto_ros2/install/manual_control /home/barrett/auto_ros2/install/log_node /home/barrett/auto_ros2/install/lights /home/barrett/auto_ros2/install/drive_tui /home/barrett/auto_ros2/install/drive_launcher /home/barrett/auto_ros2/install/custom_interfaces_shim /home/barrett/auto_ros2/install/aruco_node
+(autonomous) barrett@p14s ~/auto_ros2 >
+```
+
+If you don't see the library (in this case, `custom_interfaces`) in the list, then you'll need to add it to the builder package's `package.xml` as a `build_depend`.
+
+You can also do a hacky workaround in your `build.rs` like so:
+
+```rust
+use std::path::Path;
+
+fn main() {
+    let dependencies: &[&str] = &["std_msgs", "custom_interfaces"];
+
+    //          THIS RIGHT HERE vvvvvvv
+    //
+    // add `custom_interfaces` path to ld path
+    let k = "/home/remi/auto_ros2/install/custom_interfaces/lib";
+    println!("cargo:rustc-link-search={k}");
+
+    safe_drive_msg::depends(
+        &Path::new("../../lib/bindings")
+            .canonicalize()
+            .expect("Failed to canonicalize path (useful to prevent other build errors)"),
+        dependencies,
+        safe_drive_msg::SafeDrive::Version("0.4.3"),
+    )
+    .expect("Failed to build `custom_interfaces` bindings through `safe_drive_msg`!");
+}
+```
