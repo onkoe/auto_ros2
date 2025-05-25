@@ -4,7 +4,7 @@ fn main() {
     let dependencies: &[&str] = &["std_msgs", "custom_interfaces"];
 
     safe_drive_msg::depends(
-        &Path::new("../custom_interfaces/bindings")
+        &Path::new("../../lib/bindings")
             .canonicalize()
             .expect("Failed to canonicalize path (useful to prevent other build errors)"),
         dependencies,

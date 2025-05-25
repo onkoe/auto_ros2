@@ -26,7 +26,7 @@ safe_drive = { version = "0.4.3", features = ["humble"] }
 
 
 [dependencies.custom_interfaces]
-path = "../custom_interfaces/bindings/custom_interfaces"
+path = "../../lib/bindings/custom_interfaces"
 
 [dev-dependencies]
 futures = { version = "0.3.31", default-features = false, features = [
