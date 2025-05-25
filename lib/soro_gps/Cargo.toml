@@ -19,8 +19,9 @@ pisserror = "0.3.0"
 tracing = "0.1.41"
 sbp = "6.2.1"
 tokio = { version = "1.43.0", features = ["net", "time"] }
-tokio-util = { version = "0.7.13", features = ["net", "codec"] }
-tokio-stream = { version = "0.1.17", features = ["net"] }
 
 [dev-dependencies]
 tracing-subscriber = "0.3.19"
+
+[package.metadata.cargo-machete]
+ignored = ["tracing-subscriber"]
