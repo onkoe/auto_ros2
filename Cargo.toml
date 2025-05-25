@@ -1,9 +1,14 @@
 [workspace]
 resolver = "2"
 members = [
+    # ros 2 packages
     "src/lights",
     "src/wheels",
     "src/sensors",
     "src/drive_tui",
     "src/custom_interfaces_shim",
+    #
+    # libraries (not ros 2 packages)
+    "lib/feedback",
+    "lib/soro_gps",
 ]

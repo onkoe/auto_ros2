@@ -1,0 +1,26 @@
+[package]
+name = "soro_gps"
+version = "1.1.0"
+edition = "2021"
+
+description = "A new `gps` library for our old GPS"
+repository = "https://github.com/Sooner-Rover-Team/soro_gps"
+homepage = "https://github.com/Sooner-Rover-Team"
+license = "MIT"
+categories = ["science::robotics"]
+keywords = ["soro", "sooner-rover-team", "urc", "mars", "rover"]
+readme = "README.md"
+
+[lib]
+crate-time = ["staticlib"]
+
+[dependencies]
+pisserror = "0.3.0"
+tracing = "0.1.41"
+sbp = "6.2.1"
+tokio = { version = "1.43.0", features = ["net", "time"] }
+tokio-util = { version = "0.7.13", features = ["net", "codec"] }
+tokio-stream = { version = "0.1.17", features = ["net"] }
+
+[dev-dependencies]
+tracing-subscriber = "0.3.19"
