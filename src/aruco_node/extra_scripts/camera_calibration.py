@@ -6,7 +6,7 @@ import cv2
 import cv2.aruco as aruco
 from loguru import logger
 
-from ..aruco_node.aruco_dict_map import aruco_dict_map
+from aruco_node.aruco_dict_map import aruco_dict_map
 
 
 @dataclasses.dataclass
@@ -143,7 +143,7 @@ def main():
         )
 
         # Draw the detected corners and markers
-        if charuco_corners:
+        if charuco_corners is not None and len(charuco_corners) != 0:  # pyright: ignore[reportUnnecessaryComparison]
             preview_frame = aruco.drawDetectedCornersCharuco(
                 preview_frame, charuco_corners, charuco_ids
             )
@@ -168,14 +168,15 @@ def main():
         # - more than 3 charuco markers were found
         if (
             key == ord("c")
-            and charuco_corners
+            and charuco_corners is not None  # pyright: ignore[reportUnnecessaryComparison]
             and len(marker_corners) > 0
             and len(charuco_corners) > 3
         ):
             logger.debug(f"Markers found: {len(marker_ids)}")
-            obj_points, img_points = charuco_board.matchImagePoints(
-                charuco_corners, charuco_ids, obj_points=None, img_points=None
-            )  # pyright: ignore[reportCallIssue]
+            obj_points, img_points = charuco_board.matchImagePoints(  # pyright: ignore[reportCallIssue]
+                charuco_corners,  # pyright: ignore[reportArgumentType]
+                charuco_ids,
+            )
 
             if obj_points is None or img_points is None:
                 logger.info("Point matching failed, try again")
@@ -203,9 +204,13 @@ def main():
         exit(0)
 
     # Calibrate the camera using ChAruco
-    (rep_error, camera_mat, dist_coeffs, _rvecs, _tvecs) = cv2.calibrateCamera(
-        captured_object_points, captured_image_points, image_size
-    )  # pyright: ignore[reportCallIssue]
+    (rep_error, camera_mat, dist_coeffs, _rvecs, _tvecs) = cv2.calibrateCamera(  # pyright: ignore[reportCallIssue]
+        captured_object_points,
+        captured_image_points,
+        image_size,
+        None,  # pyright: ignore[reportArgumentType]
+        None,  # pyright: ignore[reportArgumentType]
+    )
 
     # Save the camera parameters
     try:
