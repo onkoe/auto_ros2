@@ -2,6 +2,8 @@
 //!
 //! A module that parses a given slice into a valid message.
 
+use std::f32::consts::PI;
+
 use crate::{error::ParsingError, Arm, Imu, Led, Science, Wheels};
 
 /// Any kind of message that should be sent to/from the rover.
@@ -109,22 +111,24 @@ pub fn parse(input: &[u8]) -> Result<Message, ParsingError> {
 
             // note: each float is four bytes
             let imu = Imu {
-                accel_x: f32::from_ne_bytes(input[1..9].try_into().unwrap()),
-                accel_y: f32::from_ne_bytes(input[9..17].try_into().unwrap()),
-                accel_z: f32::from_ne_bytes(input[17..25].try_into().unwrap()),
+                // accel, gyro, and compass math inspired by this library:
+                // https://github.com/norlab-ulaval/ros2_icm20948/blob/5af0f48976623e2e1a5e8a1e65b659d8e5f513eb/ros2_icm20948/icm20948_node.py#L57C1-L64C1
+                accel_x: f32::from_ne_bytes(input[1..5].try_into().unwrap()) * 9.81 / 2048.0,
+                accel_y: f32::from_ne_bytes(input[5..9].try_into().unwrap()) * 9.81 / 2048.0,
+                accel_z: f32::from_ne_bytes(input[9..13].try_into().unwrap()) * 9.81 / 2048.0,
 
-                gyro_x: f32::from_ne_bytes(input[25..33].try_into().unwrap()),
-                gyro_y: f32::from_ne_bytes(input[33..41].try_into().unwrap()),
-                gyro_z: f32::from_ne_bytes(input[41..49].try_into().unwrap()),
+                gyro_x: f32::from_ne_bytes(input[13..17].try_into().unwrap()) * PI / (16.4 * 180.0),
+                gyro_y: f32::from_ne_bytes(input[17..21].try_into().unwrap()) * PI / (16.4 * 180.0),
+                gyro_z: f32::from_ne_bytes(input[21..25].try_into().unwrap()) * PI / (16.4 / 180.0),
 
-                compass_x: f32::from_ne_bytes(input[49..57].try_into().unwrap()),
-                compass_y: f32::from_ne_bytes(input[57..65].try_into().unwrap()),
-                compass_z: f32::from_ne_bytes(input[65..73].try_into().unwrap()),
+                compass_x: f32::from_ne_bytes(input[25..29].try_into().unwrap()) * 0.000001 / 0.15,
+                compass_y: f32::from_ne_bytes(input[29..33].try_into().unwrap()) * 0.000001 / 0.15,
+                compass_z: f32::from_ne_bytes(input[33..37].try_into().unwrap()) * 0.000001 / 0.15,
 
-                temp_c: {
-                    tracing::warn!("temp c is not currently provided by electrical");
-                    0.0_f32
-                },
+                // correct according to the sparkfun library:
+                // https://github.com/sparkfun/SparkFun_ICM-20948_ArduinoLibrary/blob/32cf0614bccf0d8cff32fbc4260097ac10e5b714/src/ICM_20948.cpp#L538C3-L538C43
+                temp_c: ((f32::from_ne_bytes(input[37..41].try_into().unwrap()) - 21.0) / 333.87)
+                    + 21.0,
             };
 
             Ok(Message::Imu(imu))
