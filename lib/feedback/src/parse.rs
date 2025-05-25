@@ -276,9 +276,61 @@ mod tests {
         };
     }
 
-        // check a value in each
-        assert_eq!(imu.accel_x, 1.0241_f32);
-        assert_eq!(imu.gyro_y, 0.6241_f32);
-        assert_eq!(imu.compass_z, 9.15602_f32);
+    /// Checks that we can parse the "new" IMU messages from Electrical.
+    ///
+    /// Coop gave the following example:
+    ///
+    /// If the floating point numbers were:
+    /// - accel xyz: 0x12345678, 0x9ABCDEFF, 0xFEDCBA9F
+    /// - gyro xyz: 0x87654321, 0x01234567, 0x89ABCDEF
+    /// - Mag xyz: 0xFF124578, 0x98653211, 0xFEDBCA55
+    /// - Temp: 0x556FFBED
+    ///
+    /// you would receive:
+    /// [78, 56, 34, 12, FF, DE, BC, 9A, 9F, BA, DC, FE, 21, 43, 65, 87, 67,
+    /// 45, 23, 01, EF, CD, AB, 89, 78, 45, 12, FF, 11, 32, 65, 98, 55, CA, DB,
+    /// FE, ED, FB, 6F 55]
+    #[test]
+    fn parse_new_imu_message() {
+        #[rustfmt::skip]
+        const INPUT: [u8; 41] = [
+            // subsystem, part
+            Imu::SUBSYSTEM_BYTE,
+
+            // data
+            0x78, 0x56, 0x34, 0x12, 0xFF, 0xDE, 0xBC, 0x9A, 0x9F, 0xBA, 0xDC, 0xFE, 0x21, 0x43,
+            0x65, 0x87, 0x67, 0x45, 0x23, 0x01, 0xEF, 0xCD, 0xAB, 0x89, 0x78, 0x45, 0x12, 0xFF,
+            0x11, 0x32, 0x65, 0x98, 0x55, 0xCA, 0xDB, 0xFE, 0xED, 0xFB, 0x6F, 0x55,
+        ];
+
+        // run the parser
+        let parsed = parse(&INPUT).expect("should parse successfully");
+
+        // ensure we got an IMU message out of that
+        let Message::Imu(imu_msg) = parsed else {
+            panic!("wrong message type! \n{parsed:#?}, \n but should be Imu");
+        };
+
+        // check that we got the right values
+        assert_eq!(
+            imu_msg.accel_x,
+            f32::from_bits(0x1234_5678) * 9.81 / 2048.0,
+            "accel x"
+        );
+        assert_eq!(
+            imu_msg.gyro_y,
+            f32::from_bits(0x0123_4567) * PI / (16.4 * 180.0),
+            "gyro y"
+        );
+        assert_eq!(
+            imu_msg.compass_z,
+            f32::from_bits(0xFEDB_CA55) * 0.000001 / 0.15,
+            "compass z"
+        );
+        assert_eq!(
+            imu_msg.temp_c,
+            ((f32::from_bits(0x556F_FBED) - 21.0) / 333.87) + 21.0,
+            "temperature in celsius"
+        );
     }
 }
