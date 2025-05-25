@@ -99,14 +99,15 @@ pub fn parse(input: &[u8]) -> Result<Message, ParsingError> {
         }
 
         Imu::SUBSYSTEM_BYTE => {
-            // three floats for three vectors. each is eight bytes
+            // we should have:
             //
-            // FIXME: we don't currently get a temp_c, so that's just gonna be
-            // zero for now...
-            const EXPECTED_LENGTH: u32 = 1 + (3 * 3 * 8);
+            // - part byte
+            // - 3 arrays with 3 four-byte values
+            // - a four-byte temperature
+            const EXPECTED_LENGTH: u32 = 1 + (3 * 3 * 4) + 4;
             check_length(input_len, subsystem, 0x0, EXPECTED_LENGTH)?;
 
-            // note: each float is eight bytes
+            // note: each float is four bytes
             let imu = Imu {
                 accel_x: f32::from_ne_bytes(input[1..9].try_into().unwrap()),
                 accel_y: f32::from_ne_bytes(input[9..17].try_into().unwrap()),
