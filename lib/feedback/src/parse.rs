@@ -235,37 +235,46 @@ mod python {
 
 #[cfg(test)]
 mod tests {
-    use crate::parse::Message;
+    use std::f32::consts::PI;
+
+    use crate::{
+        parse::{parse, Message},
+        Imu,
+    };
 
     #[test]
     fn parse_imu_msg() {
-        let imu_msg: [&[u8]; 10] = [
+        let imu_msg: [&[u8]; 11] = [
             // subsystem byte
             //
             &[0x04],
             // accel
-            &1.0241_f64.to_ne_bytes(),
-            &5.135_f64.to_ne_bytes(),
-            &0.153_f64.to_ne_bytes(),
+            &1.0241_f32.to_ne_bytes(),
+            &5.135_f32.to_ne_bytes(),
+            &0.153_f32.to_ne_bytes(),
             //
             // gyro
-            &0.01523_f64.to_ne_bytes(),
-            &0.6241_f64.to_ne_bytes(),
-            &0.1_f64.to_ne_bytes(),
+            &0.01523_f32.to_ne_bytes(),
+            &0.6241_f32.to_ne_bytes(),
+            &0.1_f32.to_ne_bytes(),
             //
             // compass
-            &310_f64.to_ne_bytes(),
-            &162.1_f64.to_ne_bytes(),
-            &9.15602_f64.to_ne_bytes(),
+            &310_f32.to_ne_bytes(),
+            &162.1_f32.to_ne_bytes(),
+            &9.15602_f32.to_ne_bytes(),
+            //
+            // temp c
+            &0_u32.to_ne_bytes(),
         ];
 
         let imu_msg = imu_msg.into_iter().flatten().copied().collect::<Vec<u8>>();
 
         // parse it
         let parsed_imu_msg = super::parse(&imu_msg).expect("parse should succeed");
-        let Message::Imu(imu) = parsed_imu_msg else {
+        let Message::Imu(_) = parsed_imu_msg else {
             panic!("parser didn't recognize bytes as an imu message");
         };
+    }
 
         // check a value in each
         assert_eq!(imu.accel_x, 1.0241_f32);
