@@ -255,15 +255,15 @@ pub async fn _imu_task(logger: Arc<Logger>, imu_pub: Publisher<Imu>) {
             },
             orientation_covariance: [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             angular_velocity: Vector3 {
-                x: imu_raw.gyro_x,
-                y: imu_raw.gyro_y,
-                z: imu_raw.gyro_z,
+                x: imu_raw.gyro_x as f64,
+                y: imu_raw.gyro_y as f64,
+                z: imu_raw.gyro_z as f64,
             },
             angular_velocity_covariance: [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             linear_acceleration: Vector3 {
-                x: imu_raw.accel_x,
-                y: imu_raw.accel_y,
-                z: imu_raw.accel_z,
+                x: imu_raw.accel_x as f64,
+                y: imu_raw.accel_y as f64,
+                z: imu_raw.accel_z as f64,
             },
             linear_acceleration_covariance: [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         };

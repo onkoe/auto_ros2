@@ -108,21 +108,21 @@ pub fn parse(input: &[u8]) -> Result<Message, ParsingError> {
 
             // note: each float is eight bytes
             let imu = Imu {
-                accel_x: f64::from_ne_bytes(input[1..9].try_into().unwrap()),
-                accel_y: f64::from_ne_bytes(input[9..17].try_into().unwrap()),
-                accel_z: f64::from_ne_bytes(input[17..25].try_into().unwrap()),
+                accel_x: f32::from_ne_bytes(input[1..9].try_into().unwrap()),
+                accel_y: f32::from_ne_bytes(input[9..17].try_into().unwrap()),
+                accel_z: f32::from_ne_bytes(input[17..25].try_into().unwrap()),
 
-                gyro_x: f64::from_ne_bytes(input[25..33].try_into().unwrap()),
-                gyro_y: f64::from_ne_bytes(input[33..41].try_into().unwrap()),
-                gyro_z: f64::from_ne_bytes(input[41..49].try_into().unwrap()),
+                gyro_x: f32::from_ne_bytes(input[25..33].try_into().unwrap()),
+                gyro_y: f32::from_ne_bytes(input[33..41].try_into().unwrap()),
+                gyro_z: f32::from_ne_bytes(input[41..49].try_into().unwrap()),
 
-                compass_x: f64::from_ne_bytes(input[49..57].try_into().unwrap()),
-                compass_y: f64::from_ne_bytes(input[57..65].try_into().unwrap()),
-                compass_z: f64::from_ne_bytes(input[65..73].try_into().unwrap()),
+                compass_x: f32::from_ne_bytes(input[49..57].try_into().unwrap()),
+                compass_y: f32::from_ne_bytes(input[57..65].try_into().unwrap()),
+                compass_z: f32::from_ne_bytes(input[65..73].try_into().unwrap()),
 
                 temp_c: {
                     tracing::warn!("temp c is not currently provided by electrical");
-                    0.0_f64
+                    0.0_f32
                 },
             };
 
@@ -263,8 +263,8 @@ mod tests {
         };
 
         // check a value in each
-        assert_eq!(imu.accel_x, 1.0241_f64);
-        assert_eq!(imu.gyro_y, 0.6241_f64);
-        assert_eq!(imu.compass_z, 9.15602_f64);
+        assert_eq!(imu.accel_x, 1.0241_f32);
+        assert_eq!(imu.gyro_y, 0.6241_f32);
+        assert_eq!(imu.compass_z, 9.15602_f32);
     }
 }
