@@ -8,6 +8,8 @@
     <maintainer email="contact@barretts.club">Barrett Ray</maintainer>
     <license>MIT</license>
 
+    <build_depend>custom_interfaces</build_depend>
+
     <export>
         <build_type>ament_cargo</build_type>
     </export>
