@@ -24,6 +24,8 @@ The camera is mounted 0.5782 meters above the bottom of the ebox.
 
 - connection: USB 3.1
 - datasheet: [available here](https://cdn.sanity.io/files/s18ewfw4/staging/c059860f8fe49f3856f6b8da770eb13cc543ac2c.pdf/ZED%202i%20Datasheet%20v1.2.pdf)
+- formats
+  - output: only supports `YUYV`
 
 We use a [ZED 2i](https://www.stereolabs.com/store/products/zed-2i) depth camera for our object avoidance and real-time mapping.
 
