@@ -62,11 +62,21 @@ class NavigatorNode(Node):
     manually (more as a safety thing - a sanity check).
     """
     _gps_subscription: Subscription
+    """A subscriber to the GPS (NavSat) to know where the Rover is."""
     _aruco_subscription: Subscription
+    """Subscription to the `aruco_node` to understand what it's found so far."""
     _lights_client: Client
-    """Service client for the Lights node."""
+    """
+    Service client for the Lights node. We use it to tell the `lights_node` to
+    change the lights.
+    """
 
     nav_parameters: NavigationParameters
+    """
+    A type containing all the parameters we got when the node was launched.
+
+    Useful for storing stuff like the marker we're navigating to.
+    """
     _given_aruco_marker_id: int | None = None
     """
     The ID of the ArUco marker we're looking for.
@@ -74,7 +84,6 @@ class NavigatorNode(Node):
     We don't use this directly - it's only to make error messages better.
     """
 
-    # info about where the rover/target is
     _last_known_rover_coord: GeoPointStamped | None = None
     """The coordinate last recv'd from the GPS."""
     _last_known_marker_coord: GeoPointStamped | None = None
@@ -83,14 +92,12 @@ class NavigatorNode(Node):
     """A client to speak with the `utm_conversion_node`."""
 
     _curr_marker_transform: PoseStamped | None = None
-    _times_marker_seen: int = 0
-
-    _last_searched_coord: GeoPoint | None = None
     """
-    The coordinate we were searching at during the previous callback iteration.
-    """
+    The location of the ArUco marker relative to the Rover.
 
-    # current gps attribute
+    TODO: make this use a UTM coordinate or something; we can't be local to the
+    Rover when it's moving lol
+    """
 
     def __init__(self):
         """
