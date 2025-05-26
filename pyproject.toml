@@ -23,6 +23,7 @@ members = [
     "src/aruco_node",
     "src/simulator",
     "src/manual_control",
+    "lib/rovereye/training",
 ]
 
 [dependency-groups]

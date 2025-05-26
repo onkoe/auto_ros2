@@ -31,3 +31,12 @@ bin/**
 
 # image saved by the simulator camera script
 camera_image.png
+
+# from `lib/rovereye` :)
+lib/rovereye/**/runs
+lib/rovereye/**/*.onnx
+lib/rovereye/**/*.pt
+lib/rovereye/training
+lib/rovereye/images/**
+lib/rovereye/training/data/**
+!lib/rovereye/training/data/gitkeep
