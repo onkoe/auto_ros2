@@ -22,12 +22,8 @@ def generate_launch_description() -> LaunchDescription:
             ("camera_info", "/sensors/mono_image/camera_info"),
         ],
         parameters=[
-            PathJoinSubstitution(
-                [see3cam_pkg_path, "params", "v4l2_camera.yaml"]
-            ),
-            {
-                "camera_info_url": f"file://{see3cam_pkg_path}/params/camera_info.yaml"
-            },
+            PathJoinSubstitution([see3cam_pkg_path, "params", "v4l2_camera.yaml"]),
+            {"camera_info_url": f"file://{see3cam_pkg_path}/params/camera_info.yaml"},
         ],
     )
 
