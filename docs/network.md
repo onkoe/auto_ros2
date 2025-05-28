@@ -2,6 +2,10 @@
 
 Info about how the network is set up.
 
+## Router
+
+We use an Netgear Nighthawk AX1800 WiFi Router (R6700AX) on firmware version v1.0.11.112. For info about the long-distance networking setup, see [`docs/hardware/base_station.md`](hardware/base_station.md).
+
 ## Jetson Nano Orin (Autonomous - Computer)
 
 - MAC Addr: `48:b0:2d:eb:f2:d9`
