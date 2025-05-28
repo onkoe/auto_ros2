@@ -1,0 +1,21 @@
+[package]
+name = "maps_backend"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "maps_node"
+path = "src/main.rs"
+
+[dependencies]
+safe_drive = { version = "0.4.3", features = ["humble"] }
+tokio = { version = "1.42.0", features = [
+    "macros",
+    "rt",
+    "tokio-macros",
+    "tracing",
+    "rt-multi-thread",
+    "time",
+    "sync",
+    "signal",
+] }
