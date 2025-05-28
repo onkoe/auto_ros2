@@ -195,3 +195,52 @@ error: Recipe `sim` failed on line 13 with exit code 1
 ```
 
 You'll need to source again after [building a new ROS 2 package](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Creating-Your-First-ROS2-Package.html).
+
+## After building on the Jetson, a lot of packages say they have "stderr output." What does that even mean?
+
+**tl;dr: ignore the errors!** :D
+
+When running a build, you probably got some logs like this:
+
+```
+Finished <<< sensors [9.61s]
+[Processing: zed_components]
+[Processing: zed_components]
+[Processing: zed_components]
+[Processing: zed_components]
+[Processing: zed_components]
+--- stderr: zed_components
+gmake: Warning: File 'Makefile' has modification time 1049 s in the future
+gmake[2]: Warning: File 'CMakeFiles/zed_camera_component.dir/flags.make' has modification time 3908 s in the future
+gmake[2]: Warning: File 'CMakeFiles/zed_camera_one_component.dir/flags.make' has modification time 3908 s in the future
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Warning: File 'CMakeFiles/zed_camera_component.dir/flags.make' has modification time 3908 s in the future
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: Warning: File 'CMakeFiles/zed_camera_one_component.dir/flags.make' has modification time 3908 s in the future
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake[2]: warning:  Clock skew detected.  Your build may be incomplete.
+gmake: warning:  Clock skew detected.  Your build may be incomplete.
+---
+Finished <<< zed_components [3min 28s]
+Starting >>> zed_wrapper
+--- stderr: zed_wrapper
+gmake: Warning: File 'Makefile' has modification time 1050 s in the future
+gmake: warning:  Clock skew detected.  Your build may be incomplete.
+---
+Finished <<< zed_wrapper [1.76s]
+Starting >>> zed_ros2
+--- stderr: zed_ros2
+gmake: Warning: File 'Makefile' has modification time 1049 s in the future
+gmake: warning:  Clock skew detected.  Your build may be incomplete.
+---
+Finished <<< zed_ros2 [0.75s]
+
+Summary: 17 packages finished [3min 32s]
+  9 packages had stderr output: custom_interfaces drive_launcher see3cam sensors simulator zed zed_components zed_ros2 zed_wrapper
+```
+
+The Jetson doesn't have a clock - it gets the current time from the internet. However, when no internet connection is available, it can't update the time, which makes it assume a time of `0_u64` - which is around January 1st, 1970.
+
+Since a lot of files are uploaded to the Rover directly, or maintain their modification times from `git`, you'll often see these "file is from the future" errors when the Rover is building code while not connected to a WAN network.
+
+**In other words, you can safely ignore the errors.**
