@@ -148,62 +148,41 @@ impl Gps {
                     }
                 };
 
-                // check for the coordinate
-                if let sbp::Sbp::MsgPosLlhCov(msg_pos_llh_cov) = maybe_good_msg {
-                    tracing::debug!("Found all required frames!");
+                // we'll take any of the following gps messages:
+                //
+                // - MsgPosLlh
+                // - MsgPosLlhCov
+                match maybe_good_msg {
+                    // if we have covariances, we can just use those!
+                    sbp::Sbp::MsgPosLlhCov(_) => {
+                        if let Some(info) = parsing::msg_pos_llh_cov(&maybe_good_msg) {
+                            return Ok(info);
+                        }
+                    }
 
-                    // create the covariance.
+                    // without covariances, we'll just say we don't have them
+                    sbp::Sbp::MsgPosLlh(_) => {
+                        if let Some(info) = parsing::msg_pos_llh(&maybe_good_msg) {
+                            return Ok(info);
+                        }
+                    }
+
+                    // other variants are untested.
                     //
-                    // note: ROS 2 wants `ENU`, but Swift provides `NED`.
-                    // we'll move things around and flip down -> up...
-                    let position_covariance: [f64; 9] = [
-                        // east
-                        msg_pos_llh_cov.cov_e_e as f64,
-                        msg_pos_llh_cov.cov_n_e as f64,
-                        -msg_pos_llh_cov.cov_e_d as f64,
-                        // north
-                        msg_pos_llh_cov.cov_n_e as f64,
-                        msg_pos_llh_cov.cov_n_n as f64,
-                        -msg_pos_llh_cov.cov_n_d as f64,
-                        // up
-                        -msg_pos_llh_cov.cov_e_d as f64,
-                        -msg_pos_llh_cov.cov_n_d as f64,
-                        msg_pos_llh_cov.cov_d_d as f64,
-                    ];
+                    // TODO: add additonal fallbacks if needed!
+                    _ => (),
+                };
 
-                    let fix_mode = match msg_pos_llh_cov.fix_mode() {
-                        Ok(m) => m,
-                        Err(e) => {
-                            tracing::error!("Failed to get fix mode from SwiftNav `MsgPosLlhCov`! err code: {e}");
-                            continue;
-                        }
-                    };
+                // TODO: use second Swift on Base Station to get better heading
+                // data.
+                //match maybe_good_msg { ... }
 
-                    // we'll make the fix status from the status byte
-                    let fix_status = match fix_mode {
-                        FixMode::Invalid | FixMode::DeadReckoning => FixStatus::Invalid,
-                        FixMode::SinglePointPosition => FixStatus::SinglePoint,
-                        FixMode::SbasPosition => FixStatus::Sbas,
-                        FixMode::DifferentialGnss | FixMode::FloatRtk | FixMode::FixedRtk => {
-                            FixStatus::GroundBased
-                        }
-                    };
-
-                    // construct our gps info message
-                    let info = GpsInfo {
-                        coord: Coordinate {
-                            lat: msg_pos_llh_cov.lat,
-                            lon: msg_pos_llh_cov.lon,
-                        },
-                        height: Height(msg_pos_llh_cov.height),
-                        tow: TimeOfWeek(msg_pos_llh_cov.tow),
-                        fix_status,
-                        covariance: position_covariance,
-                    };
-
-                    // return it
-                    return Ok(info);
-                }
+                // TODO: add (e.g.) heartbeat messages and other status info.
+                //
+                // publishing onto various `/sensors/gps/**` topics could
+                // assist us in debugging far into the future ;D
+                //
+                //match maybe_good_msg { ... }
             }
         }
     }
