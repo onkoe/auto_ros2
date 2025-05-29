@@ -263,3 +263,138 @@ pub enum FixStatus {
     Sbas,
     GroundBased,
 }
+
+/// Everything in this module is related to parsing the GPS messages into
+/// something useful for maintainers of the `sensors::sensors_node`.
+///
+/// ## Why are there so many parsers?
+///
+/// Despite being so similar, the Swift GPS reports these as different message
+/// types, so we have to parse each individually, with respect to each
+/// variant's special properties.
+///
+/// We need to check for all of them due to our need for a fallback. At URC
+/// 2025, we noticed that our GPS was only providing `MsgPosLlh`, despite
+/// getting `MsgPosLlhCov` back in Oklahoma. By parsing both, we can be more
+/// certain that we're parsing useful messages if we're receiving them - even
+/// if they don't contain _everything_ we'd want... in a perfect world.
+///
+/// tl;dr: Swift has a lotta different messages, and they change depending on
+/// time, region, and luck.
+mod parsing {
+    use crate::{Coordinate, FixStatus, GpsInfo, Height, TimeOfWeek};
+
+    /// Parses from a `MsgPosLlhCov`.
+    ///
+    /// This is our preferred message types...
+    #[tracing::instrument]
+    pub fn msg_pos_llh_cov(raw_msg: &sbp::Sbp) -> Option<GpsInfo> {
+        // ensure we got the right message type
+        let sbp::Sbp::MsgPosLlhCov(m) = raw_msg else {
+            tracing::error!("Provided wrong message type!");
+            return None;
+        };
+
+        // grab the fix mode
+        let fix_mode = match m.fix_mode() {
+            Ok(fm) => fm,
+            Err(e) => {
+                tracing::error!("Failed to get fix mode from SwiftNav `MsgPosLlh`! err code: {e}");
+                return None;
+            }
+        };
+
+        // and convert that into a fix status
+        use sbp::messages::navigation::msg_pos_llh_cov::FixMode;
+        let fix_status = match fix_mode {
+            FixMode::Invalid | FixMode::DeadReckoning => FixStatus::Invalid,
+            FixMode::SinglePointPosition => FixStatus::SinglePoint,
+            FixMode::SbasPosition => FixStatus::Sbas,
+            FixMode::DifferentialGnss | FixMode::FloatRtk | FixMode::FixedRtk => {
+                FixStatus::GroundBased
+            }
+        };
+        // create the covariance.
+        //
+        // note: ROS 2 wants `ENU`, but Swift provides `NED`.
+        // we'll move things around and flip down -> up...
+        let position_covariance: [f64; 9] = [
+            // east
+            m.cov_e_e as f64,
+            m.cov_n_e as f64,
+            -m.cov_e_d as f64,
+            // north
+            m.cov_n_e as f64,
+            m.cov_n_n as f64,
+            -m.cov_n_d as f64,
+            // up
+            -m.cov_e_d as f64,
+            -m.cov_n_d as f64,
+            m.cov_d_d as f64,
+        ];
+
+        // create info from the basic stuff
+        let info = GpsInfo {
+            coord: Coordinate {
+                lat: m.lat,
+                lon: m.lon,
+            },
+            height: Height(m.height),
+            tow: TimeOfWeek(m.tow),
+            fix_status,
+            covariance: position_covariance,
+        };
+
+        return Some(info);
+    }
+
+    /// Parses from a `MsgPosLlh`, which doesn't have covariances. That means
+    /// the GPS isn't reporting how sure it is about its answer!
+    ///
+    /// We prefer position messages that provide that info instead, but this is
+    /// here as fallback.
+    #[tracing::instrument]
+    pub fn msg_pos_llh(raw_msg: &sbp::Sbp) -> Option<GpsInfo> {
+        // ensure we got the right message type
+        let sbp::Sbp::MsgPosLlh(m) = raw_msg else {
+            tracing::error!("Provided wrong message type!");
+            return None;
+        };
+
+        // grab the fix mode
+        let fix_mode = match m.fix_mode() {
+            Ok(fm) => fm,
+            Err(e) => {
+                tracing::error!("Failed to get fix mode from SwiftNav `MsgPosLlh`! err code: {e}");
+                return None;
+            }
+        };
+
+        // and convert that into a fix status
+        use sbp::messages::navigation::msg_pos_llh::FixMode;
+        let fix_status = match fix_mode {
+            FixMode::Invalid | FixMode::DeadReckoning => FixStatus::Invalid,
+            FixMode::SinglePointPosition => FixStatus::SinglePoint,
+            FixMode::SbasPosition => FixStatus::Sbas,
+            FixMode::DifferentialGnss | FixMode::FloatRtk | FixMode::FixedRtk => {
+                FixStatus::GroundBased
+            }
+        };
+
+        // create info from the basic stuff.
+        //
+        // we'll report `covariance` as all zeroes
+        let info = GpsInfo {
+            coord: Coordinate {
+                lat: m.lat,
+                lon: m.lon,
+            },
+            height: Height(m.height),
+            tow: TimeOfWeek(m.tow),
+            fix_status,
+            covariance: [0_f64; 9],
+        };
+
+        return Some(info);
+    }
+}
