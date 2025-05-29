@@ -15,7 +15,10 @@ use safe_drive::{
         builtin_interfaces::UnsafeTime,
         common_interfaces::{
             geometry_msgs::msg::Quaternion,
-            sensor_msgs::{self, msg::Imu},
+            sensor_msgs::{
+                self,
+                msg::{Imu, COVARIANCE_TYPE_KNOWN, COVARIANCE_TYPE_UNKNOWN},
+            },
             std_msgs::msg::Header,
         },
         RosString,
@@ -79,8 +82,6 @@ async fn main() {
         .create_publisher("/sensors/imu", Some(qos::Profile::sensor_data()))
         .expect("create imu topic");
 
-    // tokio::task::spawn(zed_imu::_zed_imu_publisher_task(Arc::clone(&logger), imu_publisher));
-
     tokio::select![
         _ = tokio::signal::ctrl_c() => {},
         _ = tokio::task::spawn(gps_task(gps, gps_publisher)) => (),
@@ -141,10 +142,11 @@ pub async fn gps_task(mut gps: Gps, gps_pub: Publisher<NavSatFix>) {
     // every 1/20th of a second, check for any updates.
     //
     // if the data is different, we'll publish it in a message.
-    tracing::debug!("GPS task is up! Waiting for GPS data...");
+    tracing::debug!("GPS task is up! Waiting for GPS data.");
+    tracing::debug!("If a freeze occurs here, we're waiting to get any GPS data...");
+
     loop {
         // check for gps data
-        tracing::debug!("Trying to get GPS data from sensors node. If a freeze occurs here, we didn't see any GPS data.");
         let gps_data = match gps.get().await {
             Ok(info) => info,
             Err(e) => {
@@ -157,24 +159,41 @@ pub async fn gps_task(mut gps: Gps, gps_pub: Publisher<NavSatFix>) {
         // set up a header with the correct time and `frame_id`
         //
         // time first...
+        let stamp = UnsafeTime {
+            sec: gps_data.tow.0 as i32,
 
+            // we're constructing a Rust struct, and doing so requires that all
+            // fields are given.
+            //
+            // however, our GPS provides the "Time of Week" (ToW) in seconds.
+            // it doesn't include nanoseconds, so we'll default the nanoseconds
+            // value to zero
+            nanosec: 0_u32,
+        };
         //
         // ...and now the header itself
         const FRAME_ID: &str = "gps_link";
         let header = Header {
-            stamp: UnsafeTime {
-                sec: gps_data.tow.0 as i32,
-                nanosec: 0_u32, // the GPS doesn't offer this in its reported Time of Week
-            },
+            stamp,
             frame_id: RosString::new(FRAME_ID).unwrap(),
         };
 
+        // set locational info on a new `NavSatFix` message
         let mut nav_sat_fix = NavSatFix::new().expect("this won't fail lol");
         nav_sat_fix.header = header;
         nav_sat_fix.latitude = gps_data.coord.lat;
         nav_sat_fix.longitude = gps_data.coord.lon;
         nav_sat_fix.altitude = gps_data.height.0;
 
+        // set the cov fields depending on what came back.
+        //
+        // TODO: use `GpsInfo.fix_status`
+        nav_sat_fix.position_covariance = gps_data.covariance;
+        if gps_data.covariance == [0_f64; 9] {
+            nav_sat_fix.position_covariance_type = COVARIANCE_TYPE_UNKNOWN;
+        } else {
+            nav_sat_fix.position_covariance_type = COVARIANCE_TYPE_KNOWN;
+        }
         tracing::debug!("Publishing GPS message: {nav_sat_fix:?}");
 
         // if we got all the values, publish them!
