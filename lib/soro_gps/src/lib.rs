@@ -36,7 +36,7 @@
 //! You'll want to run the tests before making releases. It's good to test everything concurrently, so consider using `cargo nextest` if you have it installed.
 
 use core::net::{IpAddr, Ipv4Addr};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use error::{GpsConnectionError, GpsReadError};
 use tokio::net::UdpSocket;
@@ -107,7 +107,20 @@ impl Gps {
         );
 
         // grab data until we have the correct message types
+        let mut last_time_got_data: Instant = Instant::now();
+        let mut last_time_warned: Instant = Instant::now();
         loop {
+            // if we haven't collected data in a while, we'll warn the user!
+            if last_time_got_data.elapsed() > Duration::from_millis(1500)
+                && last_time_warned.elapsed() > Duration::from_millis(1500)
+            {
+                tracing::warn!(
+                    "Haven't heard from the GPS in {:.2} seconds!",
+                    last_time_got_data.elapsed().as_secs_f32()
+                );
+                last_time_warned = Instant::now();
+            }
+
             self.buf = [0; 1024];
 
             let (bytes_recvd, remote_addr) = self
@@ -115,9 +128,12 @@ impl Gps {
                 .recv_from(&mut self.buf)
                 .await
                 .inspect_err(|e| tracing::error!("Failed to recv from GPS socket! err: {e}"))
+                .inspect(|r| tracing::trace!("Got a message from the GPS! bytes: {}", r.0))
                 .map_err(|_| GpsReadError::ReadFailed)?;
 
+            // remember that we got some data
             tracing::trace!("got {} bytes from ip: {}", bytes_recvd, remote_addr);
+            last_time_got_data = Instant::now();
 
             // try to parse whatever we got
             let all_parsed = sbp::iter_messages(self.buf.as_slice());
