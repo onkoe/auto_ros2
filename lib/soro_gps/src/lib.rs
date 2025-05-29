@@ -43,8 +43,6 @@ use tokio::net::UdpSocket;
 
 pub mod error;
 
-use sbp::messages::navigation::msg_pos_llh_cov::FixMode;
-
 /// The best possible update time for the GPS.
 ///
 /// This is 1/20th of a second.
@@ -121,6 +119,7 @@ impl Gps {
                 last_time_warned = Instant::now();
             }
 
+            // create a buffer
             self.buf = [0; 1024];
 
             let (bytes_recvd, remote_addr) = self
@@ -138,6 +137,10 @@ impl Gps {
             // try to parse whatever we got
             let all_parsed = sbp::iter_messages(self.buf.as_slice());
 
+            // we'll try to parse each message now.
+            //
+            // some of them are useless, and others are essential. we gotta
+            // check each to find out!
             for msg in all_parsed {
                 // this might be the message we want, but we gotta check (below)
                 let maybe_good_msg = match msg {
