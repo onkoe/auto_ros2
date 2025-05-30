@@ -55,7 +55,14 @@ Here's how the `tf` tree looks. Note that top-level frames are left-most in the 
 
 - `map`: the global frame. Provided by `slam_toolbox`.
   - `odom`: wheel/sensor odometry, which is essentially where the Rover believes it has moved. Provided by `ekf_filter_node_odom` (which is `robot_localization::ekf_filter_node`).
-    - `base_link`: The Rover model. Provided by `robot_state_publisher::robot_state_publisher`.
+    - `base_link`: the Rover model. Provided by `robot_state_publisher::robot_state_publisher`.
+      - `chassis`: big metal box with all the electronics. It, and all its children, are provided by `robot_state_publisher::robot_state_publisher`.
+        - `imu_link`: imu location
+        - `gps_link`: gps location
+        - `camera_link`: mono camera location
+        - `depth_camera_link_left`: left depth camera location
+        - `depth_camera_link_right`: right depth camera location
+        - `{...}_wheel`: links for each wheel
 
 <!--
 TODO: notes on each frame, its transform, link, and who provides it
