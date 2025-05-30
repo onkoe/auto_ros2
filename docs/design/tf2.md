@@ -64,6 +64,9 @@ Here's how the `tf` tree looks. Note that top-level frames are left-most in the 
         - `depth_camera_link_right`: right depth camera location
         - `{...}_wheel`: links for each wheel
 
+### Other helpful docs
+- https://docs.nav2.org/setup_guides/transformation/setup_transforms.html (from nav2 docs)
+
 <!--
 TODO: notes on each frame, its transform, link, and who provides it
 
