@@ -8,4 +8,11 @@ fn main() {
             println!("cargo:rustc-link-search={path}/lib");
         }
     }
+
+    // we'll manually add `custom_interfaces to the list of `rustc` linker
+    // search locations.
+    //
+    // otherwise, build fails with a giant linker err lol
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+    println!("cargo:rustc-link-search={manifest_dir}/../../../../install/custom_interfaces/lib");
 }
