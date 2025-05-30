@@ -7,6 +7,7 @@ members = [
     "src/sensors",
     "src/drive_tui",
     "src/custom_interfaces_shim",
+    "src/maps_backend",
     #
     # libraries (not ros 2 packages)
     "lib/feedback",
