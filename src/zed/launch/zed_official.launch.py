@@ -18,9 +18,9 @@ def generate_launch_description() -> LaunchDescription:
             [
                 PathJoinSubstitution(
                     [
-                        pkg_zed,
+                        get_package_share_directory("zed_wrapper"),
                         "launch",
-                        "internal.launch.py",
+                        "zed_camera.launch.py",
                     ]
                 )
             ]
@@ -32,15 +32,18 @@ def generate_launch_description() -> LaunchDescription:
             ("namespace", "/sensors/depth_image"),
             #
             # let other nodes take care of publishing to the tf tree
-            ("publish_map_tf", "false"),
-            ("publish_imu_tf", "false"),
+            # ("publish_map_tf", "false"),
+            # ("publish_imu_tf", "false"),
             #
             # provide the correct path to the Rover URDF (3d model)
-            ("xacro_path", f"{pkg_simulator}/resource/rover.urdf.xacro.xml"),
+            # ("xacro_path", f"{pkg_simulator}/resource/rover.urdf.xacro.xml"),
             #
             # configure the wrapper to use our sensors while mapping. this can
             # increase accuracy and help in other subtle ways
             ("enable_gnss", "true"),
+            #
+            # use config file with QoS overrides for GPS topic compatibility
+            ("ros_params_override_path", f"{get_package_share_directory('zed_wrapper')}/config/common_stereo.yaml"),
         ],
     )
 

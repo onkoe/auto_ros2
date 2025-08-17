@@ -115,9 +115,7 @@ def generate_launch_description() -> LaunchDescription:
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument(
-                "use_sim_time",
-            ),
+            DeclareLaunchArgument("use_sim_time", default_value="False"),
             utm_conversion_node,
             robot_state_publisher,
             robot_localization,

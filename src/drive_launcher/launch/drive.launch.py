@@ -31,7 +31,7 @@ def generate_launch_description() -> LaunchDescription:
                             ]
                         )
                     ]
-                )
+                ),
             ),
             #
             # and `ebox.launch.py` is the ebox <=> autonomous communication
