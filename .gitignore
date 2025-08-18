@@ -40,3 +40,7 @@ lib/rovereye/training
 lib/rovereye/images/**
 lib/rovereye/training/data/**
 !lib/rovereye/training/data/gitkeep
+
+# pixi virtual env (but keep its config, if present)
+.pixi/*
+!.pixi/config.toml

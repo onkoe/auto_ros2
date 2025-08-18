@@ -1,13 +1,6 @@
 [project]
 dependencies = [
-    "loguru>=0.7.3",
-    "opencv-contrib-python>=4.11.0.86",
-    "scipy>=1.15.2",
-    "geopy>=2.4.1",
     "pyside2>=5.15.2.1; platform_machine != 'arm64' and platform_machine != 'aarch64'",
-    "typer>=0.15.2",
-    "pyproj>=3.7.1",
-    "pygame>=2.6.1",
 ]
 
 name = "autonomous"
@@ -55,3 +48,15 @@ exclude = [
     "**/__pycache__",
     "**/.*",
 ]
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+autonomous = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tool.pixi.tasks]

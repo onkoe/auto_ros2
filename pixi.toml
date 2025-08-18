@@ -1,0 +1,59 @@
+[workspace]
+authors = [
+    "The Sooner Rover Team",                        # :)
+    "Tyler Roman <tyler73750@gmail.com>",
+    "Logan Murphy <logan.m.murphy-11@ou.edu>",
+    "Barrett Ray <contact@barretts.club>",
+    "Brendan Ford <bford@axmilius.com>",
+    "Carson Burnett <carsonburnett379@icloud.com>",
+    "Mizael Morales <mizaelmorales321@gmail.com>",
+]
+channels = ["conda-forge", "robostack-humble"]
+name = "auto_ros2"
+platforms = ["linux-aarch64", "linux-64", "osx-arm64", "osx-64", "win-64"]
+version = "0.1.0"
+
+[dependencies]
+c-compiler = { channel = "conda-forge" }
+cxx-compiler = { channel = "conda-forge" }
+colcon-core = { channel = "conda-forge" }
+colcon-cmake = { channel = "conda-forge" }
+colcon-common-extensions = { channel = "conda-forge" }
+colcon-mixin = { channel = "conda-forge" }
+colcon-ros = { channel = "conda-forge" }
+colcon-test-result = { channel = "conda-forge" }
+glib = { version = ">=2.80.2,<3", channel = "conda-forge" }
+make = { version = "==4.4.1", channel = "conda-forge" }
+numpy = ">=1.26,<2"
+python = "3.11.*"
+ros-humble-action-msgs = { channel = "robostack-humble" }
+ros-humble-actionlib-msgs = { channel = "robostack-humble" }
+ros-humble-ament-cmake-auto = { channel = "robostack-humble" }
+ros-humble-ament-cmake-core = { channel = "robostack-humble" }
+ros-humble-ament-lint-auto = { channel = "robostack-humble" }
+ros-humble-diagnostic-msgs = { channel = "robostack-humble" }
+ros-humble-geographic-msgs = { channel = "robostack-humble" }
+ros-humble-launch-testing-ament-cmake = { channel = "robostack-humble" }
+ros-humble-python-cmake-module = { channel = "robostack-humble" }
+ros-humble-rcl = { channel = "robostack-humble" }
+ros-humble-rclcpp = { channel = "robostack-humble" }
+ros-humble-rcl-interfaces = { channel = "robostack-humble" }
+ros-humble-ros2cli = { channel = "robostack-humble" }
+ros-humble-ros2cli-common-extensions = { channel = "robostack-humble" }
+ros-humble-rosidl-default-generators = { channel = "robostack-humble" }
+ros-humble-rviz-default-plugins = { channel = "robostack-humble" }
+ros-humble-shape-msgs = { channel = "robostack-humble" }
+ros-humble-std-srvs = { channel = "robostack-humble" }
+ros-humble-stereo-msgs = { channel = "robostack-humble" }
+ros-humble-trajectory-msgs = { channel = "robostack-humble" }
+rust = { version = ">=1.89.0", channel = "conda-forge" }
+uv = { version = "==0.8.11", channel = "conda-forge" }
+
+[pypi-dependencies]
+colcon-ros-cargo = ">=0.2.0"
+geopy = ">=2.4.1"
+loguru = ">=0.7.3"
+opencv-contrib-python = ">=4.11.0.86"
+pygame = ">=2.6.1"
+scipy = ">=1.15.2"
+typer = ">=0.15.2"
