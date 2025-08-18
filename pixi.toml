@@ -1,6 +1,6 @@
 [workspace]
 authors = [
-    "The Sooner Rover Team",                        # :)
+    "The Sooner Rover Team",                        # :D
     "Tyler Roman <tyler73750@gmail.com>",
     "Logan Murphy <logan.m.murphy-11@ou.edu>",
     "Barrett Ray <contact@barretts.club>",
@@ -10,44 +10,151 @@ authors = [
 ]
 channels = ["conda-forge", "robostack-humble"]
 name = "auto_ros2"
-platforms = ["linux-aarch64", "linux-64", "osx-arm64", "osx-64", "win-64"]
+platforms = ["linux-aarch64", "linux-64", "osx-arm64", "osx-64"]
 version = "0.1.0"
 
 [dependencies]
+# note: all the lil blocks down here are related groups, each in alphabetical
+# order.
+#
+# feel free to violate that rule if you're in a pinch, but fix it before
+# committing; otherwise, this'll get messy... quick!
+
+# build tools (e.g., c compiler, rust, glibc)
 c-compiler = { channel = "conda-forge" }
 cxx-compiler = { channel = "conda-forge" }
+glib = { version = ">=2.80.2,<3", channel = "conda-forge" }
+make = { version = "==4.4.1", channel = "conda-forge" }
+rust = { version = ">=1.89.0", channel = "conda-forge" }
+
+# system python dependencies
+numpy = ">=1.26,<2"
+python = "3.11.*"
+uv = { version = "==0.8.11", channel = "conda-forge" }
+
+# ros 2 tooling (e.g., colcon, ros2-cli)
 colcon-core = { channel = "conda-forge" }
 colcon-cmake = { channel = "conda-forge" }
 colcon-common-extensions = { channel = "conda-forge" }
 colcon-mixin = { channel = "conda-forge" }
 colcon-ros = { channel = "conda-forge" }
 colcon-test-result = { channel = "conda-forge" }
-glib = { version = ">=2.80.2,<3", channel = "conda-forge" }
-make = { version = "==4.4.1", channel = "conda-forge" }
-numpy = ">=1.26,<2"
-python = "3.11.*"
-ros-humble-action-msgs = { channel = "robostack-humble" }
-ros-humble-actionlib-msgs = { channel = "robostack-humble" }
-ros-humble-ament-cmake-auto = { channel = "robostack-humble" }
-ros-humble-ament-cmake-core = { channel = "robostack-humble" }
-ros-humble-ament-lint-auto = { channel = "robostack-humble" }
-ros-humble-diagnostic-msgs = { channel = "robostack-humble" }
-ros-humble-geographic-msgs = { channel = "robostack-humble" }
-ros-humble-launch-testing-ament-cmake = { channel = "robostack-humble" }
-ros-humble-python-cmake-module = { channel = "robostack-humble" }
-ros-humble-rcl = { channel = "robostack-humble" }
-ros-humble-rclcpp = { channel = "robostack-humble" }
-ros-humble-rcl-interfaces = { channel = "robostack-humble" }
+ros-humble-cyclonedds = { channel = "robostack-humble" }
 ros-humble-ros2cli = { channel = "robostack-humble" }
 ros-humble-ros2cli-common-extensions = { channel = "robostack-humble" }
+ros2-distro-mutex = { version = ">=0.7", channel = "robostack-humble" } # IMPORTANT! change ver if needed
+
+# ros 2 build packages (for ament, cmake, and colcon)
+ros-humble-ament-cmake-auto = { channel = "robostack-humble" }
+ros-humble-ament-cmake-clang-format = { channel = "robostack-humble" }
+ros-humble-ament-cmake = { channel = "robostack-humble" }
+ros-humble-ament-cmake-core = { channel = "robostack-humble" }
+ros-humble-ament-cmake-pytest = { channel = "robostack-humble" }
+ros-humble-ament-lint-auto = { channel = "robostack-humble" }
+ros-humble-ament-pep257 = { channel = "robostack-humble" }
+ros-humble-launch-pytest = { channel = "robostack-humble" }
+ros-humble-launch-testing-ament-cmake = { channel = "robostack-humble" }
+ros-humble-python-cmake-module = { channel = "robostack-humble" }
 ros-humble-rosidl-default-generators = { channel = "robostack-humble" }
-ros-humble-rviz-default-plugins = { channel = "robostack-humble" }
+ros-humble-rosidl-default-runtime = { channel = "robostack-humble" }
+
+# ros 2 message pkgs
+ros-humble-action-msgs = { channel = "robostack-humble" }
+ros-humble-actionlib-msgs = { channel = "robostack-humble" }
+ros-humble-diagnostic-msgs = { channel = "robostack-humble" }
+ros-humble-geographic-msgs = { channel = "robostack-humble" }
+ros-humble-geometry-msgs = { channel = "robostack-humble" }
+ros-humble-nav2-msgs = { channel = "robostack-humble" }
+ros-humble-rcl-interfaces = { channel = "robostack-humble" }
+ros-humble-ros-gz-interfaces = { channel = "robostack-humble" }
+ros-humble-sensor-msgs = { channel = "robostack-humble" }
 ros-humble-shape-msgs = { channel = "robostack-humble" }
+ros-humble-std-msgs = { channel = "robostack-humble" }
 ros-humble-std-srvs = { channel = "robostack-humble" }
 ros-humble-stereo-msgs = { channel = "robostack-humble" }
 ros-humble-trajectory-msgs = { channel = "robostack-humble" }
-rust = { version = ">=1.89.0", channel = "conda-forge" }
-uv = { version = "==0.8.11", channel = "conda-forge" }
+
+# ros 2 launch file pkgs
+ros-humble-launch = { channel = "robostack-humble" }
+ros-humble-launch-ros = { channel = "robostack-humble" }
+ros-humble-launch-testing = { channel = "robostack-humble" }
+
+# ros 2 important runtime pkgs (like Nav2)
+ros-humble-controller-manager = { channel = "robostack-humble" }
+ros-humble-cv-bridge = { channel = "robostack-humble" }
+ros-humble-depthimage-to-laserscan = { channel = "robostack-humble" }
+# ros-humble-geodesy = { channel = "robostack-humble" }
+ros-humble-image-proc = { channel = "robostack-humble" }
+ros-humble-joint-state-broadcaster = { channel = "robostack-humble" }
+ros-humble-joint-state-publisher = { channel = "robostack-humble" }
+ros-humble-nav2-behavior-tree = { channel = "robostack-humble" }
+ros-humble-nav2-bringup = { version = "==1.1.18", channel = "robostack-humble" }
+ros-humble-nav2-common = { channel = "robostack-humble" }
+ros-humble-nav2-simple-commander = { channel = "robostack-humble" }
+ros-humble-pointcloud-to-laserscan = { channel = "robostack-humble" }
+ros-humble-rcl = { channel = "robostack-humble" }
+ros-humble-rclcpp = { channel = "robostack-humble" }
+ros-humble-rclpy = { channel = "robostack-humble" }
+ros-humble-robot-localization = { channel = "robostack-humble" }
+ros-humble-robot-state-publisher = { channel = "robostack-humble" }
+ros-humble-ros2-control = { channel = "robostack-humble" }
+ros-humble-ros2-controllers = { channel = "robostack-humble" }
+ros-humble-stereo-image-proc = { channel = "robostack-humble" }
+ros-humble-tf-transformations = { channel = "robostack-humble" }
+ros-humble-tf2 = { channel = "robostack-humble" }
+ros-humble-tf2-ros = { channel = "robostack-humble" }
+ros-humble-vision-opencv = { channel = "robostack-humble" }
+
+# ros 2 debugging pkgs
+ros-humble-tf2-tools = { channel = "robostack-humble" }
+ros-humble-topic-tools = { channel = "robostack-humble" }
+
+# ros 2 visualization/simulation pkgs
+#
+#
+#
+#
+#
+#
+#
+#
+# TODO!!!!!!!!!!!!!!!!!! fix the below package by using
+# `ros-humble-gz-ros2-control` instead!
+#
+# it's... uh. only available on Jazzy and Kilted, meaning we can't actually
+# install it for Humble through `conda`. `ros-humble-gazebo-ros2-control` is
+# actually for Gazebo Classic, which is now old, unsupported, and most
+# importantly, isn't what our simulation is set up for (we use Gazebo... not
+# Gazebo Classic).
+#
+# I think the only two fixes are to either:
+#
+# 1. force all new Rover members to compile the package for 30 min
+#      - I refuse to do this lol
+# 2. update to Kilted (hell yeah)
+#
+# in case you can't tell, I'd prefer to upgrade to Kilted! but that's outta the
+# scope of this PR, and would require many changes unrelated to Pixi.
+#
+# for now, note that the simulator won't work unless you have the real (new)
+# package installed via your system package manager :(
+#
+# ros-humble-gazebo-ros2-control = { channel = "robostack-humble" }
+ros-humble-ros-gz = { channel = "robostack-humble" }
+ros-humble-ros-gz-bridge = { channel = "robostack-humble" }
+ros-humble-ros-gz-image = { channel = "robostack-humble" }
+ros-humble-ros-gz-sim = { channel = "robostack-humble" }
+ros-humble-rqt-console = { channel = "robostack-humble" }
+ros-humble-rqt-controller-manager = { channel = "robostack-humble" }
+ros-humble-rqt-graph = { channel = "robostack-humble" }
+ros-humble-rqt-tf-tree = { channel = "robostack-humble" }
+ros-humble-rviz2 = { channel = "robostack-humble" }
+ros-humble-rviz-default-plugins = { channel = "robostack-humble" }
+ros-humble-xacro = { channel = "robostack-humble" }
+
+# note: we can only depend on `video4linux`... on Linux. lol
+[target.linux.dependencies]
+ros-humble-v4l2-camera = { channel = "robostack-humble" }
 
 [pypi-dependencies]
 colcon-ros-cargo = ">=0.2.0"
