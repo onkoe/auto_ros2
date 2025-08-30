@@ -15,7 +15,19 @@ help:
 # Builds the project using ROS 2 tooling.
 build:
     @ echo "Building the ROS 2 workspace...";
-    colcon build --symlink-install
+
+    @ # first, perform an "initial build" for only the custom interfaces package
+    colcon build --symlink-install \
+        --packages-select custom_interfaces \
+        --cmake-args \
+        -DPython_ROOT_DIR="$CONDA_PREFIX" \
+        -DPython_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')"
+
+    @ # then, we can do a "full build" of the entire workspace
+    colcon build --symlink-install \
+        --cmake-args \
+        -DPython_ROOT_DIR="$CONDA_PREFIX" \
+        -DPython_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')"
     @ echo "Build complete!";
 
 # Runs the Gazebo simulation.
@@ -61,71 +73,26 @@ test: build
     colcon test --event-handlers console_direct+
     @ echo "Test run complete!"
 
-# Fetches all the newest dependencies. (including `rosdep`)
+# Fetches the environment's dependencies.
 get:
     #!/usr/bin/env bash
     set -e
     echo "Fetching newest dependencies..."
 
-    # grab the ros distro we're using
-    export ROS_DISTRO=$(cat {{ros2_workspace_dir}}/.ros_distro)
-    export ROS_PYTHON_VERSION=3
-
-    # check which os we are
-    OS=$(cat /etc/os-release | grep '^ID=' | sed 's/^ID=//' | awk '{print tolower($0)}')
-
-    # check whether we want to use `sudo` to update/install
-    OPTIONAL_SUDO=""
-    if [[ $(id -u) -ne 0 ]]; then
-        OPTIONAL_SUDO="sudo"
-        echo "If prompted, please type in your password to update the system package cache..."
+    # ensure pixi is installed
+    if ! command -v pixi &> /dev/null; then
+        echo "Pixi is not installed! Please see its installation instructions below:"
+        echo "https://github.com/prefix-dev/pixi/#installation"
+        exit 255
     fi
 
-    # grab the package manager we'll use
-    PKG_MANAGER_FETCH="$OPTIONAL_SUDO apt-get update -y"
-    PKG_MANAGER_INSTALL="$OPTIONAL_SUDO apt-get install -y --no-install-recommends"
-    PKG_MANAGER_INSTALL_FLAGS=""
-    if [[ "$OS" == *"fedora"* ]]; then
-        PKG_MANAGER_FETCH="dnf check-update || true"
-        PKG_MANAGER_INSTALL="$OPTIONAL_SUDO dnf install -y"
-        PKG_MANAGER_INSTALL_FLAGS="--skip-unavailable"
-    fi
-
-    echo "Fetching system packages..."
-    $PKG_MANAGER_FETCH
-    echo "System package repo cache updated!"
-
-    echo "Updating the virtual environment..."
-    uv sync
-    echo "The virtual environment is now up-to-date."
-
-    # note: we shim an ubuntu version to match the given ROS 2 distro (ver)
-    UBUNTU_SHIM_VERSION="ubuntu:jammy"
-    if [[ "$ROS_DISTRO" == "humble" ]]; then
-        UBUNTU_SHIM_VERSION="ubuntu:jammy"
-    elif [[ "$ROS_DISTRO" == "jazzy" ]]; then
-        UBUNTU_SHIM_VERSION="ubuntu:noble"
-    elif [[ "$ROS_DISTRO" == "kilted" ]]; then
-        UBUNTU_SHIM_VERSION="ubuntu:noble"
-    fi
-
-    # we're going to grab a list of packages in a kinda-hacky way, but it
-    # allows us to more easily support Fedora (and, potentially, other systems)
-    echo "Looking for packages on ROS 2 ($ROS_DISTRO)"
-    ROS2_PKG_PREFIX="ros-$ROS_DISTRO-"
-    rosdep update --rosdistro $ROS_DISTRO
-    RAW_PKGS=$(rosdep keys --from-paths {{ros2_workspace_dir}}/src | xargs)
-    PACKAGE_LIST=$(rosdep resolve --os=$UBUNTU_SHIM_VERSION $RAW_PKGS | sed -E 's/#[^ ]+//g' | xargs)
-    echo "Found the following packages: $PACKAGE_LIST"
-    echo
-
-    echo "Installing packages via system package manager..."
-    $PKG_MANAGER_INSTALL $PACKAGE_LIST $PKG_MANAGER_INSTALL_FLAGS
-    echo "Completed installing system dependencies!"
-
-    echo "Sourcing the environment..."
-    . {{ros2_workspace_dir}}/SOURCE_SCRIPT.bash
-    echo "Environment sourced!"
+    # great, pixi is installed!
+    #
+    # install dependencies and guide the user through continuing...
+    echo "Pixi is installed properly. Updating Pixi environment..."
+    pixi i
 
     echo
-    echo "Dependencies have been installed. You may now use ROS 2."
+    echo -e "\e[32mDependencies should be installed successfully! \e[39m"
+    echo
+    echo -e "\e[32mTo continue, run \`\e[34mpixi shell\e[32m\`. It'll start a shell with access to ROS 2, the simulator, and more! \e[39m"
