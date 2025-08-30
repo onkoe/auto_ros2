@@ -4,27 +4,21 @@ on: ["push"]
 jobs:
   check-ros2-workspace:
     # same as jetson :p
-    runs-on: ubuntu-22.04
-    needs: [python, uv-sync-on-aarch64]
-    container:
-      image: osrf/ros:humble-simulation
+    runs-on: ubuntu-22.04-arm
+    needs: [python]
     steps:
       # we'll install `node` on the "host" image if we're running on `act`...
       #
       # for more info, see: https://github.com/nektos/act/issues/973
       - name: Workaround for Act runner
         if: ${{ env.ACT }}
-        run: apt update && apt install curl && curl -fsSL https://deb.nodesource.com/setup_22.x | bash && apt update && apt install -y nodejs
+        run: apt-get update && apt-get install curl -y && curl -fsSL https://deb.nodesource.com/setup_24.x | bash && apt-get update && apt-get install -y nodejs
 
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: tecolicom/actions-use-apt-tools@v1
-        with:
-          tools: clang curl
-
-      - name: Cache ROS 2 workspace
+      - name: ROS 2 workspace cache
         uses: actions/cache@v4
         id: cache-ros2-build
         with:
@@ -41,180 +35,118 @@ jobs:
           restore-keys: |
             ros2-build-${{ runner.os }}-
 
-      - run: |
-          curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-          echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-
-      - uses: tecolicom/actions-use-apt-tools@v1
+      # install Pixi, which is our project and environment management tool.
+      #
+      # this is a little slow... but if you think it's really bad, take a look
+      # at how long `rosdep` usually takes 😭😭
+      - name: Install Pixi
+        uses: prefix-dev/setup-pixi@v0.9.0
         with:
-          tools: nodejs
-
-      # grab uv...
-      - name: Get `uv` for Python
-        uses: astral-sh/setup-uv@v5
-
-      # ...and cargo
-      - name: Set up Rust
-        uses: moonrepo/setup-rust@v1
-        with:
-          components: clippy, rustfmt
-
-      # grab a python binary
-      - name: Set up Python
-        run: uv python install
-
-      # set up environment
-      - name: Install the project
-        run: uv sync
-
-      # enter environment
-      - run: . .venv/bin/activate
-
-      # cache all our rosdep dependencies
-      - name: Grab `rosdep` dependencies
-        run: |
-          # we're going to grab all the `rosdep` stuff and use a cache to speed
-          # things up...
-          #
-          # first, we gotta update our repos. otherwise, we won't know what
-          # pkgs are out of date
-          apt update && rosdep update
-          echo "completed repo updates"
-
-          # make a list of each project in the workspace
-          PROJECT_PATHS=$(colcon list --paths-only | tr '\n' ' ')
-          echo "found workspace entry paths: $PROJECT_PATHS"
-
-          # now, grab a list of the dependencies
-          rosdep install --from-paths $PROJECT_PATHS -y -r --rosdistro humble -s > /tmp/rosdep.out
-          echo "got system package manager dep list: $(cat /tmp/rosdep.out)"
-
-          # let's parse the output!
-          #
-          # there isn't any way to get dependencies from rosdep directly, so we
-          # need to remove the `apt` stuff ourselves...
-          cat /tmp/rosdep.out | grep 'apt-get' | sed 's/^.*apt-get install -y //' | xargs > /tmp/parsed_rosdep.out
-          echo "got the following dependencies: $(cat /tmp/parsed_rosdep.out)"
-
-          echo "current directory: $(pwd)"
-          echo
-          echo "listing: $(ls)"
-          echo
-
-          # save that into a variable in the workflow
-          echo "ROSDEP_PKGS=$(cat /tmp/parsed_rosdep.out)" >> $GITHUB_ENV
-          echo "saved into workflow"
-
-      # install these based on the cache
-      - uses: tecolicom/actions-use-apt-tools@v1
-        if: env.ROSDEP_PKGS != ''
-        with:
-          tools: ${{ env.ROSDEP_PKGS }}
+          pixi-version: v0.49.0
+          cache: true
 
       # build the entire ROS 2 workspace just to ensure things work.
       #
       # this'll use colcon
       - name: Build ROS 2 workspace
-        shell: bash
+        if: steps.cache-ros2-build.outputs.cache-hit != 'true'
         run: |
-          . .venv/bin/activate
-          . /opt/ros/humble/setup.bash
+          eval "$(pixi shell-hook)"
           just build
 
-      # type check everything
+      # save the completed workspace build before doing any typecks.
+      #
+      # otherwise, we might waste a lot of time rebuilding everything when
+      # someone troubleshoots type problems in their Python
+      - name: Save ROS 2 workspace before typeck
+        id: ros2-workspace-build-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            install/
+            build/
+          key: ros2-build-${{ runner.os }}-${{ hashFiles(
+            'pyproject.toml',
+            'src/**/package.xml',
+            'src/**/CMakeLists.txt',
+            'src/**/*.py',
+            'src/simulator/**/*.xml'
+            ) }}
+          restore-keys: |
+            ros2-build-${{ runner.os }}-
+
+      # type check everything.
+      #
+      # note that, for typecking to succeed, we need to already have built the
+      # ROS 2 workspace. (otherwise, we're going to be missing
+      # `custom_interfaces` types!)
+      #
+      # so, this `basedpyright` step is put here instead of under the `python`
+      # job, even though it would probably feel better there instead.
       - name: Typeck with `basedpyright` (Python)
         shell: bash
         run: |
-          . .venv/bin/activate
-          . /opt/ros/humble/setup.bash
+          eval "$(pixi shell-hook)"
           . install/local_setup.bash
-          uv tool run basedpyright src/
+          basedpyright src/
+
+      # cache Rust workspace to speed up Rust stuff
+      - name: Rust workspace cache (for `rustfmt` and Clippy)
+        uses: actions/cache@v4
+        id: cache-rust-checks
+        with:
+          path: |
+            target/
+          key: cache-rust-checks-${{ runner.os }}-${{ hashFiles(
+            'Cargo.lock',
+            'src/**/*.rs',
+            'src/**/Cargo.toml'
+            ) }}
+          restore-keys: |
+            cache-rust-checks-${{ runner.os }}-
 
       # run rust lints
       - name: Lint with Clippy (Rust)
-        run: cargo clippy --workspace
+        run: |
+          eval "$(pixi shell-hook)"
+          cargo clippy --workspace
 
       # run the formatter
       - name: Format with `rustfmt` (Rust)
-        run: cargo fmt --check
+        run: |
+          eval "$(pixi shell-hook)"
+          cargo fmt --check
 
       - name: Run ROS 2 tests
         shell: bash
         run: |
-          . .venv/bin/activate
-          . /opt/ros/humble/setup.bash
+          eval "$(pixi shell-hook)"
           . install/local_setup.bash
           just test
 
-      # this fixes dumb file permission errors during caching post-step.
-      #
-      # without it, root owns the stuff we're caching lol
-      - name: Change file permissions for stuff made by rootful container...
-        if: always()
-        run: |
-          # change ownership so the real runner's user (`runner`) can access it
-          # normally...
-          chown -R 1001:121 "$GITHUB_WORKSPACE" || true
-          chmod -R go+rX "$GITHUB_WORKSPACE" || true
-
   python:
-    runs-on: ubuntu-22.04
-    needs: [uv-sync-on-aarch64]
-    container:
-      image: osrf/ros:humble-simulation
+    runs-on: ubuntu-22.04-arm
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       # install node real quick
-      - run: sudo apt-get update && sudo apt-get install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs
+      - name: Workaround for Act runner
+        if: ${{ env.ACT }}
+        run: apt-get update && apt-get install curl -y && curl -fsSL https://deb.nodesource.com/setup_24.x | bash && apt-get update && apt-get install -y nodejs
 
-      # grab uv
-      - uses: astral-sh/setup-uv@v5
-
-      # grab a python binary
-      - name: Set up Python
-        run: uv python install
-
-      - name: Install dependencies
-        uses: awalsh128/cache-apt-pkgs-action@v1
+      # install Pixi
+      - name: Install Pixi
+        uses: prefix-dev/setup-pixi@v0.9.0
         with:
-          packages: clang
-
-      # set up environment
-      - name: Install the project
-        run: |
-          uv sync --all-extras --dev
-          . .venv/bin/activate
+          pixi-version: v0.49.0
+          cache: true
 
       # check python lints
       - name: Lint (Python)
-        run: uv tool run ruff check
+        run: pixi run ruff check
 
       # check formatting
       - name: Format with Ruff (Python)
-        run: uv tool run ruff format --check
-
-  # Checks that grabbing the virtual environment works properly on `aarch64`,
-  # as we need that on the Rover and for any computers (like modern Macs)...
-  uv-sync-on-aarch64:
-    runs-on: ubuntu-22.04-arm
-    steps:
-      - name: Workaround for Act runner
-        if: ${{ env.ACT }}
-        run: |
-          apt-get update
-          apt-get install curl
-          curl -fsSL https://deb.nodesource.com/setup_22.x \
-          | bash && apt-get update && apt-get install -y nodejs
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install `uv`
-        uses: astral-sh/setup-uv@v5
-
-      - name: Grab workspace dependencies
-        run: uv sync --all-extras --dev
+        run: pixi run ruff format --check

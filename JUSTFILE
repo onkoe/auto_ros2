@@ -69,9 +69,11 @@ clean:
 
 # Runs our test suite through `colcon`.
 test: build
-    @ echo "Running tests..."
+    #!/usr/bin/env bash
+    set -e
+    echo "Running tests..."
     colcon test --event-handlers console_direct+
-    @ echo "Test run complete!"
+    echo "Test run complete!"
 
 # Fetches the environment's dependencies.
 get:
