@@ -20,6 +20,11 @@ version = "0.1.0"
 # feel free to violate that rule if you're in a pinch, but fix it before
 # committing; otherwise, this'll get messy... quick!
 
+# command-line tools (not for compilation)
+gh = { version = ">=2.78.0", channel = "conda-forge" }            # GitHub CLI
+just = { version = ">=1.42.4,<2", channel = "conda-forge" }       # `just` command runner
+lazygit = { version = ">=0.54.2,<0.55", channel = "conda-forge" } # `git` TUI tool
+
 # build tools (e.g., c compiler, rust, glibc)
 c-compiler = { channel = "conda-forge" }
 cxx-compiler = { channel = "conda-forge" }
