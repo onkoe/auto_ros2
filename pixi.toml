@@ -27,14 +27,18 @@ lazygit = { version = ">=0.54.2,<0.55", channel = "conda-forge" } # `git` TUI to
 
 # build tools (e.g., c compiler, rust, glibc)
 c-compiler = { channel = "conda-forge" }
+clang = { channel = "conda-forge" }
+clangxx = { channel = "conda-forge" }
 cxx-compiler = { channel = "conda-forge" }
 glib = { version = ">=2.80.2,<3", channel = "conda-forge" }
 make = { version = "==4.4.1", channel = "conda-forge" }
 rust = { version = ">=1.89.0", channel = "conda-forge" }
 
 # system python dependencies
+basedpyright = { version = ">=1.31.3", channel = "conda-forge" }
 numpy = ">=1.26,<2"
 python = "3.11.*"
+ruff = ">=0.12.11"
 uv = { version = "==0.8.11", channel = "conda-forge" }
 
 # ros 2 tooling (e.g., colcon, ros2-cli)
@@ -88,7 +92,7 @@ ros-humble-launch-testing = { channel = "robostack-humble" }
 ros-humble-controller-manager = { channel = "robostack-humble" }
 ros-humble-cv-bridge = { channel = "robostack-humble" }
 ros-humble-depthimage-to-laserscan = { channel = "robostack-humble" }
-# ros-humble-geodesy = { channel = "robostack-humble" }
+ros-humble-geodesy = { channel = "robostack-humble" }
 ros-humble-image-proc = { channel = "robostack-humble" }
 ros-humble-joint-state-broadcaster = { channel = "robostack-humble" }
 ros-humble-joint-state-publisher = { channel = "robostack-humble" }
