@@ -3,6 +3,14 @@ import sys
 from dataclasses import dataclass
 
 import rclpy
+from custom_interfaces.srv import GnssToMap, Lights
+from custom_interfaces.srv._gnss_to_map import GnssToMap_Response
+from custom_interfaces.srv._lights import (
+    Lights_Request as LightsRequest,
+)
+from custom_interfaces.srv._lights import (
+    Lights_Response as LightsResponse,
+)
 from geographic_msgs.msg import GeoPoint, GeoPointStamped
 from geometry_msgs.msg import Point, PoseStamped, Twist
 from loguru import logger as llogger
@@ -18,15 +26,6 @@ from rclpy.qos import QoSPresetProfiles, QoSProfile
 from rclpy.subscription import Subscription
 from sensor_msgs.msg import NavSatFix
 from typing_extensions import override
-
-from custom_interfaces.srv import GnssToMap, Lights
-from custom_interfaces.srv._gnss_to_map import GnssToMap_Response
-from custom_interfaces.srv._lights import (
-    Lights_Request as LightsRequest,
-)
-from custom_interfaces.srv._lights import (
-    Lights_Response as LightsResponse,
-)
 
 from .coords import dist_m_between_coords
 from .pose import geopoint_to_pose
@@ -495,7 +494,12 @@ def main(args: list[str] | None = None):
     # spin the ros 2 node and run our logic... at the same time!
     #
     # for more info, see: https://github.com/m2-farzan/ros2-asyncio
-    future = asyncio.wait([ros_spin(navigator_node), navigator_node.navigator()])
+    future = asyncio.wait(
+        [
+            asyncio.create_task(ros_spin(navigator_node)),
+            asyncio.create_task(navigator_node.navigator()),
+        ]
+    )
     _ = asyncio.get_event_loop().run_until_complete(future)
 
     # destroy the Node explicitly
