@@ -10,14 +10,15 @@ import unittest
 import launch_testing.markers
 import pytest
 from ament_index_python.packages import get_package_share_directory
+from launch_testing import IoHandler, ProcInfoHandler
+from launch_testing.actions import ReadyToTest
+
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     PathJoinSubstitution,
 )
-from launch_testing import IoHandler, ProcInfoHandler
-from launch_testing.actions import ReadyToTest
 
 
 @pytest.mark.launch_test
@@ -39,6 +40,8 @@ def generate_test_description() -> LaunchDescription:
             ]
         ),
         launch_arguments=[
+            # use sim time
+            ("use_sim_time", "True"),
             # run without showing a window
             ("run_headless", "True"),
             # ...but don't actually simulate anything
