@@ -8,8 +8,6 @@ _ = setup(
     version="1.0.0",
     #
     # boilerplate; don't change this
-    install_requires=["setuptools"],
-    tests_require=["pytest"],
     packages=find_packages(exclude=["test"]),
     #
     # stuff to add into `install/`
