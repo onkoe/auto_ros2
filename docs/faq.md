@@ -561,3 +561,102 @@ Summary: 14 packages finished [2.61s]
   2 packages had stderr output: custom_interfaces navigator
 bash-3.2$
 ```
+
+### Oh, I'm doing a clean build (or haven't built the code before), and it's still happening!
+
+Yeah, sometimes you'll get a **GIANT LINKER ERROR** like this:
+
+```fish
+~/D/p/R/auto_ros2 (refactor/pixi|✚5) $ pixi s
+
+~/D/p/R/auto_ros2 (refactor/pixi|✚5) $ just clean                                        (auto_ros2)
+Attempting to clean build files...
+rm -rfd install/ install/ log/ .cargo/
+rm -rfd build/
+ rm -rfd .venv/
+Build files have been removed!
+
+~/D/p/R/auto_ros2 (refactor/pixi|✚5) $ colcon build --symlink-install --cmake-args -DPython_ROOT_DIR="$CONDA_PREFIX" -DPython_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')"
+Starting >>> custom_interfaces_shim
+Starting >>> aruco_node
+Starting >>> custom_interfaces
+Starting >>> drive_launcher
+Starting >>> log_node
+Starting >>> manual_control
+Starting >>> navigator
+Starting >>> see3cam
+Finished <<< manual_control [2.31s]
+Starting >>> simulator
+Finished <<< aruco_node [2.35s]
+Starting >>> zed
+Finished <<< log_node [2.39s]
+Finished <<< navigator [2.39s]
+Finished <<< drive_launcher [2.87s]
+Finished <<< see3cam [3.35s]
+Finished <<< custom_interfaces_shim [3.56s]
+Starting >>> drive_tui
+Starting >>> lights
+Starting >>> maps_backend
+Starting >>> sensors
+Starting >>> wheels
+Finished <<< drive_tui [0.76s]
+Finished <<< zed [3.08s]
+Finished <<< simulator [5.70s]
+--- stderr: lights
+error: linking with `cc` failed: exit status: 1
+  |
+  = note:  "cc" "/var/folders/bd/_ch9ytrj07l39d478lyt79l00000gn/T/rustcuyidcI/symbols.o" "<98 object files omitted>" "/Users/barrett/Documents/projects/Rover/auto_ros2/build/lights/debug/deps/{libfeedback.rlib,libtracing-8b021a3922359756.rlib,libtracing_core-6d380ae9cd153ea2.rlib,libthiserror-cf437b33fe0624af.rlib,libcustom_interfaces-29543dedbd622365.rlib,libgeographic_msgs-859c17fe847f2e34.rlib,libunique_identifier_msgs-e9b300bad247ba10.rlib,libgeometry_msgs-ebd8eefd7973ae99.rlib,libstd_msgs-2df969f80f4f561d.rlib,libbuiltin_interfaces-e3c5501948944802.rlib,libsafe_drive-5ef6f5ee911f2e82.rlib,libsignal_hook-94ab49f0a0e2e53a.rlib,libcrossbeam_channel-f9c3e6eb69613ae6.rlib,libcrossbeam_utils-b0f6f16dad74b38e.rlib,libregex-2de19355f5d547cd.rlib,libregex_automata-d7cd47aa8bcf6a39.rlib,libaho_corasick-399951cffc4932fe.rlib,libregex_syntax-93102c852b1d4176.rlib,libnum_traits-e3b29dbad17cb9c6.rlib,libonce_cell-5d51a55a1a353586.rlib,libfutures-0b1a3d0006602cb7.rlib,libfutures_executor-c1ba222ad16213fd.rlib,libfutures_util-0d5cf13edd3e01a6.rlib,libmemchr-5f6df43509e8007e.rlib,libfutures_io-7840600bdc8a191e.rlib,libslab-f8add2a141d83c8d.rlib,libfutures_channel-594c2d552b63de6b.rlib,libfutures_sink-0b87a188f09b64e0.rlib,libfutures_task-ff04a30ae94c4831.rlib,libpin_utils-d60247b6540d1416.rlib,libfutures_core-e5892b2b95d7dcbe.rlib,libparking_lot-f431797de471071a.rlib,libparking_lot_core-3c7b3d369874b9e1.rlib,libcfg_if-6ae6bfdb17ac5f33.rlib,libsmallvec-7ba979a68c120aa3.rlib,liblock_api-a97bb167ef1d9c2d.rlib,libscopeguard-3a94de5a59526d7e.rlib,libpin_project-7314e391fde4d088.rlib,libtokio-9e21f93e3dfed765.rlib,libsignal_hook_registry-5555a8bebe180af7.rlib,libsocket2-b924fecdb9a011ec.rlib,libmio-2b5681e2891c946b.rlib,liblibc-3bfe410cc699aefd.rlib,libpin_project_lite-e2422973c5166238.rlib}.rlib" "<sysroot>/lib/rustlib/aarch64-apple-darwin/lib/{libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,libcfg_if-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "-lcustom_interfaces__rosidl_typesupport_c" "-lcustom_interfaces__rosidl_generator_c" "-lgeographic_msgs__rosidl_typesupport_c" "-lgeographic_msgs__rosidl_generator_c" "-lunique_identifier_msgs__rosidl_typesupport_c" "-lunique_identifier_msgs__rosidl_generator_c" "-lgeometry_msgs__rosidl_typesupport_c" "-lgeometry_msgs__rosidl_generator_c" "-lstd_msgs__rosidl_typesupport_c" "-lstd_msgs__rosidl_generator_c" "-lbuiltin_interfaces__rosidl_typesupport_c" "-lbuiltin_interfaces__rosidl_generator_c" "-lrcl" "-lrcl_action" "-lrcutils" "-lrmw" "-lrosidl_runtime_c" "-lactionlib_msgs__rosidl_typesupport_c" "-lactionlib_msgs__rosidl_generator_c" "-lbuiltin_interfaces__rosidl_typesupport_c" "-lbuiltin_interfaces__rosidl_generator_c" "-ldiagnostic_msgs__rosidl_typesupport_c" "-ldiagnostic_msgs__rosidl_generator_c" "-lgeometry_msgs__rosidl_typesupport_c" "-lgeometry_msgs__rosidl_generator_c" "-lnav_msgs__rosidl_typesupport_c" "-lnav_msgs__rosidl_generator_c" "-lsensor_msgs__rosidl_typesupport_c" "-lsensor_msgs__rosidl_generator_c" "-lshape_msgs__rosidl_typesupport_c" "-lshape_msgs__rosidl_generator_c" "-lstd_msgs__rosidl_typesupport_c" "-lstd_msgs__rosidl_generator_c" "-lstd_srvs__rosidl_typesupport_c" "-lstd_srvs__rosidl_generator_c" "-lstereo_msgs__rosidl_typesupport_c" "-lstereo_msgs__rosidl_generator_c" "-ltrajectory_msgs__rosidl_typesupport_c" "-ltrajectory_msgs__rosidl_generator_c" "-lunique_identifier_msgs__rosidl_typesupport_c" "-lunique_identifier_msgs__rosidl_generator_c" "-lvisualization_msgs__rosidl_typesupport_c" "-lvisualization_msgs__rosidl_generator_c" "-lrcl_interfaces__rosidl_typesupport_c" "-lrcl_interfaces__rosidl_generator_c" "-laction_msgs__rosidl_typesupport_c" "-laction_msgs__rosidl_generator_c" "-liconv" "-lSystem" "-lc" "-lm" "-arch" "arm64" "-mmacosx-version-min=11.0.0" "-L" "/Users/barrett/Documents/projects/Rover/auto_ros2/install/custom_interfaces_shim/lib" "-L" "<sysroot>/lib" "-L" "/Users/barrett/Documents/projects/Rover/auto_ros2/src/custom_interfaces/bindings/custom_interfaces/../../../../install/custom_interfaces/lib" "-L" "/Users/barrett/Documents/projects/Rover/auto_ros2/install/custom_interfaces_shim/lib" "-L" "<sysroot>/lib" "-L" "/Users/barrett/Documents/projects/Rover/auto_ros2/install/custom_interfaces_shim/lib" "-L" "<sysroot>/lib" "-L" "/Users/barrett/Documents/projects/Rover/auto_ros2/install/custom_interfaces_shim/lib" "-L" "<sysroot>/lib" "-L" "/Users/barrett/Documents/projects/Rover/auto_ros2/install/custom_interfaces_shim/lib" "-L" "<sysroot>/lib" "-L" "/Users/barrett/Documents/projects/Rover/auto_ros2/install/custom_interfaces_shim/lib" "-L" "<sysroot>/lib" "-L" "/Users/barrett/Documents/projects/Rover/auto_ros2/install/custom_interfaces_shim/lib" "-L" "<sysroot>/lib" "-o" "/Users/barrett/Documents/projects/Rover/auto_ros2/build/lights/debug/deps/lights_node-1db2c44ccab8761d" "-Wl,-dead_strip" "-nodefaultlibs"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: ld: warning: ignoring duplicate libraries: '-lbuiltin_interfaces__rosidl_generator_c', '-lbuiltin_interfaces__rosidl_typesupport_c', '-lgeometry_msgs__rosidl_generator_c', '-lgeometry_msgs__rosidl_typesupport_c', '-lstd_msgs__rosidl_generator_c', '-lstd_msgs__rosidl_typesupport_c', '-lunique_identifier_msgs__rosidl_generator_c', '-lunique_identifier_msgs__rosidl_typesupport_c'
+          ld: warning: search path '/Users/barrett/Documents/projects/Rover/auto_ros2/src/custom_interfaces/bindings/custom_interfaces/../../../../install/custom_interfaces/lib' not found
+          ld: library 'custom_interfaces__rosidl_typesupport_c' not found
+          clang: error: linker command failed with exit code 1 (use -v to see invocation)
+
+
+error: could not compile `lights` (bin "lights_node") due to 1 previous error
+---
+Failed   <<< lights [22.3s, exited with code 1]
+Aborted  <<< sensors [23.6s]
+Aborted  <<< wheels [23.7s]
+Aborted  <<< maps_backend [23.7s]
+Aborted  <<< custom_interfaces [43.0s]
+
+Summary: 10 packages finished [43.2s]
+  1 package failed: lights
+  4 packages aborted: custom_interfaces maps_backend sensors wheels
+~/D/p/R/auto_ros2 (refactor/pixi|✚5) $                                                   (auto_ros2)
+```
+
+We have to ensure our custom interfaces build first. This is a known problem with the IDL generation stuff in compiled languages like C, C++, and Rust.
+
+Here's an example showing you how to fix it:
+
+```fish
+# first, build only the `custom_interfaces` package!
+#
+# you can specify that with `colcon build --symlink-install --packages-select custom_interfaces`,
+# or on macOS like so:
+~/D/p/R/auto_ros2 (refactor/pixi) $ colcon build --symlink-install --packages-select custom_interfaces --cmake-args -DPython_ROOT_DIR="$CONDA_PREFIX" -DPython_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')"
+
+Starting >>> custom_interfaces
+Finished <<< custom_interfaces [11.7s]
+
+Summary: 1 package finished [11.8s]
+~/D/p/R/auto_ros2 (refactor/pixi|✚5) $                                                   (auto_ros2)
+
+# now, build everything else by removing the `--packages-select`:
+colcon build --symlink-install --cmake-args -DPython_ROOT_DIR="$CONDA_PREFIX" -DPython_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')"
+#
+# ...
+#
+Summary: 15 packages finished [27.1s]
+  6 packages had stderr output: custom_interfaces drive_launcher navigator see3cam simulator zed
+~/D/p/R/auto_ros2 (refactor/pixi|✚5) $
+
+# source the source script like usual
+. ./SOURCE_SCRIPT.fish
+
+# finally, run the node you want to run!
+ros2 run lights lights_node
+
+```
