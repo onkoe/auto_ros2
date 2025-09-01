@@ -7,8 +7,7 @@ This document contains information about contributing to the project. Please rea
 You'll need a few things to continue.
 
 - [`git`](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git): used to manage the codebase
-- [`uv`](https://docs.astral.sh/uv/getting-started/installation/): manages Python, a scripting language
-- [Rust](https://rustup.rs/): the second language we use
+- [`pixi`](https://github.com/prefix-dev/pixi/#installation): a package manager
 - A code editor, like [Zed Editor](https://zed.dev/download) or [Visual Studio Code](https://code.visualstudio.com/).
 - [A GitHub account](https://github.com/login): to see tasks and contribute your ideas
 
