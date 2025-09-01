@@ -2,6 +2,10 @@ name: CI
 on: ["push"]
 
 jobs:
+  # Builds and tests the ROS 2 workspace using `colcon`.
+  #
+  # It also scans all Python and Rust files for correctness using linting
+  # tools like `basedpyright`, `cargo-fmt`, and `cargo-clippy`.
   check-ros2-workspace:
     # same as jetson :p
     runs-on: ubuntu-22.04-arm
@@ -124,6 +128,10 @@ jobs:
           . install/local_setup.bash
           just test
 
+  # Ensures that our Python code is properly formatted and contains no common
+  # errors.
+  #
+  # These scans are done by a linting tool called `ruff`.
   python:
     runs-on: ubuntu-22.04-arm
     steps:
