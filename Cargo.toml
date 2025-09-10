@@ -12,4 +12,5 @@ members = [
     # libraries (not ros 2 packages)
     "lib/feedback",
     "lib/soro_gps",
+    "lib/safe_drive_msg"
 ]

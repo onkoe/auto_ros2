@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [build-dependencies]
-safe_drive_msg = "0.2.6"
+safe_drive_msg = { path = "../../lib/safe_drive_msg" }
 
 [package.metadata.cargo-machete]
 ignored = ["safe_drive_msg"]

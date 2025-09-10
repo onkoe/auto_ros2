@@ -1163,8 +1163,6 @@ dependencies = [
 [[package]]
 name = "safe_drive_msg"
 version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1924309480ffface96bd16c3c2bf09ade73999eda0d86bdeb5b19be53cad7f1"
 dependencies = [
  "checksumdir",
  "convert_case",
